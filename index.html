@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v5 AI</title>
+<title>썰쟁 Studio v5.1 AI</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -42,7 +42,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v5 AI</h1><div class="sub">Gemini 자동 생성 · API 키는 Vercel에 안전하게 보관</div></div>
+ <div><h1>🎬 썰쟁 Studio v5.1 AI</h1><div class="sub">Gemini 자동 생성 · API 키는 Vercel에 안전하게 보관</div></div>
  <span class="badge">AI 자동 생성</span>
 </header>
 <div class="layout">
@@ -120,7 +120,7 @@ async function callAI(task,prompt){
  const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task,prompt})});
  const data=await r.json().catch(()=>({}));
  if(!r.ok)throw new Error(data.error||`서버 오류 ${r.status}`);
- return data.text||'';
+ window.lastGeminiModel=data.model||''; return data.text||'';
 }
 function storyPrompt(){
  const v=cfg();
@@ -211,13 +211,13 @@ async function generate(type){
   setBusy(true);setProgress(8);
   if(type==='story'){
    if(!cfg().topic)throw new Error('주제를 입력하세요.');
-   $('story').value=await callAI('story',storyPrompt());switchTab('story');setProgress(100);setStatus('롱폼 생성 완료','ok');
+   $('story').value=await callAI('story',storyPrompt());switchTab('story');setProgress(100);setStatus(`롱폼 생성 완료 · ${window.lastGeminiModel||'Gemini 자동 선택'}`,'ok');
   }else if(type==='assets'){
    if(!$('story').value.trim())throw new Error('먼저 롱폼을 생성하세요.');
-   const text=await callAI('assets',assetsPrompt($('story').value));parseAssets(text);switchTab('images');setProgress(100);setStatus('이미지·쇼츠·유튜브·썸네일 생성 완료','ok');
+   const text=await callAI('assets',assetsPrompt($('story').value));parseAssets(text);switchTab('images');setProgress(100);setStatus(`제작 자료 생성 완료 · ${window.lastGeminiModel||'Gemini 자동 선택'}`,'ok');
   }else if(type==='japanese'){
    if(!$('story').value.trim())throw new Error('먼저 롱폼을 생성하세요.');
-   $('japanese').value=await callAI('japanese',japanesePrompt($('story').value));switchTab('japanese');setProgress(100);setStatus('일본어판 생성 완료','ok');
+   $('japanese').value=await callAI('japanese',japanesePrompt($('story').value));switchTab('japanese');setProgress(100);setStatus(`일본어판 생성 완료 · ${window.lastGeminiModel||'Gemini 자동 선택'}`,'ok');
   }
   saveLocal();meta();
  }catch(e){setProgress(0);setStatus(e.message,'bad')}finally{setBusy(false)}
@@ -232,7 +232,7 @@ async function generateAll(){
   const assets=await callAI('assets',assetsPrompt($('story').value));parseAssets(assets);setProgress(72);
   setStatus('<span class="spinner"></span>3/3 일본어판을 생성하고 있습니다...');
   $('japanese').value=await callAI('japanese',japanesePrompt($('story').value));setProgress(92);
-  makeSrt(false);setProgress(100);saveLocal();switchTab('story');setStatus('전체 자동 생성이 완료됐습니다!','ok');
+  makeSrt(false);setProgress(100);saveLocal();switchTab('story');setStatus(`전체 자동 생성 완료 · 마지막 사용 모델: ${window.lastGeminiModel||'Gemini 자동 선택'}`,'ok');
  }catch(e){setProgress(0);setStatus(e.message,'bad')}finally{setBusy(false);meta()}
 }
 function splitParagraphs(){

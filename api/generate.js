@@ -1,4 +1,67 @@
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+let modelCache = { models: [], expiresAt: 0 };
+
+function cleanModelName(name = "") {
+  return String(name).replace(/^models\//, "").trim();
+}
+
+function rankModel(name) {
+  const n = name.toLowerCase();
+  let score = 0;
+  if (n.includes("flash-lite")) score += 1000;
+  else if (n.includes("flash")) score += 800;
+  else if (n.includes("pro")) score += 300;
+  if (n.includes("latest")) score += 120;
+  if (/gemini-3|gemini-2\.5|gemini-2\.0/.test(n)) score += 80;
+  if (n.includes("preview")) score -= 20;
+  if (n.includes("exp")) score -= 80;
+  if (/image|tts|audio|live|embedding|aqa|robotics/.test(n)) score -= 5000;
+  return score;
+}
+
+async function listAvailableModels(apiKey) {
+  const now = Date.now();
+  if (modelCache.models.length && modelCache.expiresAt > now) return modelCache.models;
+
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",
+    { headers: { "x-goog-api-key": apiKey } }
+  );
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  const models = (data.models || [])
+    .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+    .map(m => cleanModelName(m.name))
+    .filter(Boolean)
+    .filter(n => !/image|tts|audio|live|embedding|aqa|robotics/i.test(n))
+    .sort((a, b) => rankModel(b) - rankModel(a));
+
+  modelCache = { models, expiresAt: now + 10 * 60 * 1000 };
+  return models;
+}
+
+async function candidateModels(apiKey) {
+  const configured = cleanModelName(process.env.GEMINI_MODEL || "");
+  const available = await listAvailableModels(apiKey);
+
+  // 환경변수 모델을 최우선으로 사용하고, 계정에서 실제 조회된 Flash 계열로 자동 대체합니다.
+  const preferred = [
+    configured,
+    ...available.filter(n => /flash-lite/i.test(n)),
+    ...available.filter(n => /flash/i.test(n)),
+    ...available.filter(n => !/flash/i.test(n))
+  ].filter(Boolean);
+
+  return [...new Set(preferred)].slice(0, 8);
+}
+
+function extractText(data) {
+  return (data.candidates || [])
+    .flatMap(c => c.content?.parts || [])
+    .map(p => p.text || "")
+    .join("")
+    .trim();
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -20,64 +83,69 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "요청문이 너무 깁니다." });
   }
 
-  const maxTokens =
-    task === "story" ? 20000 :
-    task === "japanese" ? 20000 :
-    12000;
+  const maxTokens = task === "story" || task === "japanese" ? 20000 : 12000;
+  const models = await candidateModels(apiKey);
 
-  try {
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(DEFAULT_MODEL)}:generateContent`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey
-      },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: task === "story" ? 0.9 : 0.65,
-          maxOutputTokens: maxTokens,
-          topP: 0.95
-        }
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const raw = data?.error?.message || `Gemini API 오류 ${response.status}`;
-      let friendly = raw;
-      if (response.status === 429) {
-        friendly = "Gemini 무료 사용 한도에 도달했거나 요청이 너무 많습니다. 잠시 후 다시 시도하거나 Vercel의 GEMINI_MODEL을 무료 사용 가능한 모델로 변경하세요.";
-      } else if (response.status === 403) {
-        friendly = "API 키 권한 또는 무료 등급 사용 가능 여부를 확인하세요. Google AI Studio에서 만든 키인지 확인해야 합니다.";
-      } else if (response.status === 404) {
-        friendly = `현재 모델 '${DEFAULT_MODEL}'을 사용할 수 없습니다. Vercel 환경변수 GEMINI_MODEL을 사용 가능한 모델명으로 변경하세요.`;
-      }
-      return res.status(response.status).json({ error: friendly, detail: raw });
-    }
-
-    const text = (data.candidates || [])
-      .flatMap(c => c.content?.parts || [])
-      .map(p => p.text || "")
-      .join("")
-      .trim();
-
-    if (!text) {
-      const reason = data.candidates?.[0]?.finishReason || "응답 없음";
-      return res.status(502).json({
-        error: `Gemini가 내용을 생성하지 못했습니다. 종료 이유: ${reason}`
-      });
-    }
-
-    return res.status(200).json({ text, model: DEFAULT_MODEL });
-  } catch (error) {
-    return res.status(500).json({
-      error: "Gemini 서버 연결 중 오류가 발생했습니다.",
-      detail: error?.message || String(error)
+  if (!models.length) {
+    return res.status(503).json({
+      error: "이 API 키에서 generateContent를 지원하는 Gemini 모델을 찾지 못했습니다. Google AI Studio에서 키와 프로젝트 상태를 확인하세요."
     });
   }
+
+  const attempts = [];
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: task === "story" ? 0.9 : 0.65,
+            maxOutputTokens: maxTokens,
+            topP: 0.95
+          }
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        const text = extractText(data);
+        if (!text) {
+          attempts.push(`${model}: 빈 응답`);
+          continue;
+        }
+        return res.status(200).json({ text, model, autoSelected: model !== cleanModelName(process.env.GEMINI_MODEL || "") });
+      }
+
+      const raw = data?.error?.message || `HTTP ${response.status}`;
+      attempts.push(`${model}: ${response.status} ${raw}`);
+
+      // 모델 미지원·한도 초과·일시 장애는 다음 사용 가능한 모델로 자동 재시도합니다.
+      if (![400, 404, 429, 500, 502, 503, 504].includes(response.status)) {
+        if (response.status === 403) {
+          return res.status(403).json({
+            error: "API 키 권한을 확인하세요. Google AI Studio에서 만든 Gemini API 키인지 확인해야 합니다.",
+            detail: raw
+          });
+        }
+        break;
+      }
+    } catch (error) {
+      attempts.push(`${model}: ${error?.message || String(error)}`);
+    }
+  }
+
+  const quotaHit = attempts.some(x => x.includes(": 429"));
+  return res.status(quotaHit ? 429 : 502).json({
+    error: quotaHit
+      ? "현재 계정에서 사용할 수 있는 Gemini 모델의 무료 한도에 도달했거나 무료 할당량이 제공되지 않았습니다. 잠시 후 다시 시도하세요."
+      : "사용 가능한 Gemini 모델을 자동으로 찾아 재시도했지만 생성에 실패했습니다.",
+    detail: attempts.slice(0, 8).join(" | ")
+  });
 }

@@ -1,48 +1,36 @@
-# 썰쟁 Studio v5 AI
+# 썰쟁 Studio v5.1 AI — 자동 모델 선택판
 
-Gemini API를 연결해 롱폼, 이미지 프롬프트, 쇼츠, 유튜브 정보, 썸네일, 일본어판, SRT를 자동 생성하는 Vercel 웹앱입니다.
+Gemini API 모델명이 바뀌거나 특정 모델을 사용할 수 없을 때, 현재 API 키에서 `generateContent`를 지원하는 모델 목록을 조회해 Flash 계열을 우선 자동 선택합니다.
 
-## 중요
-API 키는 `index.html`에 입력하지 않습니다. Vercel 환경변수에 저장하여 방문자에게 노출되지 않게 했습니다.
+## 업그레이드 방법
 
-## GitHub 업로드
-압축을 푼 뒤 저장소 루트에 다음 파일과 폴더를 업로드해 덮어씁니다.
+1. ZIP 압축을 풉니다.
+2. GitHub 저장소의 기존 파일을 이 폴더의 파일로 교체합니다.
+3. `index.html`, `api/generate.js`, `package.json`, `vercel.json`이 저장소 최상단에 오도록 업로드합니다.
+4. GitHub 커밋이 끝나면 Vercel이 자동 배포합니다.
+5. 자동 배포가 시작되지 않으면 Vercel → Deployments → 최신 배포의 `Redeploy`를 누릅니다.
 
-- index.html
-- package.json
-- vercel.json
-- README.md
-- api 폴더 안의 generate.js
+## Vercel 환경변수
 
-## Gemini API 키 만들기
-1. Google AI Studio에서 API 키를 만듭니다.
-2. 키를 다른 사람에게 보여주거나 GitHub에 올리지 않습니다.
+필수:
 
-## Vercel 환경변수 등록
-1. Vercel에서 `sseoljeng-studio` 프로젝트를 엽니다.
-2. Settings → Environment Variables로 이동합니다.
-3. 아래 항목을 추가합니다.
+- `GEMINI_API_KEY`: Google AI Studio에서 만든 API 키
 
-이름:
-GEMINI_API_KEY
+선택:
 
-값:
-Google AI Studio에서 복사한 API 키
+- `GEMINI_MODEL`: 특정 모델을 우선 사용하고 싶을 때만 입력
 
-4. Production, Preview, Development를 모두 선택합니다.
-5. Save를 누릅니다.
-6. Deployments에서 최신 배포의 메뉴를 열고 Redeploy합니다.
+`GEMINI_MODEL`을 입력하지 않아도 프로그램이 사용 가능한 모델을 자동 선택합니다.
 
-## 모델 변경
-기본 모델은 `gemini-2.5-flash`입니다. 계정의 무료 등급에서 이 모델을 사용할 수 없다는 오류가 뜨면 Vercel 환경변수에 아래 항목을 추가합니다.
+## 주요 변경점
 
-이름:
-GEMINI_MODEL
+- 고정 모델명 제거
+- API의 Models 목록을 자동 조회
+- Flash Lite → Flash → 기타 생성 모델 순으로 자동 선택
+- 모델 미지원(404), 일부 한도 초과(429), 일시 장애 시 다음 모델 자동 재시도
+- 실제 사용된 모델명을 완료 메시지에 표시
+- 기존 프로젝트 저장, SRT, 쇼츠, 일본어판, 제작 자료 기능 유지
 
-값:
-현재 Google AI Studio에서 무료 사용 가능한 정확한 모델명
+## 보안
 
-모델과 무료 한도는 Google 정책에 따라 바뀔 수 있습니다.
-
-## 비용 주의
-새 Google AI Studio 계정은 무료 등급으로 시작할 수 있지만, 무료 지원 모델과 한도는 계정·지역·시점에 따라 다를 수 있습니다. Google Cloud 결제를 직접 연결하거나 유료 등급으로 전환하지 않았다면 무료 한도 초과 시 일반적으로 요청 오류가 발생합니다. Google AI Studio의 Usage/Billing 화면에서 현재 등급을 확인하세요.
+API 키는 브라우저 코드에 들어가지 않고 Vercel 서버리스 함수에서만 읽습니다. API 키를 GitHub 파일에 직접 적지 마세요.
