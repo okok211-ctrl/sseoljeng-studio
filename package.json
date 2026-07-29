@@ -1,5 +1,8 @@
 {
-  "name": "sseoljeng-studio-v4",
-  "version": "4.0.0",
-  "private": true
+  "name": "sseoljeng-studio-v5-gemini",
+  "version": "5.0.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  }
 }
