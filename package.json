@@ -1,8 +1,5 @@
 {
-  "name": "sseoljeng-studio-v2",
-  "version": "2.0.0",
-  "private": true,
-  "engines": {
-    "node": ">=20"
-  }
+  "name": "sseoljeng-studio-v3-lite",
+  "version": "3.0.0",
+  "private": true
 }

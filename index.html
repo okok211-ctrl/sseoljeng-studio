@@ -3,176 +3,195 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v2</title>
-<meta name="description" content="유튜브 사연 제작 올인원 웹 스튜디오">
+<title>썰쟁 Studio v3 Lite</title>
+<meta name="description" content="API 비용 없이 사용하는 유튜브 사연 제작 정리 도구">
 <style>
-:root{--bg:#050b14;--panel:#0e1929;--panel2:#111f33;--line:#263b57;--text:#f8fafc;--muted:#9fb0c5;--a:#ff7a18;--a2:#ff9a4b;--ok:#24c875;--bad:#ff6670}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 95% 0,rgba(255,122,24,.2),transparent 30%),linear-gradient(145deg,#030811,#081423 52%,#0d1728);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR","Segoe UI",sans-serif;min-height:100vh}
-button,input,textarea,select{font:inherit}.app{max-width:1520px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:18px 20px;background:rgba(14,25,41,.88);border:1px solid rgba(255,255,255,.08);border-radius:20px;backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.28)}
-.brand h1{margin:0;font-size:clamp(24px,4vw,38px);letter-spacing:-.04em}.brand p{margin:5px 0 0;color:var(--muted);font-size:13px}.topActions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:0;border-radius:11px;padding:10px 12px;font-weight:900;cursor:pointer;transition:.16s}.btn:hover{transform:translateY(-1px)}.primary{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff}.secondary{background:#243751;color:#eef5ff}.ghost{background:#0b1524;color:#dbe7f5;border:1px solid var(--line)}.success{background:var(--ok);color:#042214}.danger{background:#3b1920;color:#ffc6ca;border:1px solid #65313a}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.layout{display:grid;grid-template-columns:330px 1fr;gap:16px;margin-top:16px}.panel{background:rgba(14,25,41,.94);border:1px solid rgba(255,255,255,.08);border-radius:19px;box-shadow:0 16px 45px rgba(0,0,0,.23)}.side{padding:17px;height:max-content;position:sticky;top:15px}.main{padding:17px;min-width:0}
-h2{font-size:17px;margin:0 0 13px}.field{margin:11px 0}.field label{display:block;font-size:12px;font-weight:900;color:#cdd8e6;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:10px;background:#06101d;color:white;padding:10px 11px;outline:none}.field textarea{min-height:76px;resize:vertical;line-height:1.5}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(255,122,24,.12)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.checks{display:grid;gap:8px;margin:11px 0}.check{display:flex;align-items:flex-start;gap:8px;color:#c5d1df;font-size:12px;line-height:1.45}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.wide{grid-column:1/-1}.status{margin-top:11px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:#07111f;color:var(--muted);font-size:12px;line-height:1.45}.status.ok{color:#baffd5;border-color:#2d7851}.status.bad{color:#ffc2c7;border-color:#7e3640}
+:root{--bg:#050b14;--panel:#0e1929;--line:#263b57;--text:#f8fafc;--muted:#9fb0c5;--a:#ff7a18;--a2:#ff9a4b;--ok:#28c878;--bad:#ff6670}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 95% 0,rgba(255,122,24,.18),transparent 30%),linear-gradient(145deg,#030811,#081423 52%,#0d1728);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR","Segoe UI",sans-serif;min-height:100vh}
+button,input,textarea,select{font:inherit}.app{max-width:1500px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:18px 20px;background:rgba(14,25,41,.9);border:1px solid rgba(255,255,255,.08);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.brand h1{margin:0;font-size:clamp(24px,4vw,38px)}.brand p{margin:5px 0 0;color:var(--muted);font-size:13px}.badge{padding:7px 10px;border-radius:999px;background:rgba(40,200,120,.13);border:1px solid rgba(40,200,120,.35);color:#b9ffd6;font-size:11px;font-weight:900}
+.layout{display:grid;grid-template-columns:345px 1fr;gap:16px;margin-top:16px}.panel{background:rgba(14,25,41,.95);border:1px solid rgba(255,255,255,.08);border-radius:19px;box-shadow:0 16px 45px rgba(0,0,0,.23)}.side{padding:17px;height:max-content;position:sticky;top:15px}.main{padding:17px;min-width:0}
+h2{font-size:17px;margin:0 0 13px}.field{margin:11px 0}.field label{display:block;font-size:12px;font-weight:900;color:#cdd8e6;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:10px;background:#06101d;color:white;padding:10px 11px;outline:none}.field textarea{min-height:80px;resize:vertical;line-height:1.55}.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(255,122,24,.12)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border:0;border-radius:11px;padding:10px 12px;font-weight:900;cursor:pointer}.primary{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff}.secondary{background:#243751;color:#eef5ff}.ghost{background:#0b1524;color:#dbe7f5;border:1px solid var(--line)}.success{background:var(--ok);color:#052316}.danger{background:#3b1920;color:#ffc6ca;border:1px solid #65313a}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.wide{grid-column:1/-1}
+.status{margin-top:11px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:#07111f;color:var(--muted);font-size:12px;line-height:1.45}.status.ok{color:#baffd5;border-color:#2d7851}.status.bad{color:#ffc2c7;border-color:#7e3640}
 .tabs{display:flex;gap:7px;overflow:auto;padding-bottom:5px;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#18283e;color:#b8c7da;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer}.tab.active{background:rgba(255,122,24,.17);color:#ffd7b8;border-color:rgba(255,122,24,.55)}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.meta{color:var(--muted);font-size:12px}.output{min-height:610px;background:#040b14;border:1px solid #20344f;border-radius:14px;padding:17px;white-space:pre-wrap;line-height:1.75;overflow:auto;font-size:14px}
-.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.card{background:#07111f;border:1px solid var(--line);border-radius:14px;overflow:hidden}.preview{aspect-ratio:16/9;background:linear-gradient(135deg,#15253b,#08111d);display:grid;place-items:center;color:#8496ad}.preview.vertical{aspect-ratio:9/16}.preview img{width:100%;height:100%;object-fit:cover}.cardBody{padding:12px}.cardBody h3{font-size:13px;margin:0 0 7px}.prompt{font-size:11px;color:#aebed2;line-height:1.5;white-space:pre-wrap;max-height:130px;overflow:auto}.mini{display:flex;gap:7px;margin-top:9px}.mini button{flex:1;padding:8px;font-size:11px}
-.projectList{display:grid;gap:8px}.projectItem{display:flex;justify-content:space-between;gap:8px;align-items:center;background:#07111f;border:1px solid var(--line);border-radius:11px;padding:10px}.projectItem .name{font-size:13px;font-weight:850}.projectItem .date{font-size:10px;color:var(--muted);margin-top:3px}.projectItem button{padding:6px 8px;font-size:10px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:18px;z-index:50}.modalBox{width:min(680px,100%);max-height:85vh;overflow:auto;background:#0e1929;border:1px solid #344c6b;border-radius:18px;padding:18px}.modalBox h2{font-size:20px}.modalBox p,.modalBox li{color:#bbc8d8;line-height:1.65;font-size:13px}.code{background:#050b14;border:1px solid #263b57;border-radius:9px;padding:9px;font-family:monospace;color:#ffd0ad;word-break:break-all}.drop{border:1px dashed #3a506e;border-radius:11px;padding:10px;text-align:center;color:var(--muted);font-size:11px;background:#07111f}.drop input{width:100%;margin-top:7px}
-.badge{display:inline-flex;padding:7px 10px;border-radius:999px;background:rgba(36,200,117,.12);border:1px solid rgba(36,200,117,.32);color:#b8ffd4;font-size:11px;font-weight:900}
+.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.card{background:#07111f;border:1px solid var(--line);border-radius:14px;overflow:hidden}.preview{aspect-ratio:16/9;background:linear-gradient(135deg,#15253b,#08111d);display:grid;place-items:center;color:#8496ad}.preview img{width:100%;height:100%;object-fit:cover}.cardBody{padding:12px}.cardBody h3{font-size:13px;margin:0 0 7px}.prompt{font-size:11px;color:#aebed2;line-height:1.5;white-space:pre-wrap;max-height:145px;overflow:auto}.mini{display:flex;gap:7px;margin-top:9px}.mini button{flex:1;padding:8px;font-size:11px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:18px;z-index:50}.modalBox{width:min(760px,100%);max-height:88vh;overflow:auto;background:#0e1929;border:1px solid #344c6b;border-radius:18px;padding:18px}.projectItem{display:flex;justify-content:space-between;gap:8px;align-items:center;background:#07111f;border:1px solid var(--line);border-radius:11px;padding:10px;margin:8px 0}.code{background:#050b14;border:1px solid #263b57;border-radius:9px;padding:10px;white-space:pre-wrap;color:#ffd0ad;font-size:12px;line-height:1.6}
+.note{padding:11px;border-radius:11px;background:rgba(255,122,24,.08);border:1px solid rgba(255,122,24,.25);color:#ffd8bb;font-size:12px;line-height:1.55}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.output{min-height:450px}}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
-  <div class="brand"><h1>🎬 썰쟁 Studio v2</h1><p>어디서든 접속하는 유튜브 사연 제작 웹앱</p></div>
-  <div class="topActions">
-    <span class="badge" id="modeBadge">연결 확인 중</span>
-    <button class="btn ghost" onclick="openProjects()">프로젝트</button>
-    <button class="btn ghost" id="loginBtn" onclick="openLogin()">로그인</button>
-    <button class="btn primary" onclick="saveProject()">저장</button>
-  </div>
+ <div class="brand"><h1>🎬 썰쟁 Studio v3 Lite</h1><p>API 비용 0원 · ChatGPT 결과를 붙여넣어 캡컷용으로 정리</p></div>
+ <span class="badge">무료 모드</span>
 </header>
 
 <main class="layout">
 <aside class="panel side">
-  <h2>이야기 설정</h2>
-  <div class="field"><label>프로젝트 이름</label><input id="projectName" value="새로운 사연"></div>
-  <div class="field"><label>주제</label><textarea id="topic">남편의 장례식장에 죽은 줄 알았던 여자가 나타났습니다.</textarea></div>
-  <div class="field"><label>여자 주인공</label><textarea id="heroine">42세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
-  <div class="drop">여주 참고사진<input id="reference" type="file" accept="image/*"></div>
-  <div class="row">
-    <div class="field"><label>문단 수</label><select id="paragraphs"><option>15</option><option selected>20</option></select></div>
-    <div class="field"><label>본문 이미지</label><select id="imageCount"><option>3</option><option selected>4</option><option>5</option></select></div>
-  </div>
-  <div class="row">
-    <div class="field"><label>시점</label><select id="pov"><option>3인칭 관찰자</option><option>1인칭 회고체</option></select></div>
-    <div class="field"><label>분위기</label><select id="tone"><option>긴장감</option><option>통쾌한 반전</option><option>감동</option><option>가족 갈등</option></select></div>
-  </div>
-  <div class="checks">
-    <label class="check"><input id="subscribe" type="checkbox" checked>0문단 구독·좋아요·알림 멘트</label>
-    <label class="check"><input id="noBubbles" type="checkbox" checked>이미지 말풍선·문자·워터마크 금지</label>
-    <label class="check"><input id="longPerm" type="checkbox" checked>여주 롱펌과 얼굴 일관성 유지</label>
-  </div>
-  <div class="actions">
-    <button class="btn primary wide" onclick="generateAll()">✨ 전체 생성</button>
-    <button class="btn secondary" onclick="generate('story')">롱폼</button>
-    <button class="btn secondary" onclick="generate('scenes')">본문 이미지</button>
-    <button class="btn secondary" onclick="generate('shorts')">쇼츠</button>
-    <button class="btn secondary" onclick="generate('youtube')">유튜브 정보</button>
-    <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
-    <button class="btn secondary" onclick="makeCaptions()">SRT 자막</button>
-    <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP</button>
-    <button class="btn ghost wide" onclick="openHelp()">배포·API 설정</button>
-  </div>
-  <div id="status" class="status">전체 생성을 눌러 시작하세요.</div>
+<h2>프로젝트 설정</h2>
+<div class="field"><label>프로젝트 이름</label><input id="projectName" value="새로운 사연"></div>
+<div class="field"><label>주제</label><textarea id="topic">남편의 장례식장에 죽은 줄 알았던 여자가 나타났습니다.</textarea></div>
+<div class="field"><label>여자 주인공 설정</label><textarea id="heroine">42세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
+<div class="row">
+ <div class="field"><label>문단 수</label><select id="paragraphs"><option>15</option><option selected>20</option></select></div>
+ <div class="field"><label>본문 이미지</label><select id="imageCount"><option>3</option><option selected>4</option><option>5</option></select></div>
+</div>
+<div class="row">
+ <div class="field"><label>시점</label><select id="pov"><option>3인칭 관찰자</option><option>1인칭 회고체</option></select></div>
+ <div class="field"><label>분위기</label><select id="tone"><option>긴장감</option><option>통쾌한 반전</option><option>감동</option><option>가족 갈등</option></select></div>
+</div>
+<div class="actions">
+ <button class="btn primary wide" onclick="makeChatPrompt()">💬 ChatGPT 요청문 만들기</button>
+ <button class="btn secondary wide" onclick="pasteStory()">📋 대본 붙여넣기</button>
+ <button class="btn secondary" onclick="makeScenes()">본문 이미지</button>
+ <button class="btn secondary" onclick="makeShorts()">쇼츠</button>
+ <button class="btn secondary" onclick="makeYoutube()">유튜브 정보</button>
+ <button class="btn secondary" onclick="makeJapanesePrompt()">일본어 요청문</button>
+ <button class="btn secondary" onclick="makeCaptions()">SRT 자막</button>
+ <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP</button>
+ <button class="btn ghost" onclick="saveProject()">저장</button>
+ <button class="btn ghost" onclick="openProjects()">불러오기</button>
+</div>
+<div id="status" class="status">먼저 ChatGPT 요청문을 만든 뒤, 생성된 대본을 붙여넣으세요.</div>
+<div class="note" style="margin-top:12px">이 버전은 OpenAI API를 사용하지 않으므로 추가 요금이 없습니다. 대본과 이미지는 지금처럼 ChatGPT에서 만들고, 이 사이트에서 프로젝트를 정리합니다.</div>
 </aside>
 
 <section class="panel main">
 <nav class="tabs">
-  <button class="tab active" data-tab="story">롱폼</button>
-  <button class="tab" data-tab="images">본문 이미지</button>
-  <button class="tab" data-tab="shorts">쇼츠</button>
-  <button class="tab" data-tab="youtube">유튜브</button>
-  <button class="tab" data-tab="japanese">일본어판</button>
-  <button class="tab" data-tab="captions">자막</button>
+ <button class="tab active" data-tab="story">롱폼</button>
+ <button class="tab" data-tab="images">본문 이미지</button>
+ <button class="tab" data-tab="shorts">쇼츠</button>
+ <button class="tab" data-tab="youtube">유튜브</button>
+ <button class="tab" data-tab="japanese">일본어 요청</button>
+ <button class="tab" data-tab="captions">자막</button>
 </nav>
-<div class="toolbar"><span id="meta" class="meta">글자 수 0자</span><button class="btn ghost" onclick="copyCurrent()">복사</button></div>
-<div id="storyPane" class="pane"><div id="storyOutput" class="output">롱폼 대본이 표시됩니다.</div></div>
-<div id="imagesPane" class="pane hidden"><div id="imageGrid" class="grid"></div></div>
-<div id="shortsPane" class="pane hidden"><div id="shortsOutput" class="output">쇼츠 기획이 표시됩니다.</div></div>
-<div id="youtubePane" class="pane hidden"><div id="youtubeOutput" class="output">유튜브 정보가 표시됩니다.</div></div>
-<div id="japanesePane" class="pane hidden"><div id="japaneseOutput" class="output">일본어판이 표시됩니다.</div></div>
-<div id="captionsPane" class="pane hidden"><div id="captionsOutput" class="output">자막이 표시됩니다.</div></div>
+<div class="toolbar"><span id="meta" class="meta">글자 수 0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
+<div id="storyPane"><textarea id="storyOutput" class="output" placeholder="ChatGPT에서 만든 롱폼 대본을 여기에 붙여넣으세요."></textarea></div>
+<div id="imagesPane" class="hidden"><div id="imageGrid" class="grid"></div></div>
+<div id="shortsPane" class="hidden"><textarea id="shortsOutput" class="output"></textarea></div>
+<div id="youtubePane" class="hidden"><textarea id="youtubeOutput" class="output"></textarea></div>
+<div id="japanesePane" class="hidden"><textarea id="japaneseOutput" class="output"></textarea></div>
+<div id="captionsPane" class="hidden"><textarea id="captionsOutput" class="output"></textarea></div>
 </section>
 </main>
 </div>
 
+<div id="promptModal" class="modal hidden" onclick="if(event.target===this)closeModal('promptModal')">
+<div class="modalBox"><h2>ChatGPT에 보낼 요청문</h2><div id="promptText" class="code"></div><br><button class="btn primary" onclick="copyPrompt()">요청문 복사</button> <button class="btn ghost" onclick="closeModal('promptModal')">닫기</button></div>
+</div>
+
+<div id="pasteModal" class="modal hidden" onclick="if(event.target===this)closeModal('pasteModal')">
+<div class="modalBox"><h2>대본 붙여넣기</h2><textarea id="pasteBox" class="output" style="min-height:420px" placeholder="ChatGPT에서 받은 전체 대본을 붙여넣으세요."></textarea><br><button class="btn primary" onclick="applyPaste()">적용</button> <button class="btn ghost" onclick="closeModal('pasteModal')">닫기</button></div>
+</div>
+
 <div id="projectsModal" class="modal hidden" onclick="if(event.target===this)closeModal('projectsModal')">
-<div class="modalBox"><h2>📂 프로젝트</h2><div id="projectList" class="projectList"></div><br><button class="btn ghost" onclick="closeModal('projectsModal')">닫기</button></div></div>
-
-<div id="loginModal" class="modal hidden" onclick="if(event.target===this)closeModal('loginModal')">
-<div class="modalBox"><h2>로그인</h2><p>Supabase 연결 후 이메일로 로그인 링크를 받을 수 있습니다. 연결 전에는 이 브라우저에만 저장됩니다.</p>
-<div class="field"><label>이메일</label><input id="loginEmail" type="email" placeholder="example@email.com"></div>
-<button class="btn primary" onclick="sendLogin()">로그인 링크 보내기</button> <button class="btn ghost" onclick="closeModal('loginModal')">닫기</button></div></div>
-
-<div id="helpModal" class="modal hidden" onclick="if(event.target===this)closeModal('helpModal')">
-<div class="modalBox"><h2>배포 및 연결</h2>
-<p><b>Vercel 무료 배포:</b> GitHub에 파일을 올린 후 Vercel에서 저장소를 Import하고 Deploy를 누르세요.</p>
-<p><b>실제 AI:</b> Vercel 환경변수에 아래 값을 추가합니다.</p>
-<div class="code">OPENAI_API_KEY=발급받은 API 키</div>
-<div class="code">OPENAI_TEXT_MODEL=gpt-5-mini</div>
-<div class="code">OPENAI_IMAGE_MODEL=gpt-image-1</div>
-<p><b>다른 기기에서도 프로젝트 이어쓰기:</b> Supabase 프로젝트를 만들고 아래 환경변수를 추가합니다.</p>
-<div class="code">SUPABASE_URL=https://xxxx.supabase.co</div>
-<div class="code">SUPABASE_ANON_KEY=공개 anon key</div>
-<p>키를 저장한 뒤 Vercel에서 Redeploy 하면 로그인과 클라우드 저장이 켜집니다.</p>
-<button class="btn primary" onclick="closeModal('helpModal')">확인</button></div></div>
+<div class="modalBox"><h2>저장된 프로젝트</h2><div id="projectList"></div><br><button class="btn ghost" onclick="closeModal('projectsModal')">닫기</button></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id);
-const state={id:null,story:'',shorts:'',youtube:'',japanese:'',captions:'',scenes:[],active:'story',referenceData:'',user:null,cloud:false,supabase:null};
-const panes=['story','images','shorts','youtube','japanese','captions'];
+const state={id:null,active:'story',scenes:[]};
+const tabs=['story','images','shorts','youtube','japanese','captions'];
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-function switchTab(t){state.active=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));panes.forEach(p=>$(p+'Pane').classList.toggle('hidden',p!==t));updateMeta()}
-function updateMeta(){let t=state[state.active]||'';if(state.active==='images')t=state.scenes.map(x=>x.prompt||'').join('');$('meta').textContent=`글자 수 ${t.length.toLocaleString()}자 · ${state.active}`}
-function vals(){return{projectName:$('projectName').value.trim(),topic:$('topic').value.trim(),heroine:$('heroine').value.trim(),paragraphs:+$('paragraphs').value,imageCount:+$('imageCount').value,pov:$('pov').value,tone:$('tone').value,subscribe:$('subscribe').checked,noBubbles:$('noBubbles').checked,longPerm:$('longPerm').checked}}
+function switchTab(t){state.active=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));tabs.forEach(x=>$(x+'Pane').classList.toggle('hidden',x!==t));updateMeta()}
+function val(){return{projectName:$('projectName').value.trim(),topic:$('topic').value.trim(),heroine:$('heroine').value.trim(),paragraphs:+$('paragraphs').value,imageCount:+$('imageCount').value,pov:$('pov').value,tone:$('tone').value}}
 function status(t,type=''){$('status').textContent=t;$('status').className='status '+type}
-function closeModal(id){$(id).classList.add('hidden')}function openHelp(){$('helpModal').classList.remove('hidden')}function openLogin(){$('loginModal').classList.remove('hidden')}
+function closeModal(id){$(id).classList.add('hidden')}
+function updateMeta(){let t='';if(state.active==='images')t=state.scenes.map(x=>x.prompt).join('');else t=$(state.active+'Output')?.value||'';$('meta').textContent=`글자 수 ${t.length.toLocaleString()}자 · ${state.active}`}
+['storyOutput','shortsOutput','youtubeOutput','japaneseOutput','captionsOutput'].forEach(id=>$(id).addEventListener('input',updateMeta));
 
-$('reference').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.referenceData=r.result;status('참고사진을 불러왔습니다.','ok')};r.readAsDataURL(f)});
+function makeChatPrompt(){
+ const v=val();
+ const p=`다음 설정으로 유튜브 사연 채널용 롱폼 원고를 작성해줘.
 
-async function init(){
- try{
-  const r=await fetch('/api/config');const j=await r.json();
-  $('modeBadge').textContent=j.openai?'AI 연결됨':'데모 모드';
-  if(j.supabaseUrl&&j.supabaseAnonKey){
-   state.supabase=window.supabase.createClient(j.supabaseUrl,j.supabaseAnonKey);state.cloud=true;
-   const {data}=await state.supabase.auth.getSession();state.user=data.session?.user||null;updateLogin();
-   state.supabase.auth.onAuthStateChange((_e,s)=>{state.user=s?.user||null;updateLogin()});
-  }
- }catch{$('modeBadge').textContent='데모 모드'}
+주제: ${v.topic}
+주인공: ${v.heroine}
+시점: ${v.pov}
+분위기: ${v.tone}
+분량: 0문단 오프닝 + 본문 ${v.paragraphs}문단
+문단당 분량: 약 420~450자
+대화체는 최소화
+'~다/~습니다' 종결은 전체의 약 10% 이하
+나머지는 '~했어요, ~였지요, ~더군요' 등을 자연스럽게 혼합
+사건을 먼저 보여주는 강한 후킹
+0문단에 "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 포함
+각 문단 끝에 [문단 글자 수: N자] 표시
+완성 원고만 출력해줘.`;
+ $('promptText').textContent=p;$('promptModal').classList.remove('hidden')
 }
-function updateLogin(){$('loginBtn').textContent=state.user?'로그아웃':'로그인'}
-$('loginBtn').onclick=()=>state.user?logout():openLogin();
-async function sendLogin(){if(!state.supabase){status('Supabase 연결이 필요합니다.','bad');return}const email=$('loginEmail').value.trim();if(!email)return;const {error}=await state.supabase.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin}});if(error)status(error.message,'bad');else{status('이메일로 로그인 링크를 보냈습니다.','ok');closeModal('loginModal')}}
-async function logout(){await state.supabase.auth.signOut();status('로그아웃했습니다.','ok')}
+async function copyPrompt(){await navigator.clipboard.writeText($('promptText').textContent);status('ChatGPT 요청문을 복사했습니다. 이 채팅에 붙여넣으세요.','ok')}
+function pasteStory(){$('pasteBox').value=$('storyOutput').value;$('pasteModal').classList.remove('hidden')}
+function applyPaste(){$('storyOutput').value=$('pasteBox').value.trim();closeModal('pasteModal');switchTab('story');updateMeta();status('대본을 적용했습니다. 이제 본문 이미지·쇼츠·유튜브 정보를 만들 수 있습니다.','ok')}
 
-async function api(kind,extra={}){
- const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,...vals(),story:state.story,...extra})});
- const j=await r.json();if(!r.ok)throw new Error(j.error||'생성 실패');return j
+function paragraphTexts(){
+ const raw=$('storyOutput').value.trim();if(!raw)return[];
+ const parts=raw.split(/\n(?=\d+문단\b)/).map(x=>x.trim()).filter(Boolean);
+ return parts.length>1?parts:raw.split(/\n{2,}/).map(x=>x.trim()).filter(x=>x&&!/^\[문단 글자 수/.test(x));
 }
-async function generate(kind){
- status(`${kind} 생성 중…`);
- try{
-  const j=await api(kind);
-  if(kind==='scenes'){state.scenes=j.scenes||[];renderScenes();switchTab('images')}
-  else{state[kind]=j.text||'';$(kind+'Output').textContent=state[kind];switchTab(kind)}
-  status(j.demo?'데모 생성 완료. API 연결 후 실제 AI로 전환됩니다.':'생성 완료','ok')
- }catch(e){status(e.message,'bad')}
+function makeScenes(){
+ const v=val(),ps=paragraphTexts();if(!ps.length){status('먼저 대본을 붙여넣으세요.','bad');return}
+ const n=v.imageCount, scenes=[];
+ for(let i=0;i<n;i++){
+  const start=Math.floor(i*ps.length/n),end=Math.max(start+1,Math.floor((i+1)*ps.length/n));
+  const excerpt=ps.slice(start,end).join(' ').replace(/\[문단 글자 수:[^\]]+\]/g,'').slice(0,520);
+  const stages=['사건의 시작','갈등의 확대','결정적 단서','반전과 선택','새로운 출발'];
+  scenes.push({title:`본문 이미지 ${i+1} · ${stages[i]||'핵심 장면'}`,prompt:`한국 드라마 실사 영화 스틸, 16:9.\n동일 주인공: ${v.heroine}.\n주제: ${v.topic}.\n해당 구간 내용: ${excerpt}\n감정이 선명한 얼굴, 자연스러운 한국 배경과 의상, 시네마틱 조명, 동일 인물과 롱펌 유지, 화면 안 글자·말풍선·대화창·로고·워터마크 없음.`});
+ }
+ state.scenes=scenes;renderScenes();switchTab('images');status('본문 이미지 프롬프트를 만들었습니다. 복사해서 ChatGPT에 이미지 생성을 요청하세요.','ok')
 }
-async function generateAll(){const bs=[...document.querySelectorAll('button')];bs.forEach(b=>b.disabled=true);try{await generate('story');await generate('scenes');await generate('shorts');await generate('youtube');await generate('japanese');makeCaptions();switchTab('story');status('전체 생성 완료','ok')}finally{bs.forEach(b=>b.disabled=false)}}
+function renderScenes(){
+ const g=$('imageGrid');g.innerHTML='';
+ state.scenes.forEach((s,i)=>{const c=document.createElement('article');c.className='card';c.innerHTML=`<div id="prev${i}" class="preview"><span>이미지 ${i+1} 직접 추가 가능</span></div><div class="cardBody"><h3>${esc(s.title)}</h3><div class="prompt">${esc(s.prompt)}</div><div class="mini"><button class="btn primary" onclick="copyScene(${i})">프롬프트 복사</button><button class="btn ghost" onclick="$('file${i}').click()">이미지 넣기</button></div><input id="file${i}" class="hidden" type="file" accept="image/*" onchange="readImage(event,${i})"></div>`;g.appendChild(c)});updateMeta()
+}
+async function copyScene(i){await navigator.clipboard.writeText(state.scenes[i].prompt);status(`이미지 ${i+1} 프롬프트를 복사했습니다. ChatGPT에서 생성하세요.`,'ok')}
+function readImage(e,i){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.scenes[i].image=r.result;$('prev'+i).innerHTML=`<img src="${r.result}">`;status(`이미지 ${i+1}을 추가했습니다.`,'ok')};r.readAsDataURL(f)}
 
-function renderScenes(){const g=$('imageGrid');g.innerHTML='';state.scenes.forEach((s,i)=>{const c=document.createElement('article');c.className='card';c.innerHTML=`<div id="prev${i}" class="preview"><span>이미지 ${i+1}</span></div><div class="cardBody"><h3>${esc(s.title||`본문 이미지 ${i+1}`)}</h3><div class="prompt">${esc(s.prompt||'')}</div><div class="mini"><button class="btn primary" onclick="generateImage(${i})">AI 생성</button><button class="btn ghost" onclick="$('file${i}').click()">직접 넣기</button></div><input class="hidden" id="file${i}" type="file" accept="image/*" onchange="readImage(event,${i})"></div>`;g.appendChild(c)});updateMeta()}
-async function generateImage(i){status(`이미지 ${i+1} 생성 중…`);try{const r=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:state.scenes[i].prompt,heroine:vals().heroine,noBubbles:vals().noBubbles,referenceImage:state.referenceData})});const j=await r.json();if(!r.ok)throw new Error(j.error||'실패');state.scenes[i].image=j.image;$('prev'+i).innerHTML=`<img src="${j.image}" alt="본문 이미지">`;status('이미지 생성 완료','ok')}catch(e){status(e.message,'bad')}}
-function readImage(e,i){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.scenes[i].image=r.result;$('prev'+i).innerHTML=`<img src="${r.result}" alt="본문 이미지">`;status('이미지를 추가했습니다.','ok')};r.readAsDataURL(f)}
-function makeCaptions(){if(!state.story){status('먼저 대본을 생성하세요.','bad');return}const parts=state.story.split(/\n{2,}/).filter(x=>x.trim()&&!/글자 수/.test(x));let s=0,out=[];parts.forEach(p=>{const clean=p.replace(/^\d+문단\s*/,'').trim();if(!clean)return;const d=Math.max(4,Math.ceil(clean.length/7));out.push(`${out.length+1}\n${tm(s)} --> ${tm(s+d)}\n${clean}\n`);s+=d});state.captions=out.join('\n');$('captionsOutput').textContent=state.captions;switchTab('captions');status('SRT 자막 생성 완료','ok')}
+function makeShorts(){
+ const v=val(),p=paragraphTexts();if(!p.length){status('먼저 대본을 붙여넣으세요.','bad');return}
+ const picks=[p[0],p[Math.floor(p.length*.35)],p[Math.floor(p.length*.7)],p[p.length-1]].map(x=>x.replace(/\[문단 글자 수:[^\]]+\]/g,'').replace(/^\d+문단/,'').trim());
+ const hooks=['그날부터 모든 게 이상해졌습니다.','아무도 진실을 말하지 않았습니다.','단서 하나가 모든 걸 바꿨습니다.','그녀는 결국 선택했습니다.'];
+ let out='';
+ for(let i=0;i<4;i++)out+=`📸 ${i+1}컷 (${i*6}~${(i+1)*6}초)\n화면 설명: ${picks[i].slice(0,95)}\n화면 문구: "${hooks[i]}"\n나레이션: ${picks[i].slice(0,72)}\n\n`;
+ $('shortsOutput').value=out.trim();switchTab('shorts');status('쇼츠 4컷 초안을 만들었습니다. 필요하면 여기서 수정하세요.','ok')
+}
+function makeYoutube(){
+ const v=val();
+ $('youtubeOutput').value=`📌 제목\n${v.topic}\n\n📌 설명\n${v.topic}\n\n평범하다고 믿었던 일상 속에서 감춰져 있던 진실이 드러났습니다.\n주인공은 믿었던 사람들의 침묵 앞에서 어떤 선택을 하게 될까요?\n\n시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다.\n끝까지 시청하시고 여러분의 생각도 댓글로 남겨주세요.\n\n📌 해시태그\n#사연 #인생이야기 #가족갈등 #반전사연 #감동사연 #중년이야기 #썰쟁\n\n📌 고정 댓글\n여러분이라면 같은 상황에서 어떤 선택을 하셨을까요?`;
+ switchTab('youtube');status('유튜브 업로드 정보를 만들었습니다.','ok')
+}
+function makeJapanesePrompt(){
+ const story=$('storyOutput').value.trim();if(!story){status('먼저 대본을 붙여넣으세요.','bad');return}
+ $('japaneseOutput').value=`아래 한국어 사연 원고를 일본 중장년층이 자연스럽게 들을 수 있는 일본어로 번역·현지화해줘.\n문단 번호와 전체 흐름은 유지하고, 한국식 가족·시댁 표현은 일본인이 이해하기 쉽게 자연스럽게 바꿔줘.\n한 문단당 약 450자 안팎으로 정리하고 완성 원고만 출력해줘.\n\n[원고]\n${story}`;
+ switchTab('japanese');status('일본어판 ChatGPT 요청문을 만들었습니다.','ok')
+}
+function makeCaptions(){
+ const parts=paragraphTexts();if(!parts.length){status('먼저 대본을 붙여넣으세요.','bad');return}
+ let s=0,out=[];parts.forEach(p=>{const clean=p.replace(/\[문단 글자 수:[^\]]+\]/g,'').replace(/^\d+문단/,'').trim();if(!clean)return;const d=Math.max(5,Math.ceil(clean.length/7));out.push(`${out.length+1}\n${tm(s)} --> ${tm(s+d)}\n${clean}\n`);s+=d});
+ $('captionsOutput').value=out.join('\n');switchTab('captions');status('SRT 자막을 만들었습니다.','ok')
+}
 function tm(s){return`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')},000`}
 
-function projectPayload(){return{id:state.id||crypto.randomUUID(),updatedAt:new Date().toISOString(),settings:vals(),story:state.story,shorts:state.shorts,youtube:state.youtube,japanese:state.japanese,captions:state.captions,scenes:state.scenes}}
-async function saveProject(){const p=projectPayload();state.id=p.id;localStorage.setItem('sseoljeng:'+p.id,JSON.stringify(p));let ids=JSON.parse(localStorage.getItem('sseoljeng:index')||'[]');ids=[p.id,...ids.filter(x=>x!==p.id)];localStorage.setItem('sseoljeng:index',JSON.stringify(ids));if(state.cloud&&state.user){const {error}=await state.supabase.from('projects').upsert({id:p.id,user_id:state.user.id,name:p.settings.projectName,data:p,updated_at:p.updatedAt});if(error){status('로컬 저장 완료, 클라우드 저장 실패: '+error.message,'bad');return}}status(state.user?'클라우드와 브라우저에 저장했습니다.':'이 브라우저에 저장했습니다. 로그인 연결 후 다른 기기와 동기화됩니다.','ok')}
-async function getProjects(){let arr=[];const ids=JSON.parse(localStorage.getItem('sseoljeng:index')||'[]');ids.forEach(id=>{try{const p=JSON.parse(localStorage.getItem('sseoljeng:'+id));if(p)arr.push(p)}catch{}});if(state.cloud&&state.user){const {data}=await state.supabase.from('projects').select('data').order('updated_at',{ascending:false});(data||[]).forEach(x=>{if(x.data&&!arr.some(p=>p.id===x.data.id))arr.push(x.data)})}return arr.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt))}
-async function openProjects(){const arr=await getProjects();const l=$('projectList');l.innerHTML=arr.length?'':'저장된 프로젝트가 없습니다.';arr.forEach(p=>{const d=document.createElement('div');d.className='projectItem';d.innerHTML=`<div><div class="name">${esc(p.settings?.projectName||'이름 없음')}</div><div class="date">${new Date(p.updatedAt).toLocaleString()}</div></div><div><button class="btn ghost" onclick='loadProject(${JSON.stringify(p.id)})'>열기</button> <button class="btn danger" onclick='deleteProject(${JSON.stringify(p.id)})'>삭제</button></div>`;l.appendChild(d)});$('projectsModal').classList.remove('hidden')}
-async function loadProject(id){const arr=await getProjects();const p=arr.find(x=>x.id===id);if(!p)return;state.id=p.id;Object.assign(state,{story:p.story||'',shorts:p.shorts||'',youtube:p.youtube||'',japanese:p.japanese||'',captions:p.captions||'',scenes:p.scenes||[]});const s=p.settings||{};for(const k of ['projectName','topic','heroine','paragraphs','imageCount','pov','tone'])if($(k)&&s[k]!=null)$(k).value=s[k];for(const k of ['subscribe','noBubbles','longPerm'])if($(k)&&s[k]!=null)$(k).checked=s[k];$('storyOutput').textContent=state.story;$('shortsOutput').textContent=state.shorts;$('youtubeOutput').textContent=state.youtube;$('japaneseOutput').textContent=state.japanese;$('captionsOutput').textContent=state.captions;renderScenes();closeModal('projectsModal');switchTab('story');status('프로젝트를 불러왔습니다.','ok')}
-async function deleteProject(id){localStorage.removeItem('sseoljeng:'+id);let ids=JSON.parse(localStorage.getItem('sseoljeng:index')||'[]').filter(x=>x!==id);localStorage.setItem('sseoljeng:index',JSON.stringify(ids));if(state.cloud&&state.user)await state.supabase.from('projects').delete().eq('id',id).eq('user_id',state.user.id);openProjects()}
+function payload(){return{id:state.id||crypto.randomUUID(),updatedAt:new Date().toISOString(),settings:val(),story:$('storyOutput').value,shorts:$('shortsOutput').value,youtube:$('youtubeOutput').value,japanese:$('japaneseOutput').value,captions:$('captionsOutput').value,scenes:state.scenes}}
+function saveProject(){const p=payload();state.id=p.id;localStorage.setItem('lite:'+p.id,JSON.stringify(p));let ids=JSON.parse(localStorage.getItem('lite:index')||'[]');ids=[p.id,...ids.filter(x=>x!==p.id)];localStorage.setItem('lite:index',JSON.stringify(ids));status('이 브라우저에 프로젝트를 저장했습니다.','ok')}
+function openProjects(){const ids=JSON.parse(localStorage.getItem('lite:index')||'[]'),l=$('projectList');l.innerHTML='';ids.forEach(id=>{try{const p=JSON.parse(localStorage.getItem('lite:'+id));const d=document.createElement('div');d.className='projectItem';d.innerHTML=`<div><b>${esc(p.settings.projectName)}</b><br><small>${new Date(p.updatedAt).toLocaleString()}</small></div><div><button class="btn ghost" onclick="loadProject('${id}')">열기</button> <button class="btn danger" onclick="deleteProject('${id}')">삭제</button></div>`;l.appendChild(d)}catch{}});if(!ids.length)l.textContent='저장된 프로젝트가 없습니다.';$('projectsModal').classList.remove('hidden')}
+function loadProject(id){const p=JSON.parse(localStorage.getItem('lite:'+id));state.id=p.id;for(const k of ['projectName','topic','heroine','paragraphs','imageCount','pov','tone'])$(k).value=p.settings[k];$('storyOutput').value=p.story||'';$('shortsOutput').value=p.shorts||'';$('youtubeOutput').value=p.youtube||'';$('japaneseOutput').value=p.japanese||'';$('captionsOutput').value=p.captions||'';state.scenes=p.scenes||[];renderScenes();closeModal('projectsModal');switchTab('story');status('프로젝트를 불러왔습니다.','ok')}
+function deleteProject(id){localStorage.removeItem('lite:'+id);let ids=JSON.parse(localStorage.getItem('lite:index')||'[]').filter(x=>x!==id);localStorage.setItem('lite:index',JSON.stringify(ids));openProjects()}
 
-async function copyCurrent(){let t=state[state.active]||'';if(state.active==='images')t=state.scenes.map((s,i)=>`${i+1}. ${s.title}\n${s.prompt}`).join('\n\n');await navigator.clipboard.writeText(t);status('복사했습니다.','ok')}
-async function downloadZip(){if(!state.story){status('먼저 전체 생성을 해주세요.','bad');return}const z=new JSZip(),b=z.folder('sseoljeng-project');b.file('01_롱폼.txt',state.story);b.file('02_쇼츠.txt',state.shorts);b.file('03_유튜브정보.txt',state.youtube);b.file('04_일본어판.txt',state.japanese);b.file('05_자막.srt',state.captions);b.file('06_이미지프롬프트.txt',state.scenes.map((s,i)=>`${i+1}. ${s.title}\n${s.prompt}`).join('\n\n'));const f=b.folder('images');state.scenes.forEach((s,i)=>{if(s.image){const m=s.image.match(/^data:image\/(\w+);base64,(.+)$/);if(m)f.file(`${String(i+1).padStart(2,'0')}_본문.${m[1]==='jpeg'?'jpg':m[1]}`,m[2],{base64:true})}});b.file('README.txt','이미지는 번호순으로 캡컷에 불러오세요. PC/웹 캡컷에서는 SRT 자막 가져오기를 사용할 수 있습니다. 모바일에서는 음성 삽입 후 자동 자막을 사용하세요.');const blob=await z.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${vals().projectName||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);status('캡컷용 ZIP 저장 완료','ok')}
+async function copyCurrent(){let t=state.active==='images'?state.scenes.map((s,i)=>`${i+1}. ${s.title}\n${s.prompt}`).join('\n\n'):$(state.active+'Output').value;await navigator.clipboard.writeText(t);status('현재 내용을 복사했습니다.','ok')}
+async function downloadZip(){
+ if(!$('storyOutput').value.trim()){status('먼저 대본을 붙여넣으세요.','bad');return}
+ const z=new JSZip(),b=z.folder('sseoljeng-project');
+ b.file('01_롱폼.txt',$('storyOutput').value);b.file('02_쇼츠.txt',$('shortsOutput').value);b.file('03_유튜브정보.txt',$('youtubeOutput').value);b.file('04_일본어요청문.txt',$('japaneseOutput').value);b.file('05_자막.srt',$('captionsOutput').value);b.file('06_이미지프롬프트.txt',state.scenes.map((s,i)=>`${i+1}. ${s.title}\n${s.prompt}`).join('\n\n'));
+ const f=b.folder('images');state.scenes.forEach((s,i)=>{if(s.image){const m=s.image.match(/^data:image\/(\w+);base64,(.+)$/);if(m)f.file(`${String(i+1).padStart(2,'0')}_본문.${m[1]==='jpeg'?'jpg':m[1]}`,m[2],{base64:true})}});
+ b.file('README.txt','1. images 폴더 사진을 번호순으로 캡컷에 불러옵니다.\n2. 01_롱폼.txt를 음성 제작에 사용합니다.\n3. PC/웹 캡컷은 05_자막.srt를 가져올 수 있습니다.\n4. 모바일은 음성 삽입 후 자동 자막을 사용하세요.');
+ const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${val().projectName||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);status('캡컷용 ZIP 저장 완료','ok')
+}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-init();
+updateMeta();
 </script>
-</body></html>
+</body>
+</html>
