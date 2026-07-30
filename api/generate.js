@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "요청문이 너무 깁니다." });
   }
 
-  const maxTokens = task === "story" || task === "japanese" ? 20000 : 12000;
+  const maxTokens = task === "japanese" ? 30000 : task === "story" || task === "storychunk" ? 12000 : 12000;
   const models = await candidateModels(apiKey);
 
   if (!models.length) {
@@ -106,7 +106,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: task === "story" ? 0.9 : 0.65,
+            temperature: task === "story" || task === "storychunk" ? 0.68 : task === "blueprint" || task === "consistency" ? 0.35 : 0.65,
             maxOutputTokens: maxTokens,
             topP: 0.95
           }
