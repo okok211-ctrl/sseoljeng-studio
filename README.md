@@ -1,38 +1,510 @@
-# 썰쟁 Studio v9.2 Character Engine
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>썰쟁 Studio v9.2.1 Aspect Ratio Hotfix</title>
+<meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
+<style>
+:root{
+ --bg:#050b14;--panel:#0d1828;--panel2:#111f33;--line:#273b57;--text:#f8fafc;
+ --muted:#9fb0c5;--accent:#ff7917;--accent2:#ffab61;--ok:#26c87a;--danger:#ff6672
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;
+background:radial-gradient(circle at 95% 0,rgba(255,121,23,.2),transparent 30%),linear-gradient(145deg,#02070e,#071322 55%,#0d1728)}
+button,input,textarea,select{font:inherit}
+.app{max-width:1580px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;gap:15px;align-items:center;
+padding:18px 20px;border:1px solid rgba(255,255,255,.08);border-radius:20px;background:rgba(13,24,40,.95)}
+h1{margin:0;font-size:clamp(25px,4vw,40px);letter-spacing:-.05em}.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.badge{padding:8px 11px;border-radius:999px;background:rgba(38,200,122,.13);border:1px solid rgba(38,200,122,.4);font-size:11px;font-weight:900;color:#baffd8}
+.layout{display:grid;grid-template-columns:365px 1fr;gap:16px;margin-top:16px}.panel{border-radius:19px;background:rgba(13,24,40,.96);border:1px solid rgba(255,255,255,.08)}
+.side{padding:17px;position:sticky;top:15px;height:max-content}.main{padding:17px;min-width:0}h2{font-size:17px;margin:0 0 12px}
+.field{margin:10px 0}.field label{display:block;font-size:12px;font-weight:900;color:#d0dbe8;margin-bottom:6px}
+input,textarea,select{width:100%;background:#06101d;color:white;border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none}
+textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,121,23,.12)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border:0;border-radius:11px;padding:10px 12px;font-weight:900;cursor:pointer;transition:.16s}
+.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.secondary{background:#243751;color:#eef5ff}.ghost{background:#0b1524;color:#dbe7f5;border:1px solid var(--line)}.success{background:var(--ok);color:#052316}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.wide{grid-column:1/-1}
+.status{margin-top:11px;padding:10px;border-radius:10px;border:1px dashed var(--line);background:#07111f;color:var(--muted);font-size:12px;line-height:1.5}
+.status.ok{border-color:#2d7851;color:#baffd5}.status.bad{border-color:#7e3640;color:#ffc2c7}
+.progress{height:8px;background:#07111f;border-radius:999px;overflow:hidden;margin:10px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--ok));transition:.3s}
+.note{font-size:11px;color:#ffd7b8;background:rgba(255,121,23,.08);border:1px solid rgba(255,121,23,.24);border-radius:10px;padding:10px;line-height:1.55;margin-top:11px}
+.tabs{display:flex;gap:7px;overflow:auto;padding-bottom:5px;margin-bottom:12px}.tab{white-space:nowrap;border:1px solid var(--line);background:#18283e;color:#b8c7da;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;cursor:pointer}
+.tab.active{background:rgba(255,121,23,.17);color:#ffd7b8;border-color:rgba(255,121,23,.55)}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.meta{font-size:12px;color:var(--muted)}.output{width:100%;min-height:650px;padding:17px;border-radius:14px;background:#040b14;border:1px solid #20344f;color:#fff;line-height:1.75;font-size:14px}
+.hidden{display:none!important}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}.checks{display:grid;gap:6px;margin:10px 0}.check{display:flex;gap:7px;color:#c6d2df;font-size:12px;line-height:1.45}.check input{width:auto}
+.character-tools{display:grid;grid-template-columns:1fr 120px;gap:7px}.character-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;max-height:310px;overflow:auto;padding-right:2px}.char-card{position:relative;min-height:110px;border:1px solid var(--line);border-radius:11px;background:#07111f;padding:6px;cursor:pointer;text-align:center;color:#dbe7f5}.char-card.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,121,23,.18)}.char-card.default::after{content:'★';position:absolute;right:7px;top:7px;background:#07111fdd;color:#ffd76a;border-radius:99px;padding:2px 5px;font-size:11px}.char-card.inactive{opacity:.55}.char-card img,.char-placeholder{width:100%;height:65px;border-radius:8px;object-fit:cover;background:#14233a;display:flex;align-items:center;justify-content:center;font-size:27px}.char-card span{display:block;margin-top:5px;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.char-role{color:var(--muted)!important;font-size:9px!important;margin-top:2px!important}.mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.file-input{display:none}.project-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.char-editor{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#07111f}.char-editor h3{font-size:13px;margin:0 0 8px}.char-editor .field{margin:7px 0}.char-editor textarea{min-height:60px}.tiny{font-size:10px;color:var(--muted)}
 
-v9.1 Thumbnail Pro의 모든 기능을 유지하면서 등장인물 이름과 일관성 관리를 강화한 버전입니다.
+.cloud-box{margin-top:12px;padding:12px;border:1px solid rgba(78,160,255,.35);border-radius:13px;background:rgba(28,75,125,.18)}
+.cloud-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cloud-title{font-size:13px;font-weight:900}.cloud-user{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.cloud-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.cloud-select{margin-top:8px}.cloud-state{font-size:10px;color:#b8c7da;margin-top:7px;line-height:1.45}.cloud-state.ok{color:#baffd5}.cloud-state.bad{color:#ffc2c7}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+ <div><h1>🎬 썰쟁 Studio v9.2.1 Aspect Ratio Hotfix</h1><div class="sub">롱폼 16:9 · 쇼츠 9:16 · 썸네일 16:9 자동 고정 · Character Engine · Firestore</div></div>
+ <span class="badge">AI 자동 생성</span>
+</header>
+<div class="layout">
+<aside class="panel side">
+ <h2>이야기 설정</h2>
+ <div class="cloud-box">
+  <div class="cloud-head"><div class="cloud-title">☁️ 클라우드</div><div id="cloudUser" class="cloud-user">로그아웃 상태</div></div>
+  <div class="cloud-row"><button id="loginBtn" class="btn primary" type="button" onclick="googleLogin()">Google 로그인</button><button id="logoutBtn" class="btn ghost hidden" type="button" onclick="googleLogout()">로그아웃</button></div>
+  <div class="cloud-row" style="margin-top:7px"><button id="newCloudBtn" class="btn ghost" type="button" onclick="newCloudProject()" disabled>새 클라우드 프로젝트</button><button id="saveCloudBtn" class="btn success" type="button" onclick="saveCloudProject(false)" disabled>지금 저장</button></div>
+  <div class="cloud-select"><select id="cloudProjectSelect" onchange="loadSelectedCloudProject()" disabled><option value="">클라우드 프로젝트 선택</option></select></div>
+  <div class="cloud-row" style="margin-top:7px"><button id="refreshCloudBtn" class="btn ghost" type="button" onclick="refreshCloudProjects()" disabled>목록 새로고침</button><button id="deleteCloudBtn" class="btn ghost" type="button" onclick="deleteCloudProject()" disabled>클라우드 삭제</button></div>
+  <div id="cloudState" class="cloud-state">로그인하면 PC와 휴대폰에서 같은 프로젝트를 사용할 수 있습니다.</div>
+ </div>
+ <div class="field"><label>프로젝트 이름</label><input id="name" value="새로운 사연"></div>
+ <div class="field"><label>주제</label><textarea id="topic">길에서 굶어 죽어가던 노인을 도와줬는데 나중에 알고 보니 엄청난 갑부였습니다.</textarea></div>
+ <div class="field"><label>캐릭터 라이브러리</label>
+  <div class="character-tools"><input id="characterSearch" placeholder="이름·역할 검색" oninput="renderCharacters()"><select id="characterFilter" onchange="renderCharacters()"><option value="전체">전체 역할</option><option>여주</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div>
+  <div id="characterGrid" class="character-grid"></div>
+  <input id="characterImageInput" class="file-input" type="file" accept="image/*" onchange="finishCharacterImage(event)">
+  <div class="mini-actions"><button class="btn ghost" type="button" onclick="addCharacterPreset()">➕ 새 캐릭터</button><button class="btn ghost" type="button" onclick="duplicateCharacterPreset()">복제</button></div>
+  <div class="mini-actions"><button class="btn primary" type="button" onclick="randomizeAllNames()">🎲 전체 이름 랜덤</button><button class="btn ghost" type="button" onclick="randomizeSelectedName()">선택 이름 랜덤</button></div>
+  <div class="tiny" style="margin-top:7px">연령대와 역할에 맞는 한국 이름을 중복 없이 배정합니다. 🔒 이름 고정 캐릭터는 전체 랜덤에서 제외됩니다.</div>
+ </div>
+ <div class="char-editor">
+  <h3>선택 캐릭터 편집</h3>
+  <div class="row"><div class="field"><label>이름</label><input id="charName"></div><div class="field"><label>역할</label><select id="charRole"><option>여주</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div></div>
+  <div class="row"><div class="field"><label>나이/연령대</label><input id="charAge" placeholder="예: 37세"></div><div class="field"><label>기본 의상</label><input id="charOutfit" placeholder="예: 단정한 베이지 블라우스"></div></div>
+  <div class="row"><div class="field"><label>등장 등급</label><select id="charScope"><option value="core">핵심 인물</option><option value="support">보조 인물</option><option value="extra">단역</option></select></div><div class="field"><label>내부 캐릭터 ID</label><input id="charInternalId" readonly></div></div>
+  <div class="field"><label>외모</label><textarea id="charAppearance" placeholder="얼굴형, 헤어스타일, 인상"></textarea></div>
+  <div class="field"><label>성격·분위기</label><textarea id="charPersonality" placeholder="차분함, 강단 있음"></textarea></div>
+  <div class="field"><label>고정 프롬프트</label><textarea id="charPrompt" placeholder="모든 장면에서 동일 인물 유지 등"></textarea></div>
+  <label class="check"><input id="charEnabled" type="checkbox" checked>현재 작품에 등장</label>
+  <label class="check"><input id="charNameLocked" type="checkbox">🔒 이름 고정 · 전체 랜덤에서 제외</label>
+  <div class="mini-actions"><button class="btn ghost" type="button" onclick="$('characterImageInput').click()">📷 얼굴 등록/교체</button><button class="btn ghost" type="button" onclick="removeCharacterImage()">사진 삭제</button></div>
+  <div class="mini-actions"><button class="btn primary" type="button" onclick="updateCharacterPreset()">설정 저장</button><button class="btn ghost" type="button" onclick="setDefaultCharacter()">⭐ 역할 기본값</button></div>
+  <div class="mini-actions"><button class="btn ghost" type="button" onclick="deleteCharacterPreset()">선택 삭제</button><button class="btn ghost" type="button" onclick="exportCharacters()">캐릭터만 저장</button></div>
+  <input id="charactersFileInput" class="file-input" type="file" accept=".json,application/json" onchange="importCharacters(event)">
+  <button class="btn ghost" style="width:100%;margin-top:7px" type="button" onclick="$('charactersFileInput').click()">📂 캐릭터 보관함 불러오기</button>
+  <div class="tiny" style="margin-top:7px">얼굴 사진은 무료 버전에서는 각 기기에 로컬 저장됩니다. 캐릭터 설정과 프로젝트 내용은 클라우드 동기화됩니다.</div>
+ </div>
+ <div class="field"><label>현재 여주 설정(자동 연결)</label><textarea id="heroine">37세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
+ <div class="row">
+  <div class="field"><label>문단 수</label><select id="count"><option>15</option><option selected>20</option><option>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option value="custom">직접 입력</option></select><input id="customCount" type="number" min="10" max="100" value="40" style="margin-top:6px;display:none" placeholder="10~100"></div>
+  <div class="field"><label>이미지 수</label><select id="images"><option>3</option><option selected>4</option><option>6</option><option>8</option><option>10</option></select></div>
+ </div>
+ <div class="row">
+  <div class="field"><label>시점</label><select id="pov"><option>3인칭 관찰자</option><option>1인칭 회고체</option></select></div>
+  <div class="field"><label>분위기</label><select id="tone"><option>긴장감과 반전</option><option>감동</option><option>통쾌함</option><option>가족 갈등</option></select></div>
+ </div>
+ <div class="row">
+  <div class="field"><label>스토리 밀도</label><select id="density"><option>보통</option><option selected>높음</option><option>영화급</option><option>잔잔함</option></select></div>
+  <div class="field"><label>작성 품질</label><select id="quality"><option>빠르게</option><option selected>균형</option><option>최고 품질</option></select></div>
+ </div>
+ <div class="checks">
+  <label class="check"><input id="subscribe" type="checkbox" checked>0문단 구독·좋아요·알림 멘트</label>
+  <label class="check"><input id="strict" type="checkbox" checked>문단당 420~450자 최대한 준수</label>
+ </div>
+ <div class="char-editor" style="margin-top:12px">
+  <h3>🖼 썸네일 Pro 설정</h3>
+  <div class="row">
+   <div class="field"><label>레이아웃</label><select id="thumbLayout"><option value="auto" selected>AI 자동 추천</option><option value="face">얼굴 확대형</option><option value="poster">영화 포스터형</option><option value="emotion">감동형</option><option value="tension">긴장감형</option><option value="twist">반전형</option></select></div>
+   <div class="field"><label>문구 스타일</label><select id="thumbStyle"><option value="drama" selected>드라마형</option><option value="youtube">유튜브 자극형</option><option value="poster">영화 포스터형</option><option value="news">뉴스 자막형</option></select></div>
+  </div>
+  <div class="row">
+   <div class="field"><label>문구 길이</label><select id="thumbTextLength"><option value="short" selected>짧게 · 최대 3줄</option><option value="veryshort">아주 짧게 · 1~2줄</option><option value="medium">보통 · 최대 3줄</option></select></div>
+   <div class="field"><label>인물 수</label><select id="thumbPeople"><option value="2" selected>최대 2명</option><option value="1">1명만</option></select></div>
+  </div>
+  <button class="btn primary" style="width:100%" type="button" onclick="generate('thumbnail')">썸네일만 새로 생성</button>
+  <div class="tiny" style="margin-top:7px">한 장면만 사용하며 콜라주·분할 화면·억지 빈 공간을 금지합니다. 기존 롱폼과 다른 자료는 유지됩니다.</div>
+ </div>
+ <div class="actions">
+  <button id="allBtn" class="btn primary wide" onclick="generateAll()">✨ 전체 자동 생성</button>
+  <button class="btn secondary" onclick="generateStableStory()">롱폼 안정 생성</button>
+  <button class="btn secondary" onclick="generateBlueprint()">🧭 설계도만</button>
+  <button class="btn secondary" onclick="generate('assets')">제작 자료</button>
+  <button class="btn secondary" onclick="generateShortsOnly()">📱 쇼츠만 생성</button>
+  <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
+  <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
+  <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
+  <button class="btn secondary" onclick="checkConsistency()">🔍 설정 검사</button>
+  <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
+  <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
+  <button class="btn ghost" onclick="loadLocal()">이 PC에서 불러오기</button>
+ </div>
+ <div class="char-editor" style="margin-top:12px">
+  <h3>📱 쇼츠 독립 생성</h3>
+  <div class="row">
+   <div class="field"><label>생성 개수</label><select id="shortsCount"><option value="1">1개</option><option value="3" selected>3개</option><option value="5">5개</option></select></div>
+   <div class="field"><label>결과 저장</label><select id="shortsSaveMode"><option value="append" selected>기존 결과에 추가</option><option value="replace">기존 결과 교체</option></select></div>
+  </div>
+  <div class="row">
+   <div class="field"><label>원본</label><select id="shortsSource"><option value="story" selected>현재 롱폼 사용</option><option value="topic">주제만 사용</option></select></div>
+   <div class="field"><label>스타일</label><select id="shortsStyle"><option value="mixed" selected>각기 다른 스타일</option><option value="hook">강한 후킹형</option><option value="twist">반전형</option><option value="emotion">감동형</option><option value="anger">분노·사이다형</option></select></div>
+  </div>
+  <button id="shortsOnlyBtn" class="btn primary" style="width:100%" type="button" onclick="generateShortsOnly()">쇼츠만 새로 생성</button>
+  <div class="tiny" style="margin-top:7px">롱폼과 기존 제작 자료는 건드리지 않습니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
+ </div>
+ <div class="project-actions">
+  <button class="btn ghost" onclick="exportProject()">📦 프로젝트 내보내기</button>
+  <button class="btn ghost" onclick="$('projectFileInput').click()">📂 프로젝트 불러오기</button>
+  <button class="btn ghost" onclick="exportEmergencyBackup()">🛟 긴급 백업</button>
+  <button class="btn ghost" onclick="restoreImportBackup()">↩️ 불러오기 전 복구</button>
+ </div>
+ <input id="projectFileInput" class="file-input" type="file" accept=".json,application/json" onchange="importProject(event)">
+ <div class="progress"><div id="bar" class="bar"></div></div>
+ <div id="status" class="status">주제를 입력하고 전체 자동 생성을 누르세요.</div>
+ <div class="note">무료 사용량은 Google 계정·모델·지역·현재 정책에 따라 달라질 수 있습니다. 한도를 넘으면 자동으로 결제되는 구조가 아니라 API 오류가 날 수 있으며, 유료 결제를 직접 활성화하지 않았다면 요금은 청구되지 않습니다.</div>
+</aside>
 
-## v9.2 새 기능
+<section class="panel main">
+ <nav class="tabs">
+  <button class="tab active" data-tab="story">롱폼</button>
+  <button class="tab" data-tab="blueprint">스토리 설계도</button>
+  <button class="tab" data-tab="images">이미지 프롬프트</button>
+  <button class="tab" data-tab="shorts">쇼츠 4컷</button>
+  <button class="tab" data-tab="youtube">유튜브 정보</button>
+  <button class="tab" data-tab="thumbnail">썸네일</button>
+  <button class="tab" data-tab="japanese">일본어</button>
+  <button class="tab" data-tab="srt">SRT</button>
+  <button class="tab" data-tab="voice">음성용</button>
+  <button class="tab" data-tab="consistency">설정 검사</button>
+ </nav>
+ <div class="toolbar"><span id="meta" class="meta">0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
+ <textarea id="story" class="output"></textarea>
+ <textarea id="blueprint" class="output hidden"></textarea>
+ <textarea id="imagesOut" class="output hidden"></textarea>
+ <textarea id="shorts" class="output hidden"></textarea>
+ <textarea id="youtube" class="output hidden"></textarea>
+ <textarea id="thumbnail" class="output hidden"></textarea>
+ <textarea id="japanese" class="output hidden"></textarea>
+ <textarea id="srt" class="output hidden"></textarea>
+ <textarea id="voice" class="output hidden"></textarea>
+ <textarea id="consistency" class="output hidden"></textarea>
+</section>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function setStatus(message,type=''){
+ const el=$('status');
+ if(!el)return;
+ el.textContent=String(message||'');
+ el.className='status'+(type?' '+type:'');
+}
+let active='story',busy=false;
+const fields={story:'story',blueprint:'blueprint',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
+const DEFAULT_CHARACTERS=[
+ {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
+ {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
+ {id:'hero-glam',name:'화려한 여주',role:'여주',age:'37세',appearance:'한국인 여성, 세련된 롱펌, 또렷한 이목구비, 화려하지만 품위 있는 스타일',personality:'자신감 있고 강단 있음',outfit:'세련된 원피스 또는 정장',prompt:'동일 인물 유지, 얼굴과 헤어스타일 고정',image:'',enabled:false,isDefault:false}
+];
+function uid(){return 'c-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
+function normalizeCharacter(c,i=0){
+ const legacyText=c.text||'';
+ return{id:c.id||uid(),internalId:c.internalId||`CHAR-${String(i+1).padStart(3,'0')}`,name:c.name||`캐릭터 ${i+1}`,role:c.role||'여주',scope:c.scope||'core',nameLocked:!!c.nameLocked,age:c.age||'',appearance:c.appearance||legacyText,personality:c.personality||'',outfit:c.outfit||'',prompt:c.prompt||(!legacyText?'동일 인물 유지, 장면마다 얼굴 변경 금지':''),image:c.image||'',enabled:c.enabled!==false,isDefault:!!c.isDefault};
+}
+function getCharacters(){
+ try{const saved=JSON.parse(localStorage.getItem('sseoljeng-characters-v3')||localStorage.getItem('sseoljeng-characters-v2')||localStorage.getItem('sseoljeng-characters')||'null');return Array.isArray(saved)&&saved.length?saved.map(normalizeCharacter):DEFAULT_CHARACTERS.map(normalizeCharacter)}catch{return DEFAULT_CHARACTERS.map(normalizeCharacter)}
+}
+let selectedCharacterId=localStorage.getItem('sseoljeng-selected-character-id')||'',pendingCharacterId='';
+function storeCharacters(list){localStorage.setItem('sseoljeng-characters-v3',JSON.stringify(list.map(normalizeCharacter)))}
+function characterText(c){return[c.age,c.appearance,c.personality&&`성격과 분위기: ${c.personality}`,c.outfit&&`기본 의상: ${c.outfit}`,c.prompt].filter(Boolean).join(', ')}
+function roleEmoji(role){return({여주:'👩',남편:'👨',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
+function selectedCharacter(){const list=getCharacters();return list.find(c=>c.id===selectedCharacterId)||list[0]}
+function renderCharacters(){
+ const list=getCharacters(),grid=$('characterGrid');if(!list.length)return;
+ if(!list.some(c=>c.id===selectedCharacterId))selectedCharacterId=list[0].id;
+ const q=($('characterSearch')?.value||'').trim().toLowerCase(),filter=$('characterFilter')?.value||'전체';grid.innerHTML='';
+ list.filter(c=>(filter==='전체'||c.role===filter)&&(!q||`${c.name} ${c.role} ${c.appearance}`.toLowerCase().includes(q))).forEach(c=>{
+  const card=document.createElement('button');card.type='button';card.className='char-card'+(c.id===selectedCharacterId?' active':'')+(c.isDefault?' default':'')+(c.enabled?'':' inactive');card.title=characterText(c);card.onclick=()=>selectCharacter(c.id);
+  card.innerHTML=c.image?`<img src="${c.image}" alt="${escapeHtml(c.name)}"><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`:`<div class="char-placeholder">${roleEmoji(c.role)}</div><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`;grid.appendChild(card);
+ });
+ localStorage.setItem('sseoljeng-selected-character-id',selectedCharacterId);loadCharacterEditor();
+}
+function escapeHtml(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;if(c.role==='여주')$('heroine').value=characterText(c)}
+function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
+function readCharacterEditor(base={}){return normalizeCharacter({...base,name:$('charName').value.trim()||'이름 없는 캐릭터',role:$('charRole').value,scope:$('charScope').value,nameLocked:$('charNameLocked').checked,age:$('charAge').value.trim(),appearance:$('charAppearance').value.trim(),personality:$('charPersonality').value.trim(),outfit:$('charOutfit').value.trim(),prompt:$('charPrompt').value.trim(),enabled:$('charEnabled').checked})}
+function addCharacterPreset(){const list=refreshInternalIds(getCharacters()),base={id:uid(),internalId:`CHAR-${String(list.length+1).padStart(3,'0')}`,name:'',role:'기타',scope:'support',nameLocked:false,age:'',appearance:'',personality:'',outfit:'',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',enabled:true,isDefault:false};base.name=makeRandomName(base,new Set(list.map(x=>x.name)));const c=normalizeCharacter(base,list.length);list.push(c);storeCharacters(list);selectedCharacterId=c.id;renderCharacters();$('charName').focus();$('charName').select();setStatus(`새 캐릭터 ${c.name}을 추가했습니다. 역할과 나이를 설정하세요.`,'ok');saveLocal(true)}
+function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;list[i]=readCharacterEditor(list[i]);storeCharacters(list);renderCharacters();setStatus(`${list[i].name} 설정을 저장했습니다.`,'ok');saveLocal(true)}
+function duplicateCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(!c)return;const copy=normalizeCharacter({...c,id:uid(),name:c.name+' 복사본',isDefault:false});list.push(copy);storeCharacters(list);selectedCharacterId=copy.id;renderCharacters();setStatus('캐릭터를 복제했습니다.','ok');saveLocal(true)}
+function deleteCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(list.length<=1){setStatus('캐릭터는 최소 1개가 필요합니다.','bad');return}if(!confirm(`${c.name}을 삭제할까요?`))return;const next=list.filter(x=>x.id!==c.id);storeCharacters(next);selectedCharacterId=next[0].id;renderCharacters();setStatus('캐릭터를 삭제했습니다.','ok');saveLocal(true)}
+function setDefaultCharacter(){const list=getCharacters(),c=readCharacterEditor(selectedCharacter());list.forEach(x=>{if(x.role===c.role)x.isDefault=x.id===c.id});const i=list.findIndex(x=>x.id===c.id);list[i]=c;list[i].isDefault=true;storeCharacters(list);renderCharacters();setStatus(`${c.role} 역할의 기본 캐릭터로 지정했습니다.`,'ok');saveLocal(true)}
+function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
+function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
+const KOREAN_SURNAMES=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황','안','송','류','홍'];
+const NAME_POOLS={
+ youngFemale:['서윤','지안','하린','채원','서아','예린','다은','유나','민서','수아','지우','아린','소희','유진','나연','은채','가은','세아','혜원','시은'],
+ adultFemale:['지현','수진','미영','은정','혜진','선영','유리','정은','소연','지영','민정','현주','다영','윤희','주연','은주','미정','서현','하영','채영'],
+ seniorFemale:['영숙','명희','정자','순자','경자','옥자','미숙','정희','혜숙','선자','복순','말순','영자','춘자','금자','인숙','경숙','순희','화자','정숙'],
+ youngMale:['도현','민재','현우','준혁','시우','건우','지훈','우진','태윤','성민','민호','재현','준서','정우','승현','동현','태민','현준','재민','서준'],
+ adultMale:['성호','정훈','민석','재훈','상현','준호','태성','영민','진우','동욱','현석','상민','기태','정민','성진','병훈','재성','승호','태훈','진석'],
+ seniorMale:['태식','정호','준식','영철','성복','만수','병철','동식','기철','상구','종수','덕수','영수','창호','재국','춘식','광수','성태','인호','정식']
+};
+function ageNumber(age=''){const m=String(age).match(/(\d{1,3})/);return m?Number(m[1]):null}
+function genderForRole(role){if(['여주','시어머니','시누이'].includes(role))return'female';if(['남편','시아버지','회장'].includes(role))return'male';return null}
+function poolForCharacter(c){const n=ageNumber(c.age),g=genderForRole(c.role)||(/여성|여자/.test(c.appearance)?'female':/남성|남자/.test(c.appearance)?'male':Math.random()<.5?'female':'male');if(n!==null&&n>=58)return g==='female'?NAME_POOLS.seniorFemale:NAME_POOLS.seniorMale;if(n!==null&&n<=34)return g==='female'?NAME_POOLS.youngFemale:NAME_POOLS.youngMale;return g==='female'?NAME_POOLS.adultFemale:NAME_POOLS.adultMale}
+function makeRandomName(c,used=new Set()){const pool=poolForCharacter(c);for(let i=0;i<300;i++){const name=KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)];if(!used.has(name))return name}return KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)]}
+function refreshInternalIds(list){let n=1;return list.map(c=>({...c,internalId:c.internalId&&/^CHAR-\d{3,}$/.test(c.internalId)?c.internalId:`CHAR-${String(n++).padStart(3,'0')}`}))}
+function randomizeSelectedName(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;const used=new Set(list.filter((_,x)=>x!==i).map(c=>c.name));list[i].name=makeRandomName(readCharacterEditor(list[i]),used);list[i].nameLocked=false;storeCharacters(refreshInternalIds(list));renderCharacters();saveLocal(true);setStatus(`선택 캐릭터 이름을 ${list[i].name}(으)로 바꿨습니다.`,'ok')}
+function randomizeAllNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.filter(c=>c.nameLocked).map(c=>c.name));let changed=0;for(const c of list){if(c.nameLocked||!c.enabled)continue;c.name=makeRandomName(c,used);used.add(c.name);changed++}storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`등장 캐릭터 ${changed}명의 이름을 중복 없이 랜덤 배정했습니다.`,'ok')}
+function ensureAssignedNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.map(c=>c.name)),generic=/^(여주|안경 여주|화려한 여주|새 캐릭터|캐릭터|이름 없는 캐릭터)(\s|$)/;let changed=false;for(const c of list){if(!c.enabled||c.nameLocked||!generic.test(c.name))continue;used.delete(c.name);c.name=makeRandomName(c,used);used.add(c.name);changed=true}if(changed){storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true)}return changed}
+function activeCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
+function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
+function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
+function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=3,APP_VERSION='9.2.1',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
-- 활성 등장인물 전체 이름 랜덤 배정
-- 선택 캐릭터 이름만 다시 뽑기
-- 역할과 연령대에 맞는 한국 이름 풀 적용
-- 같은 작품 안에서 이름 중복 방지
-- 이름 고정 잠금: 잠근 캐릭터는 전체 랜덤에서 제외
-- 캐릭터마다 `CHAR-001` 형식의 내부 ID 부여
-- 핵심 인물 / 보조 인물 / 단역 등급 설정
-- 친구, 회장, 비서, 변호사, 직장동료 역할 추가
-- 새 캐릭터를 만들 때 이름 자동 배정
-- 기존의 `여주 A`, `새 캐릭터` 같은 임시 이름은 최초 생성 직전에 자동 교체
-- AI가 목록에 없는 새 사람 이름을 즉흥적으로 만들지 않도록 프롬프트 잠금
-- 잠깐 등장하는 인물은 간호사, 직원, 행인 같은 역할명으로만 처리
+function updateMeta(){
+ const el=$('meta'),field=$(fields[active]);
+ if(!el||!field)return;
+ el.textContent=`${field.value.length.toLocaleString()}자`;
+}
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+ active=btn.dataset.tab;
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));
+ Object.entries(fields).forEach(([key,id])=>$(id).classList.toggle('hidden',key!==active));
+ updateMeta();
+}));
+Object.values(fields).forEach(id=>$(id).addEventListener('input',updateMeta));
+function cfg(){
+ return{
+  name:$('name').value.trim(),topic:$('topic').value.trim(),heroine:$('heroine').value.trim(),
+  count:String($('count').value==='custom'?Math.max(10,Math.min(100,Number($('customCount').value||40))):$('count').value||20),images:String($('images').value||3),
+  pov:$('pov').value,tone:$('tone').value,density:$('density').value,quality:$('quality').value,
+  subscribe:$('subscribe').checked,strict:$('strict').checked,
+  thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value
+ };
+}
+function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:getCharacters(),outputs:outputsNow()}}
+function legacyVersion(raw){return String(raw?.createdWith||raw?.version||raw?.appVersion||'5.x')}
+function normalizeProject(raw){
+ if(!raw||typeof raw!=='object')throw new Error('프로젝트 데이터가 비어 있습니다.');
+ let config={},characters=[],outputs={},selected='';
+ if(raw.app===APP_ID&&raw.schemaVersion){config=raw.project?.config||raw.config||{};selected=raw.project?.selectedCharacterId||raw.selectedCharacterId||'';characters=raw.characters||raw.project?.characters||[];outputs=raw.outputs||raw.project?.outputs||{}}
+ else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
+ const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
+ const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
+ const cleanOut={story:'',blueprint:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:''};for(const k in cleanOut)cleanOut[k]=String(outputs?.[k]??'');
+ return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:cleanChars,outputs:cleanOut};
+}
+function applyProject(raw){
+ const p=normalizeProject(raw),c=p.project.config,o=p.outputs;
+ for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])$(k).value=c[k]??'';
+ for(const k of ['subscribe','strict'])$(k).checked=!!c[k];
+ for(const k of Object.keys(o))$(fields[k]).value=o[k];
+ if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
+ 
+ renderCharacters();updateMeta();return p;
+}
+function pushBackup(snapshot,reason='자동 백업'){
+ try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
+}
+function saveLocal(silent=false){const p=project();localStorage.setItem(LOCAL_KEY,JSON.stringify(p));pushBackup(p,'자동 저장');if(!busy&&!silent)setStatus('이 기기에 저장했습니다. 다른 기기 이동은 프로젝트 내보내기를 사용하세요.','ok')}
+function loadLocal(){
+ let raw=null,key='';for(const k of [LOCAL_KEY,'sseoljeng-v6.0','sseoljeng-v5.3','sseoljeng-v5.2','sseoljeng-v5.1','sseoljeng-v5']){try{raw=JSON.parse(localStorage.getItem(k)||'null')}catch{}if(raw){key=k;break}}
+ if(!raw){setStatus('이 브라우저에 저장된 프로젝트가 없습니다.','bad');return}
+ try{const p=applyProject(raw);localStorage.setItem(LOCAL_KEY,JSON.stringify(p));setStatus(key===LOCAL_KEY?'저장된 프로젝트를 불러왔습니다.':`${legacyVersion(raw)} 프로젝트를 v7 호환 형식으로 변환했습니다.`,'ok')}catch(e){setStatus('불러오기 실패: '+e.message,'bad')}
+}
+function downloadJson(data,name){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportProject(){const p=project();downloadJson(p,`${safeFileName(cfg().name||'썰쟁-프로젝트')}.sseoljeng.project.json`);setStatus('프로젝트 파일을 저장했습니다. PC·폰·다른 PC에서 그대로 불러올 수 있습니다.','ok')}
+function exportEmergencyBackup(){const p=project();pushBackup(p,'수동 긴급 백업');downloadJson(p,`${safeFileName(cfg().name||'썰쟁-프로젝트')}_긴급백업_${new Date().toISOString().replace(/[:.]/g,'-')}.json`);setStatus('긴급 백업 파일을 저장했습니다.','ok')}
+function importProject(event){
+ const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;
+ const reader=new FileReader();reader.onload=()=>{try{const current=project();localStorage.setItem(IMPORT_BACKUP_KEY,JSON.stringify(current));pushBackup(current,'프로젝트 불러오기 전');const raw=JSON.parse(reader.result);const p=applyProject(raw);localStorage.setItem(LOCAL_KEY,JSON.stringify(p));const from=legacyVersion(raw);setStatus(`불러오기 완료 · ${file.name} · ${from===APP_VERSION?'호환 확인':from+' → v7 변환'}`,'ok')}catch(e){setStatus('프로젝트 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.onerror=()=>setStatus('파일 읽기에 실패했습니다.','bad');reader.readAsText(file,'utf-8');
+}
+function restoreImportBackup(){try{const raw=JSON.parse(localStorage.getItem(IMPORT_BACKUP_KEY)||'null');if(!raw){setStatus('불러오기 전 백업이 없습니다.','bad');return}applyProject(raw);saveLocal(true);setStatus('프로젝트 불러오기 전 작업으로 복구했습니다.','ok')}catch(e){setStatus('복구 실패: '+e.message,'bad')}}
+function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'썰쟁-프로젝트'}
+let autoSaveTimer;
+function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
+['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
 
-## 유지되는 기능
+function generationPrompt(task){
+ ensureAssignedNames();
+ const c=cfg(),cast=activeCastText(),story=$('story').value.trim();
+ const common=`프로젝트 이름: ${c.name}\n주제: ${c.topic}\n주인공 설정: ${c.heroine}\n등장인물:\n${cast}\n\n[이름 사용 잠금 규칙]\n1. 위에 배정된 이름만 사용하세요. AI가 새로운 사람 이름을 즉흥적으로 만들면 안 됩니다.\n2. 이름이 없는 잠깐의 인물은 간호사, 직원, 행인처럼 역할명으로만 부르세요.\n3. 내부 캐릭터 ID와 이름의 연결을 끝까지 유지하세요. 서로 이름·외모·관계를 바꾸지 마세요.\n4. 보조 인물과 단역을 핵심 인물처럼 확대하지 마세요.\n시점: ${c.pov}\n분위기: ${c.tone}\n문단 수: ${c.count}\n이미지 수: ${c.images}\n스토리 밀도: ${c.density}\n작성 품질: ${c.quality}`;
+ if(task==='blueprint')return `${common}
 
-- Firebase 로그인 및 Firestore 프로젝트 동기화
-- v9.0 장편 설계도, 분할 생성, 설정 검사
-- v9.1 단일 장면 Thumbnail Pro 및 CTR 평가
-- 독립 쇼츠 생성
-- SRT와 음성 AI용 원고
-- 일본어판
-- 캡컷용 ZIP 출력
-- 기존 프로젝트 자동 호환
+본문을 쓰지 말고 먼저 장편 사연의 고정 설계도를 작성하세요.
+반드시 포함: [한 줄 주제], [결말 고정], [등장인물 성경], [절대 바뀌면 안 되는 설정], [핵심 갈등], [복선과 회수], [에피소드 지도].
+에피소드 지도는 전체 ${c.count}문단을 5문단 단위로 나누고, 각 구간마다 새로운 사건·갈등·감정 변화·다음 구간 연결점을 구체적으로 적으세요.
+문단 수를 채우기 위한 반복은 금지하며, 위 목록에 없는 새 이름은 만들지 마세요. 꼭 필요한 단역은 이름 없이 역할명으로만 설계하세요. 결말과 인물의 이름·ID·나이·직업·관계·성격은 이후 절대 바뀌지 않도록 명확히 고정하세요.`;
+ if(task==='story')return `${common}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하고, 각 문단은 약 420~450자로 작성하세요. 대화체는 최소화하고 몰입감 있는 회고형 서술을 사용하세요. ${c.subscribe?'0문단에 구독과 좋아요 안내 문구를 자연스럽게 포함하세요.':''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
+ if(task==='assets')return `${common}
 
-## 사용 순서
+다음 롱폼 원고를 바탕으로 제작 자료를 작성하세요.
 
-1. 캐릭터의 역할과 나이를 설정합니다.
-2. `전체 이름 랜덤`을 눌러 모든 등장인물 이름을 배정합니다.
-3. 반드시 유지할 이름은 `이름 고정`을 체크합니다.
-4. 설계도 또는 전체 자동 생성을 시작합니다.
+원고:
+${story}
 
-직접 이름을 입력한 캐릭터는 자동으로 바뀌지 않습니다. 임시 이름만 생성 직전에 자동 교체됩니다.
+출력 순서:
+[이미지 프롬프트] 본문용 이미지 ${c.images}개. 모든 이미지는 반드시 가로형 16:9 비율의 실사 한국 드라마 영화 스틸로 작성하세요. 9:16 세로형은 절대 사용하지 마세요. 각 번호의 프롬프트 첫 문장과 마지막 조건에 모두 '16:9 가로형'을 명시하세요. 동일 인물과 의상 연속성을 유지하고, 본문 이미지는 문구·자막·말풍선·로고 없음.
+[쇼츠 4컷] 각 컷별로 강렬한 화면 문구, 짧은 나레이션, 9:16 이미지 프롬프트를 작성하세요. 쇼츠 이미지에는 해당 화면 문구만 크고 선명하게 넣고, 말풍선·대화풍선·로고·워터마크는 금지하세요.
+[유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.
+[썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. 인물은 최대 ${c.thumbPeople}명이며 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
+ if(task==='thumbnail')return `${common}
+
+현재 롱폼 원고:
+${story}
+
+16:9 유튜브 썸네일 A안·B안·C안을 새로 작성하세요.
+핵심 규칙:
+1. 각 안은 하나의 사건만 담은 단일 장면이어야 합니다.
+2. 콜라주, 분할 화면, 좌우 비교판, 여러 시간대 결합, 동일 인물 중복 등장은 금지합니다.
+3. 인물은 최대 ${c.thumbPeople}명이며 얼굴과 감정을 크게 보여 주세요.
+4. 문구를 넣기 위해 빈 배경을 억지로 만들거나 인물을 화면 구석으로 밀지 마세요.
+5. 문구 위치를 상단으로 고정하지 말고 장면에 맞춰 자연스럽게 선택하세요.
+6. 레이아웃 ${c.thumbLayout}, 문구 스타일 ${c.thumbStyle}, 문구 길이 ${c.thumbTextLength}를 적용하세요.
+7. 헤드라인은 핵심 단어 중심으로 최대 3줄이며 모바일에서도 즉시 읽혀야 합니다.
+8. 각 안마다 [헤드라인], [단일 장면 프롬프트], [CTR 자체 점수 / 100], [한 줄 평가]를 출력하세요.
+9. 말풍선, 로고, 워터마크는 금지합니다.`;
+ if(task==='shorts'){
+  const count=Number($('shortsCount')?.value||1),source=$('shortsSource')?.value||'story',style=$('shortsStyle')?.value||'mixed';
+  const sourceText=source==='story'&&story?`현재 롱폼 원고:\n${story}`:`주제와 등장인물 설정만 사용하세요. 롱폼 원고를 새로 만들지는 마세요.`;
+  const styleText=({mixed:'각 쇼츠의 후킹 방향과 전개를 서로 다르게 구성',hook:'첫 2초가 매우 강한 후킹형',twist:'정체나 사건의 반전을 중심으로 구성',emotion:'감정 몰입과 여운 중심',anger:'분노를 유발한 뒤 통쾌한 결말을 암시'})[style]||'서로 다른 방식';
+  return `${common}\n\n${sourceText}\n\n이 자료로 서로 중복되지 않는 유튜브 쇼츠 ${count}개를 독립적으로 작성하세요. ${styleText}하세요.\n각 쇼츠는 정확히 4컷이며 25초 안팎입니다. 각 안은 [쇼츠 1안], [쇼츠 2안]처럼 구분하세요.\n각 컷마다 다음 항목을 반드시 포함하세요.\n- 시간 구간\n- 강렬하고 짧은 화면 문구\n- 너무 길지 않은 나레이션\n- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트\n쇼츠 이미지는 4분할이나 콜라주가 아닌 컷별 독립 이미지입니다. 해당 화면 문구만 이미지에 크고 선명하게 넣고 말풍선·대화풍선·로고·워터마크는 넣지 마세요.\n각 쇼츠 마지막에 유튜브 제목 3개, 짧은 설명, 해시태그를 붙이세요. 채널 검색 유도 문구는 쓰지 마세요.`;
+ }
+ if(task==='japanese')return `${common}\n\n아래 한국어 원고를 일본 시청자에게 자연스러운 일본어 사연 콘텐츠로 번역·현지화하세요. 문단 번호와 구조를 유지하고 의미를 임의로 생략하지 마세요.\n\n원고:\n${story}`;
+ return '';
+}
+async function callGenerate(task){
+ const prompt=generationPrompt(task);
+ if(!prompt.trim())throw new Error('생성 요청문이 비어 있습니다.');
+ const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));
+ return data.text||'';
+}
+function normalizeAspectRatio(text,type){
+ let value=String(text||'');
+ if(type==='images'||type==='thumbnail'){
+  value=value.replace(/9\s*[:：]\s*16/g,'16:9').replace(/세로형\s*16\s*[:：]\s*9/g,'가로형 16:9');
+ }else if(type==='shorts'){
+  value=value.replace(/16\s*[:：]\s*9/g,'9:16').replace(/가로형\s*9\s*[:：]\s*16/g,'세로형 9:16');
+ }
+ return value;
+}
+function splitAssets(text){
+ const sections={images:'',shorts:'',youtube:'',thumbnail:''};
+ const map=[['images',/\[이미지 프롬프트\]/],['shorts',/\[쇼츠 4컷\]/],['youtube',/\[유튜브 정보\]/],['thumbnail',/\[썸네일\]/]];
+ const found=map.map(([k,r])=>({k,m:r.exec(text)})).filter(x=>x.m).sort((a,b)=>a.m.index-b.m.index);
+ if(!found.length){sections.images=text;return sections}
+ found.forEach((x,i)=>{const start=x.m.index+x.m[0].length,end=i+1<found.length?found[i+1].m.index:text.length;sections[x.k]=normalizeAspectRatio(text.slice(start,end).trim(),x.k)});
+ return sections;
+}
+async function generate(task){
+ if(task==='story')return generateStableStory();
+ if(busy)return;
+ const c=cfg();
+ if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ if((task==='assets'||task==='japanese'||task==='thumbnail')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='assets'?'제작 자료 생성 중...':task==='thumbnail'?'썸네일 새로 생성 중...':'일본어판 생성 중...');
+ try{
+  const text=await callGenerate(task);
+  if(task==='story'){$('story').value=text;active='story'}
+  else if(task==='assets'){const s=splitAssets(text);$('imagesOut').value=s.images;$('shorts').value=s.shorts;$('youtube').value=s.youtube;$('thumbnail').value=s.thumbnail;active='images'}
+  else if(task==='thumbnail'){$('thumbnail').value=normalizeAspectRatio(text,'thumbnail');active='thumbnail'}
+  else{$('japanese').value=text;active='japanese'}
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===active));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==active));
+  updateMeta();saveLocal(true);scheduleCloudSave();setStatus('생성이 완료되었습니다.','ok');
+ }catch(e){setStatus('생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
+}
+async function generateShortsOnly(){
+ if(busy)return;
+ const c=cfg(),source=$('shortsSource').value;
+ if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ if(source==='story'&&!$('story').value.trim()){setStatus('현재 롱폼 사용을 선택했습니다. 먼저 롱폼을 생성하거나 원본을 주제만 사용으로 바꾸세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;$('shortsOnlyBtn').disabled=true;
+ const count=$('shortsCount').value,mode=$('shortsSaveMode').value;
+ setStatus(`쇼츠 ${count}개 독립 생성 중... 기존 롱폼은 유지됩니다.`);
+ try{
+  const text=await callGenerate('shorts');
+  const stamp=new Date().toLocaleString('ko-KR');
+  const block=`===== 쇼츠 생성 ${stamp} · ${count}개 =====\n\n${normalizeAspectRatio(text.trim(),'shorts')}`;
+  $('shorts').value=mode==='append'&&$('shorts').value.trim()?`${$('shorts').value.trim()}\n\n\n${block}`:block;
+  active='shorts';
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='shorts'));
+  Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='shorts'));
+  updateMeta();saveLocal(true);scheduleCloudSave();setStatus(`쇼츠 ${count}개 생성 완료. 롱폼과 다른 제작 자료는 그대로 유지했습니다.`,'ok');
+ }catch(e){setStatus('쇼츠 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
+}
+
+async function generateAll(){
+ if(busy)return;
+ if(!cfg().topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;
+ try{
+  setStatus('1/4 설계도 생성 중...');$('blueprint').value=await callGenerate('blueprint');saveLocal(true);
+  const c=cfg(),total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let built='';for(let s=1;s<=total;s+=chunkSize){const e=Math.min(total,s+chunkSize-1);setStatus(`2/4 롱폼 ${s}~${e}문단 생성 중...`);built+=(built?'\n\n':'')+(await callGeneratePrompt(storyChunkPrompt(s===1?0:s,e,$('blueprint').value,built),'storychunk')).trim();$('story').value=built;saveLocal(true)}updateMeta();
+  setStatus('3/4 제작 자료 생성 중...');const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;saveLocal(true);
+  setStatus('4/4 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
+  active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
+ }catch(e){setStatus('전체 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
+}
+function makeSrt(silent=false){
+ const text=$('story').value.trim();if(!text){if(!silent)setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ const parts=text.split(/\n+/).map(x=>x.replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()).filter(Boolean);let t=0,out=[];
+ const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
+ parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('SRT 자막을 만들었습니다.','ok')}}
+
+async function copyCurrent(){await navigator.clipboard.writeText($(fields[active]).value);setStatus('현재 내용을 복사했습니다.','ok')}
+async function downloadZip(){
+ if(!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ const z=new JSZip(),f=z.folder('sseoljeng-project');
+ f.file('00_스토리설계도.txt',$('blueprint').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
+ f.file('03-1_음성AI용.txt',$('voice').value);f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
+ f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
+ const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
+ setStatus('캡컷용 ZIP 저장 완료','ok')
+}
+
+
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));updateMeta()}
+$('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
+function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
+async function callGeneratePrompt(prompt,task){const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));return data.text||''}
+async function generateBlueprint(silent=false){
+ if(busy&&!silent)return '';const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return ''}
+ if(!silent){busy=true;$('allBtn').disabled=true;setStatus('스토리 설계도와 설정 성경 생성 중...')}
+ try{const text=await callGenerate('blueprint');$('blueprint').value=text;saveLocal(true);if(!silent){showTab('blueprint');setStatus('설계도 생성 완료. 이 설계도를 기준으로 긴 이야기를 고정합니다.','ok')}return text}
+ catch(e){if(!silent)setStatus('설계도 생성 실패: '+e.message,'bad');throw e}finally{if(!silent){busy=false;$('allBtn').disabled=false}}
+}
+function storyChunkPrompt(start,end,blueprint,existing){
+ ensureAssignedNames();
+ const c=cfg(),cast=activeCastText(),isFirst=start===0;
+ const previous=existing?existing.slice(-12000):'(없음)';
+ return `프로젝트: ${c.name}\n주제: ${c.topic}\n시점: ${c.pov}\n분위기: ${c.tone}\n밀도: ${c.density}\n등장인물:\n${cast}\n\n[고정 스토리 설계도]\n${blueprint}\n\n[이미 작성된 원고의 마지막 부분]\n${previous}\n\n이제 ${isFirst?'0문단과 1':'본문 '+start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요. 각 본문 문단은 약 420~450자로 쓰고 문단 번호를 명확히 표시하세요. ${isFirst&&c.subscribe?'0문단에 구독·좋아요·알림 문구를 자연스럽게 포함하세요.':''}\n중요 규칙:\n1. 설계도와 등장인물 목록에 없는 이름을 절대 만들지 마세요. 필요한 단역은 이름 없이 역할명으로만 처리하세요.\n2. 이전 원고와 설계도의 사실을 절대 변경하지 마세요.\n3. 같은 갈등·감정·설명을 반복해 분량을 늘리지 마세요.\n4. 이 구간에는 설계도에 지정된 새 사건이 실제로 발생해야 합니다.\n5. 다음 구간으로 자연스럽게 이어지되 결말을 앞당기지 마세요.\n6. 대화는 최소화하고 ${c.pov} 문체를 유지하세요.\n7. ${c.strict?'각 본문 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'글자 수 표시는 하지 마세요.'}`
+}
+async function generateStableStory(){
+ if(busy)return;const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;$('shortsOnlyBtn').disabled=true;
+ try{
+  let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
+  const total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let story='';let starts=[];for(let s=1;s<=total;s+=chunkSize)starts.push([s,Math.min(total,s+chunkSize-1)]);
+  for(let i=0;i<starts.length;i++){const [start,end]=starts[i];setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(start===1?0:start,end,blueprint,story);const part=await callGeneratePrompt(prompt,'storychunk');story+=(story?'\n\n':'')+part.trim();$('story').value=story;updateMeta();saveLocal(true)}
+  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();setStatus(`${total}문단 생성 완료. 설계도 고정 + 구간별 생성으로 이야기 이탈을 줄였습니다.`,'ok')
+ }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
+}
+function makeVoice(silent=false){
+ const text=cleanParagraphText($('story').value);if(!text){if(!silent)setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ const paras=text.split(/\n+/).map(x=>x.replace(/^\s*(?:\[?\d+\s*문단\]?|\d+\.)\s*[:：-]?\s*/,'').trim()).filter(Boolean);
+ const parts=[];for(let i=0;i<paras.length;i+=10)parts.push(`===== Part ${Math.floor(i/10)+1} (${i+1}~${Math.min(i+10,paras.length)}문단) =====\n\n${paras.slice(i,i+10).join('\n\n')}`);
+ $('voice').value=parts.join('\n\n\n');saveLocal(true);if(!silent){showTab('voice');setStatus('시간·번호·글자 수를 뺀 음성 AI용 원고를 10문단씩 나눴습니다.','ok')}
+}
+async function checkConsistency(){
+ if(busy)return;if(!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}if(!$('blueprint').value.trim()){setStatus('먼저 스토리 설계도를 생성하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus('등장인물·시간·직업·관계·결말 설정 충돌 검사 중...');
+ try{const prompt=`[고정 설계도]\n${$('blueprint').value}\n\n[완성 원고]\n${$('story').value}\n\n위 원고가 설계도에서 벗어났는지 엄격히 검사하세요. 인물의 나이, 직업, 성격, 가족관계, 사건 순서, 장소, 소지품, 핵심 동기, 복선 회수, 결말 충돌과 반복 에피소드를 찾으세요. 출력은 [검사 결과], [충돌 목록: 문단 번호/문제/수정안], [미회수 복선], [반복·늘어짐], [최종 판정] 순서로 작성하세요. 문제가 없으면 없다고 명확히 표시하세요. 원고 전체를 다시 쓰지는 마세요.`;const text=await callGeneratePrompt(prompt,'consistency');$('consistency').value=text;showTab('consistency');saveLocal(true);setStatus('설정 충돌 검사가 완료되었습니다.','ok')}catch(e){setStatus('설정 검사 실패: '+e.message,'bad')}finally{busy=false;$('allBtn').disabled=false}
+}
+
+renderCharacters();updateMeta();
+</script>
+<script src="js/firebase-cloud.js"></script>
+</body>
+</html>
