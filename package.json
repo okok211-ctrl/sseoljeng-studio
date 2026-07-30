@@ -1,6 +1,6 @@
 {
-  "name": "sseoljeng-studio-v5-gemini",
-  "version": "5.0.0",
+  "name": "sseoljeng-studio-v7-cloud",
+  "version": "7.0.0",
   "private": true,
   "engines": {
     "node": "22.x"
