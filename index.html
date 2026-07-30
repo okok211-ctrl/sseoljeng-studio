@@ -315,7 +315,7 @@ async function generateAll(){
 }
 function makeSrt(silent=false){
  const text=$('story').value.trim();if(!text){if(!silent)setStatus('먼저 롱폼을 생성하세요.','bad');return}
- const parts=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);let t=0,out=[];
+ const parts=text.split(/\n+/).map(x=>x.replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()).filter(Boolean);let t=0,out=[];
  const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
  parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('SRT 자막을 만들었습니다.','ok')}}
 
