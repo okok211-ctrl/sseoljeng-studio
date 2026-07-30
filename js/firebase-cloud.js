@@ -17,10 +17,49 @@ function cloudDocPayload(){const p=stripImagesForCloud(project());return{title:(
 async function googleLogin(){try{cloudStatus('Google 로그인 창을 여는 중...');await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){cloudStatus('로그인 실패: '+e.message,'bad')}}
 async function googleLogout(){try{await auth.signOut()}catch(e){cloudStatus('로그아웃 실패: '+e.message,'bad')}}
 function setCloudControls(on){for(const id of ['newCloudBtn','saveCloudBtn','cloudProjectSelect','refreshCloudBtn'])$(id).disabled=!on;$('deleteCloudBtn').disabled=!on||!currentCloudProjectId;$('loginBtn').classList.toggle('hidden',on);$('logoutBtn').classList.toggle('hidden',!on)}
-async function refreshCloudProjects(selectId=''){if(!currentUser)return;try{cloudStatus('클라우드 목록 불러오는 중...');const snap=await db.collection('users').doc(currentUser.uid).collection('projects').orderBy('updatedAtClient','desc').get();const sel=$('cloudProjectSelect');sel.innerHTML='<option value="">클라우드 프로젝트 선택</option>';snap.forEach(doc=>{const d=doc.data(),o=document.createElement('option');o.value=doc.id;o.textContent=(d.title||'이름 없는 프로젝트')+' · '+String(d.updatedAtClient||'').slice(0,16).replace('T',' ');sel.appendChild(o)});if(selectId||currentCloudProjectId)sel.value=selectId||currentCloudProjectId;cloudStatus(`클라우드 프로젝트 ${snap.size}개`,'ok')}catch(e){cloudStatus('목록 불러오기 실패: '+e.message,'bad')}}
+async function refreshCloudProjects(selectId=''){
+ if(!currentUser)return;
+ try{
+  cloudStatus('클라우드 목록 불러오는 중...');
+  const snap=await db.collection('users').doc(currentUser.uid).collection('projects').orderBy('updatedAtClient','desc').get();
+  const sel=$('cloudProjectSelect');sel.innerHTML='<option value="">클라우드 프로젝트 선택</option>';
+  snap.forEach(doc=>{const d=doc.data(),o=document.createElement('option');o.value=doc.id;o.textContent=(d.title||'이름 없는 프로젝트')+' · '+String(d.updatedAtClient||'').slice(0,16).replace('T',' ');sel.appendChild(o)});
+  const wanted=selectId||currentCloudProjectId||localStorage.getItem('sseoljeng-last-cloud-project-id')||'';
+  if(wanted&&[...sel.options].some(o=>o.value===wanted)){sel.value=wanted;currentCloudProjectId=wanted}
+  $('deleteCloudBtn').disabled=!currentCloudProjectId;
+  cloudStatus(`클라우드 프로젝트 ${snap.size}개`,'ok')
+ }catch(e){console.error('Cloud list failed',e);cloudStatus('목록 불러오기 실패: '+e.message,'bad')}
+}
 async function newCloudProject(){if(!currentUser)return;const title=prompt('새 클라우드 프로젝트 이름','새로운 사연');if(!title)return;$('name').value=title;currentCloudProjectId=db.collection('users').doc(currentUser.uid).collection('projects').doc().id;await saveCloudProject(false);await refreshCloudProjects(currentCloudProjectId);$('deleteCloudBtn').disabled=false}
-async function saveCloudProject(silent=true){if(!currentUser||cloudApplying)return;if(!currentCloudProjectId)currentCloudProjectId=db.collection('users').doc(currentUser.uid).collection('projects').doc().id;try{if(!silent)cloudStatus('클라우드 저장 중...');await cloudProjectRef(currentCloudProjectId).set(cloudDocPayload(),{merge:true});$('deleteCloudBtn').disabled=false;cloudStatus('클라우드 저장 완료 · '+new Date().toLocaleTimeString(),'ok');if(!silent)await refreshCloudProjects(currentCloudProjectId)}catch(e){cloudStatus('클라우드 저장 실패: '+e.message,'bad')}}
-async function loadSelectedCloudProject(){const id=$('cloudProjectSelect').value;if(!id||!currentUser)return;try{cloudStatus('클라우드 프로젝트 불러오는 중...');const snap=await cloudProjectRef(id).get();if(!snap.exists)throw new Error('프로젝트가 없습니다.');cloudApplying=true;const p=mergeLocalImages(snap.data().data||{});applyProject(p);currentCloudProjectId=id;localStorage.setItem(LOCAL_KEY,JSON.stringify(project()));$('deleteCloudBtn').disabled=false;cloudStatus('클라우드 프로젝트를 불러왔습니다.','ok')}catch(e){cloudStatus('클라우드 불러오기 실패: '+e.message,'bad')}finally{cloudApplying=false}}
+async function saveCloudProject(silent=true){
+ if(!currentUser||cloudApplying)return false;
+ if(!db){cloudStatus('Firestore가 아직 준비되지 않았습니다.','bad');return false}
+ if(!currentCloudProjectId)currentCloudProjectId=db.collection('users').doc(currentUser.uid).collection('projects').doc().id;
+ try{
+  if(!silent)cloudStatus('클라우드 저장 중...');
+  const payload=cloudDocPayload();
+  await cloudProjectRef(currentCloudProjectId).set(payload,{merge:true});
+  localStorage.setItem('sseoljeng-last-cloud-project-id',currentCloudProjectId);
+  $('cloudProjectSelect').value=currentCloudProjectId;
+  $('deleteCloudBtn').disabled=false;
+  cloudStatus('클라우드 저장 완료 · '+new Date().toLocaleTimeString(),'ok');
+  if(!silent)await refreshCloudProjects(currentCloudProjectId);
+  return true;
+ }catch(e){console.error('Cloud save failed',e);cloudStatus('클라우드 저장 실패: '+e.message,'bad');return false}
+}
+async function loadSelectedCloudProject(){
+ const id=$('cloudProjectSelect').value;if(!id||!currentUser)return;
+ try{
+  cloudStatus('클라우드 프로젝트 불러오는 중...');
+  const snap=await cloudProjectRef(id).get();if(!snap.exists)throw new Error('프로젝트가 없습니다.');
+  cloudApplying=true;
+  const raw=snap.data().data;if(!raw||typeof raw!=='object')throw new Error('저장된 프로젝트 데이터가 비어 있습니다.');
+  const p=mergeLocalImages(raw);applyProject(p);currentCloudProjectId=id;
+  localStorage.setItem('sseoljeng-last-cloud-project-id',id);
+  localStorage.setItem(LOCAL_KEY,JSON.stringify(project()));
+  $('deleteCloudBtn').disabled=false;cloudStatus('클라우드 프로젝트를 불러왔습니다.','ok')
+ }catch(e){console.error('Cloud load failed',e);cloudStatus('클라우드 불러오기 실패: '+e.message,'bad')}finally{cloudApplying=false}
+}
 async function deleteCloudProject(){if(!currentUser||!currentCloudProjectId)return;if(!confirm('현재 클라우드 프로젝트를 삭제할까요? 이 작업은 되돌릴 수 없습니다.'))return;try{await cloudProjectRef(currentCloudProjectId).delete();currentCloudProjectId='';$('deleteCloudBtn').disabled=true;await refreshCloudProjects();cloudStatus('클라우드 프로젝트를 삭제했습니다.','ok')}catch(e){cloudStatus('클라우드 삭제 실패: '+e.message,'bad')}}
 function scheduleCloudSave(){clearTimeout(cloudSaveTimer);if(!currentUser||!currentCloudProjectId||cloudApplying)return;cloudSaveTimer=setTimeout(()=>saveCloudProject(true),2500)}
 function initFirebase(){try{firebaseApp=firebase.initializeApp(firebaseConfig);auth=firebase.auth();db=firebase.firestore();auth.onAuthStateChanged(async user=>{currentUser=user||null;setCloudControls(!!user);$('cloudUser').textContent=user?(user.displayName||user.email):'로그아웃 상태';if(user){cloudStatus('로그인 완료. 클라우드 목록을 불러옵니다.','ok');await refreshCloudProjects()}else{currentCloudProjectId='';$('cloudProjectSelect').innerHTML='<option value="">클라우드 프로젝트 선택</option>';cloudStatus('로그인하면 PC와 휴대폰에서 같은 프로젝트를 사용할 수 있습니다.')}})}catch(e){cloudStatus('Firebase 초기화 실패: '+e.message,'bad')}}

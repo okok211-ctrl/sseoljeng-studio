@@ -1,4 +1,4 @@
-# 썰쟁 Studio v7.1 Cloud Complete
+# 썰쟁 Studio v7.2 Cloud Complete
 
 실제로 Firebase Authentication과 Cloud Firestore에 연결되는 배포용 버전입니다.
 
@@ -89,3 +89,10 @@ users/{로그인 사용자 UID}/projects/{프로젝트 ID}
 ## 주의
 
 Firebase 공개 설정값(apiKey 등)은 웹 앱에서 보이는 것이 정상입니다. 실제 데이터 보호는 Firestore 보안 규칙과 Google 로그인으로 처리합니다.
+
+
+## v7.2 Stable 수정 사항
+- 누락된 `cfg()` 함수 복구
+- 로컬/파일/클라우드 저장 시 설정값 정상 수집
+- 마지막 클라우드 프로젝트 선택 유지
+- Firestore 저장/불러오기 오류 처리 강화
