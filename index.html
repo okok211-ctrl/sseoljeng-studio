@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v9.2.2 Stable</title>
+<title>썰쟁 Studio v9.2.3 Image Prompt Separate</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -122,7 +122,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button id="allBtn" class="btn primary wide" onclick="generateAll()">✨ 전체 자동 생성</button>
   <button class="btn secondary" onclick="generateStableStory()">롱폼 안정 생성</button>
   <button class="btn secondary" onclick="generateBlueprint()">🧭 설계도만</button>
-  <button class="btn secondary" onclick="generate('assets')">제작 자료</button>
+  <button class="btn secondary" onclick="generate('images')">🖼 본문 이미지 프롬프트만</button>
+  <button class="btn secondary" onclick="generate('assets')">제작 자료 전체</button>
   <button class="btn secondary" onclick="generateShortsOnly()">📱 쇼츠만 생성</button>
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
@@ -336,6 +337,20 @@ function generationPrompt(task){
 에피소드 지도는 전체 ${c.count}문단을 5문단 단위로 나누고, 각 구간마다 새로운 사건·갈등·감정 변화·다음 구간 연결점을 구체적으로 적으세요.
 문단 수를 채우기 위한 반복은 금지하며, 위 목록에 없는 새 이름은 만들지 마세요. 꼭 필요한 단역은 이름 없이 역할명으로만 설계하세요. 결말과 인물의 이름·ID·나이·직업·관계·성격은 이후 절대 바뀌지 않도록 명확히 고정하세요.`;
  if(task==='story')return `${common}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하고, 각 문단은 약 420~450자로 작성하세요. 대화체는 최소화하고 몰입감 있는 회고형 서술을 사용하세요. ${c.subscribe?'0문단에 구독과 좋아요 안내 문구를 자연스럽게 포함하세요.':''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
+ if(task==='images')return `${common}
+
+다음 롱폼 원고만 바탕으로 본문용 이미지 프롬프트 ${c.images}개만 작성하세요.
+
+원고:
+${story}
+
+출력 규칙:
+1. 이미지 프롬프트 외에 쇼츠, 유튜브 정보, 썸네일, 설명은 출력하지 마세요.
+2. 각 이미지는 서로 독립된 한 장면이며 콜라주·분할 화면·여러 장면 결합을 금지합니다.
+3. 모든 프롬프트는 반드시 '한국 드라마 실사 영화 스틸, 16:9 가로형.'으로 시작하세요.
+4. 각 프롬프트 마지막에도 '16:9 가로형, 동일 인물과 의상 연속성 유지, 텍스트·자막·말풍선·로고·워터마크 없음.'을 명시하세요.
+5. 9:16 세로형은 절대 사용하지 마세요.
+6. 각 번호마다 [사용 문단], [장면 설명], [생성 프롬프트]를 구분하세요.`;
  if(task==='assets')return `${common}
 
 다음 롱폼 원고를 바탕으로 제작 자료를 작성하세요.
@@ -403,11 +418,12 @@ async function generate(task){
  if(busy)return;
  const c=cfg();
  if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
- if((task==='assets'||task==='japanese'||task==='thumbnail')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
- busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='assets'?'제작 자료 생성 중...':task==='thumbnail'?'썸네일 새로 생성 중...':'일본어판 생성 중...');
+ if((task==='assets'||task==='images'||task==='japanese'||task==='thumbnail')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='images'?'본문 이미지 프롬프트만 생성 중...':task==='assets'?'제작 자료 전체 생성 중...':task==='thumbnail'?'썸네일 새로 생성 중...':'일본어판 생성 중...');
  try{
   const text=await callGenerate(task);
   if(task==='story'){$('story').value=text;active='story'}
+  else if(task==='images'){$('imagesOut').value=normalizeAspectRatio(text,'images');active='images'}
   else if(task==='assets'){const s=splitAssets(text);$('imagesOut').value=s.images;$('shorts').value=s.shorts;$('youtube').value=s.youtube;$('thumbnail').value=s.thumbnail;active='images'}
   else if(task==='thumbnail'){$('thumbnail').value=normalizeAspectRatio(text,'thumbnail');active='thumbnail'}
   else{$('japanese').value=text;active='japanese'}
