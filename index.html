@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v8.1 Shorts</title>
+<title>썰쟁 Studio v9.1 Thumbnail Pro</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -47,7 +47,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v8.1 Shorts</h1><div class="sub">롱폼 유지 · 쇼츠 독립 반복 생성 · Gemini · Firestore</div></div>
+ <div><h1>🎬 썰쟁 Studio v9.1 Thumbnail Pro</h1><div class="sub">장편 스토리 고정 · 쇼츠 독립 생성 · 단일 장면 CTR 썸네일 · Firestore</div></div>
  <span class="badge">AI 자동 생성</span>
 </header>
 <div class="layout">
@@ -100,6 +100,19 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div class="checks">
   <label class="check"><input id="subscribe" type="checkbox" checked>0문단 구독·좋아요·알림 멘트</label>
   <label class="check"><input id="strict" type="checkbox" checked>문단당 420~450자 최대한 준수</label>
+ </div>
+ <div class="char-editor" style="margin-top:12px">
+  <h3>🖼 썸네일 Pro 설정</h3>
+  <div class="row">
+   <div class="field"><label>레이아웃</label><select id="thumbLayout"><option value="auto" selected>AI 자동 추천</option><option value="face">얼굴 확대형</option><option value="poster">영화 포스터형</option><option value="emotion">감동형</option><option value="tension">긴장감형</option><option value="twist">반전형</option></select></div>
+   <div class="field"><label>문구 스타일</label><select id="thumbStyle"><option value="drama" selected>드라마형</option><option value="youtube">유튜브 자극형</option><option value="poster">영화 포스터형</option><option value="news">뉴스 자막형</option></select></div>
+  </div>
+  <div class="row">
+   <div class="field"><label>문구 길이</label><select id="thumbTextLength"><option value="short" selected>짧게 · 최대 3줄</option><option value="veryshort">아주 짧게 · 1~2줄</option><option value="medium">보통 · 최대 3줄</option></select></div>
+   <div class="field"><label>인물 수</label><select id="thumbPeople"><option value="2" selected>최대 2명</option><option value="1">1명만</option></select></div>
+  </div>
+  <button class="btn primary" style="width:100%" type="button" onclick="generate('thumbnail')">썸네일만 새로 생성</button>
+  <div class="tiny" style="margin-top:7px">한 장면만 사용하며 콜라주·분할 화면·억지 빈 공간을 금지합니다. 기존 롱폼과 다른 자료는 유지됩니다.</div>
  </div>
  <div class="actions">
   <button id="allBtn" class="btn primary wide" onclick="generateAll()">✨ 전체 자동 생성</button>
@@ -224,7 +237,7 @@ function activeCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- 
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=2,APP_VERSION='9.0.0',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=2,APP_VERSION='9.1.0',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -244,7 +257,8 @@ function cfg(){
   name:$('name').value.trim(),topic:$('topic').value.trim(),heroine:$('heroine').value.trim(),
   count:String($('count').value==='custom'?Math.max(10,Math.min(100,Number($('customCount').value||40))):$('count').value||20),images:String($('images').value||3),
   pov:$('pov').value,tone:$('tone').value,density:$('density').value,quality:$('quality').value,
-  subscribe:$('subscribe').checked,strict:$('strict').checked
+  subscribe:$('subscribe').checked,strict:$('strict').checked,
+  thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value
  };
 }
 function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:getCharacters(),outputs:outputsNow()}}
@@ -254,14 +268,14 @@ function normalizeProject(raw){
  let config={},characters=[],outputs={},selected='';
  if(raw.app===APP_ID&&raw.schemaVersion){config=raw.project?.config||raw.config||{};selected=raw.project?.selectedCharacterId||raw.selectedCharacterId||'';characters=raw.characters||raw.project?.characters||[];outputs=raw.outputs||raw.project?.outputs||{}}
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
- const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false};
+ const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
  const cleanOut={story:'',blueprint:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:''};for(const k in cleanOut)cleanOut[k]=String(outputs?.[k]??'');
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:cleanChars,outputs:cleanOut};
 }
 function applyProject(raw){
  const p=normalizeProject(raw),c=p.project.config,o=p.outputs;
- for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality'])$(k).value=c[k]??'';
+ for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])$(k).value=c[k]??'';
  for(const k of ['subscribe','strict'])$(k).checked=!!c[k];
  for(const k of Object.keys(o))$(fields[k]).value=o[k];
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
@@ -288,7 +302,7 @@ function restoreImportBackup(){try{const raw=JSON.parse(localStorage.getItem(IMP
 function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'썰쟁-프로젝트'}
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
-['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','charName','charRole','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
 
 function generationPrompt(task){
  const c=cfg(),cast=activeCastText(),story=$('story').value.trim();
@@ -311,7 +325,23 @@ ${story}
 [이미지 프롬프트] 본문용 이미지 ${c.images}개. 실사 한국 드라마 영화 스틸, 동일 인물과 의상 연속성 유지. 본문 이미지는 문구·자막·말풍선·로고 없음.
 [쇼츠 4컷] 각 컷별로 강렬한 화면 문구, 짧은 나레이션, 9:16 이미지 프롬프트를 작성하세요. 쇼츠 이미지에는 해당 화면 문구만 크고 선명하게 넣고, 말풍선·대화풍선·로고·워터마크는 금지하세요.
 [유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.
-[썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안마다 ① 클릭을 부르는 강렬한 한국어 문구 ② 그 문구가 이미지 안에 크고 선명하게 실제로 들어가도록 지시한 장면 프롬프트를 함께 작성하세요. 인물 표정과 사건의 핵심을 크게 강조하고, 문구가 얼굴을 가리지 않도록 배치하세요. 썸네일에서는 '문구 없음' 또는 '자막 없음'이라고 쓰지 마세요. 말풍선·로고·워터마크만 금지하세요.`;
+[썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. 인물은 최대 ${c.thumbPeople}명이며 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
+ if(task==='thumbnail')return `${common}
+
+현재 롱폼 원고:
+${story}
+
+16:9 유튜브 썸네일 A안·B안·C안을 새로 작성하세요.
+핵심 규칙:
+1. 각 안은 하나의 사건만 담은 단일 장면이어야 합니다.
+2. 콜라주, 분할 화면, 좌우 비교판, 여러 시간대 결합, 동일 인물 중복 등장은 금지합니다.
+3. 인물은 최대 ${c.thumbPeople}명이며 얼굴과 감정을 크게 보여 주세요.
+4. 문구를 넣기 위해 빈 배경을 억지로 만들거나 인물을 화면 구석으로 밀지 마세요.
+5. 문구 위치를 상단으로 고정하지 말고 장면에 맞춰 자연스럽게 선택하세요.
+6. 레이아웃 ${c.thumbLayout}, 문구 스타일 ${c.thumbStyle}, 문구 길이 ${c.thumbTextLength}를 적용하세요.
+7. 헤드라인은 핵심 단어 중심으로 최대 3줄이며 모바일에서도 즉시 읽혀야 합니다.
+8. 각 안마다 [헤드라인], [단일 장면 프롬프트], [CTR 자체 점수 / 100], [한 줄 평가]를 출력하세요.
+9. 말풍선, 로고, 워터마크는 금지합니다.`;
  if(task==='shorts'){
   const count=Number($('shortsCount')?.value||1),source=$('shortsSource')?.value||'story',style=$('shortsStyle')?.value||'mixed';
   const sourceText=source==='story'&&story?`현재 롱폼 원고:\n${story}`:`주제와 등장인물 설정만 사용하세요. 롱폼 원고를 새로 만들지는 마세요.`;
@@ -342,12 +372,13 @@ async function generate(task){
  if(busy)return;
  const c=cfg();
  if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
- if((task==='assets'||task==='japanese')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
- busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='assets'?'제작 자료 생성 중...':'일본어판 생성 중...');
+ if((task==='assets'||task==='japanese'||task==='thumbnail')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='assets'?'제작 자료 생성 중...':task==='thumbnail'?'썸네일 새로 생성 중...':'일본어판 생성 중...');
  try{
   const text=await callGenerate(task);
   if(task==='story'){$('story').value=text;active='story'}
   else if(task==='assets'){const s=splitAssets(text);$('imagesOut').value=s.images;$('shorts').value=s.shorts;$('youtube').value=s.youtube;$('thumbnail').value=s.thumbnail;active='images'}
+  else if(task==='thumbnail'){$('thumbnail').value=text;active='thumbnail'}
   else{$('japanese').value=text;active='japanese'}
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===active));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==active));
   updateMeta();saveLocal(true);scheduleCloudSave();setStatus('생성이 완료되었습니다.','ok');
