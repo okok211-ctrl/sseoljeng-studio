@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v7.2.2 Stable</title>
+<title>썰쟁 Studio v7.2.3 Stable</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -47,7 +47,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v7.2.2 Stable</h1><div class="sub">Gemini 자동 생성 · Google 로그인 · Firestore 클라우드 동기화</div></div>
+ <div><h1>🎬 썰쟁 Studio v7.2.3 Stable</h1><div class="sub">Gemini 자동 생성 · Google 로그인 · Firestore 클라우드 동기화</div></div>
  <span class="badge">AI 자동 생성</span>
 </header>
 <div class="layout">
@@ -197,7 +197,7 @@ function activeCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- 
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=2,APP_VERSION='7.2.2',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=2,APP_VERSION='7.2.3',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return{story:$('story').value,images:$('imagesOut').value,shorts:$('shorts').value,youtube:$('youtube').value,thumbnail:$('thumbnail').value,japanese:$('japanese').value,srt:$('srt').value}}
 
 function updateMeta(){
@@ -262,6 +262,63 @@ function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
 ['name','topic','heroine','count','images','pov','tone','subscribe','strict','charName','charRole','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+
+function generationPrompt(task){
+ const c=cfg(),cast=activeCastText(),story=$('story').value.trim();
+ const common=`프로젝트 이름: ${c.name}\n주제: ${c.topic}\n주인공 설정: ${c.heroine}\n등장인물:\n${cast}\n시점: ${c.pov}\n분위기: ${c.tone}\n문단 수: ${c.count}\n이미지 수: ${c.images}`;
+ if(task==='story')return `${common}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하고, 각 문단은 약 420~450자로 작성하세요. 대화체는 최소화하고 몰입감 있는 회고형 서술을 사용하세요. ${c.subscribe?'0문단에 구독과 좋아요 안내 문구를 자연스럽게 포함하세요.':''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
+ if(task==='assets')return `${common}\n\n다음 롱폼 원고를 바탕으로 제작 자료를 작성하세요.\n\n원고:\n${story}\n\n출력 순서:\n[이미지 프롬프트] 본문용 이미지 ${c.images}개, 실사 한국 드라마 영화 스틸, 동일 인물과 의상 연속성 유지, 문구·자막·말풍선·로고 없음.\n[쇼츠 4컷] 각 컷별 화면 문구와 짧은 나레이션. 말풍선 금지.\n[유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.\n[썸네일] 강렬한 문구 3안과 장면 프롬프트.`;
+ if(task==='japanese')return `${common}\n\n아래 한국어 원고를 일본 시청자에게 자연스러운 일본어 사연 콘텐츠로 번역·현지화하세요. 문단 번호와 구조를 유지하고 의미를 임의로 생략하지 마세요.\n\n원고:\n${story}`;
+ return '';
+}
+async function callGenerate(task){
+ const prompt=generationPrompt(task);
+ if(!prompt.trim())throw new Error('생성 요청문이 비어 있습니다.');
+ const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));
+ return data.text||'';
+}
+function splitAssets(text){
+ const sections={images:'',shorts:'',youtube:'',thumbnail:''};
+ const map=[['images',/\[이미지 프롬프트\]/],['shorts',/\[쇼츠 4컷\]/],['youtube',/\[유튜브 정보\]/],['thumbnail',/\[썸네일\]/]];
+ const found=map.map(([k,r])=>({k,m:r.exec(text)})).filter(x=>x.m).sort((a,b)=>a.m.index-b.m.index);
+ if(!found.length){sections.images=text;return sections}
+ found.forEach((x,i)=>{const start=x.m.index+x.m[0].length,end=i+1<found.length?found[i+1].m.index:text.length;sections[x.k]=text.slice(start,end).trim()});
+ return sections;
+}
+async function generate(task){
+ if(busy)return;
+ const c=cfg();
+ if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ if((task==='assets'||task==='japanese')&&!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus(task==='story'?'롱폼 생성 중...':task==='assets'?'제작 자료 생성 중...':'일본어판 생성 중...');
+ try{
+  const text=await callGenerate(task);
+  if(task==='story'){$('story').value=text;active='story'}
+  else if(task==='assets'){const s=splitAssets(text);$('imagesOut').value=s.images;$('shorts').value=s.shorts;$('youtube').value=s.youtube;$('thumbnail').value=s.thumbnail;active='images'}
+  else{$('japanese').value=text;active='japanese'}
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===active));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==active));
+  updateMeta();saveLocal(true);scheduleCloudSave();setStatus('생성이 완료되었습니다.','ok');
+ }catch(e){setStatus('생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
+}
+async function generateAll(){
+ if(busy)return;
+ if(!cfg().topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ busy=true;$('allBtn').disabled=true;
+ try{
+  setStatus('1/3 롱폼 생성 중...');$('story').value=await callGenerate('story');updateMeta();saveLocal(true);
+  setStatus('2/3 제작 자료 생성 중...');const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;saveLocal(true);
+  setStatus('3/3 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);
+  active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
+ }catch(e){setStatus('전체 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
+}
+function makeSrt(silent=false){
+ const text=$('story').value.trim();if(!text){if(!silent)setStatus('먼저 롱폼을 생성하세요.','bad');return}
+ const parts=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);let t=0,out=[];
+ const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
+ parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('SRT 자막을 만들었습니다.','ok')}}
+
 async function copyCurrent(){await navigator.clipboard.writeText($(fields[active]).value);setStatus('현재 내용을 복사했습니다.','ok')}
 async function downloadZip(){
  if(!$('story').value.trim()){setStatus('먼저 롱폼을 생성하세요.','bad');return}
