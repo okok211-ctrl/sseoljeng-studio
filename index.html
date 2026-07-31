@@ -267,7 +267,7 @@ function findVisualLeaks(text){const value=String(text||'');return visualLeakTer
 function storyEngineRules(){return `[Story Engine v11.1 Lite]
 - 실제 사람이 말하는 것처럼 자연스러운 구어체로 작성하세요.
 - 각 문단은 약 450자로 작성하세요.
-- 등장인물 외의 새로운 인물은 만들지 마세요.`}
+- 등장인물 목록에 없는 새로운 사람 이름은 만들지 마세요. 필요한 단역은 '직원', '은행원', '의사'처럼 역할명만 사용하세요.`}
 async function repairVisualLeaks(text,context=''){const leaks=findVisualLeaks(text);if(!leaks.length)return text;const prompt=`${storyEngineRules()}
 
 [수정 대상 원고]
