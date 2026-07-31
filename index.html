@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.6 Workflow Fix</title>
+<title>썰쟁 Studio v13.7 Workflow Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -36,7 +36,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .meta{font-size:12px;color:var(--muted)}.output{width:100%;min-height:650px;padding:17px;border-radius:14px;background:#040b14;border:1px solid #20344f;color:#fff;line-height:1.75;font-size:14px}
 .hidden{display:none!important}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}.checks{display:grid;gap:6px;margin:10px 0}.check{display:flex;gap:7px;color:#c6d2df;font-size:12px;line-height:1.45}.check input{width:auto}
-.character-tools{display:grid;grid-template-columns:1fr 120px;gap:7px}.character-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;max-height:310px;overflow:auto;padding-right:2px}.char-card{position:relative;min-height:110px;border:1px solid var(--line);border-radius:11px;background:#07111f;padding:6px;cursor:pointer;text-align:center;color:#dbe7f5}.char-card.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,121,23,.18)}.char-card.default::after{content:'★';position:absolute;right:7px;top:7px;background:#07111fdd;color:#ffd76a;border-radius:99px;padding:2px 5px;font-size:11px}.char-card.inactive{opacity:.55}.char-card img,.char-placeholder{width:100%;height:65px;border-radius:8px;object-fit:cover;background:#14233a;display:flex;align-items:center;justify-content:center;font-size:27px}.char-card span{display:block;margin-top:5px;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.char-role{color:var(--muted)!important;font-size:9px!important;margin-top:2px!important}.mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.file-input{display:none}.project-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.char-editor{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#07111f}.char-editor h3{font-size:13px;margin:0 0 8px}.char-editor .field{margin:7px 0}.char-editor textarea{min-height:60px}.tiny{font-size:10px;color:var(--muted)}
+.character-tools{display:grid;grid-template-columns:1fr 120px;gap:7px}.character-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;max-height:310px;overflow:auto;padding-right:2px}.char-card{position:relative;min-height:110px;border:1px solid var(--line);border-radius:11px;background:#07111f;padding:6px;cursor:pointer;text-align:center;color:#dbe7f5}.char-card.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,121,23,.18)}.char-card.default::after{content:'★';position:absolute;right:7px;top:7px;background:#07111fdd;color:#ffd76a;border-radius:99px;padding:2px 5px;font-size:11px}.char-card.inactive{opacity:.55}.char-card.protagonist{border-color:#ffd76a;box-shadow:0 0 0 2px rgba(255,215,106,.18)}.char-card img,.char-placeholder{width:100%;height:65px;border-radius:8px;object-fit:cover;background:#14233a;display:flex;align-items:center;justify-content:center;font-size:27px}.char-card span{display:block;margin-top:5px;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.char-role{color:var(--muted)!important;font-size:9px!important;margin-top:2px!important}.mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.file-input{display:none}.project-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.char-editor{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#07111f}.char-editor h3{font-size:13px;margin:0 0 8px}.char-editor .field{margin:7px 0}.char-editor textarea{min-height:60px}.tiny{font-size:10px;color:var(--muted)}
 .heroine-face-panel{margin-top:8px;padding:10px;border:1px solid #31506f;border-radius:12px;background:#081829}.heroine-face-head{display:flex;gap:9px;align-items:center}.heroine-face-preview{width:72px;height:72px;border-radius:12px;object-fit:cover;background:#14233a;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 72px}.heroine-face-info{min-width:0;flex:1}.heroine-face-info select{margin-top:4px}.heroine-face-state{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}.heroine-face-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
 
 .cloud-box{margin-top:12px;padding:12px;border:1px solid rgba(78,160,255,.35);border-radius:13px;background:rgba(28,75,125,.18)}
@@ -49,7 +49,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v13.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">Workflow Fix Edition</span>
 </header>
 <div class="layout">
@@ -98,14 +98,15 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="field"><label>외모</label><textarea id="charAppearance" placeholder="얼굴형, 헤어스타일, 인상"></textarea></div>
   <div class="field"><label>성격·분위기</label><textarea id="charPersonality" placeholder="차분함, 강단 있음"></textarea></div>
   <div class="field"><label>고정 프롬프트</label><textarea id="charPrompt" placeholder="모든 장면에서 동일 인물 유지 등"></textarea></div>
-  <label class="check"><input id="charEnabled" type="checkbox" checked>현재 작품에 등장</label>
+  <label class="check"><input id="charEnabled" type="checkbox" checked>이번 이야기에서 사용</label>
+  <label class="check"><input id="charProtagonist" type="checkbox">⭐ 이야기 주인공으로 지정</label>
   <label class="check"><input id="charNameLocked" type="checkbox">🔒 이름 고정 · 전체 랜덤에서 제외</label>
   <div class="mini-actions"><button class="btn ghost" type="button" onclick="$('characterImageInput').click()">📷 얼굴 등록/교체</button><button class="btn ghost" type="button" onclick="removeCharacterImage()">사진 삭제</button></div>
   <div class="mini-actions"><button class="btn primary" type="button" onclick="updateCharacterPreset()">설정 저장</button><button class="btn ghost" type="button" onclick="setDefaultCharacter()">⭐ 역할 기본값</button></div>
   <div class="mini-actions"><button class="btn ghost" type="button" onclick="deleteCharacterPreset()">선택 삭제</button><button class="btn ghost" type="button" onclick="exportCharacters()">캐릭터만 저장</button></div>
   <input id="charactersFileInput" class="file-input" type="file" accept=".json,application/json" onchange="importCharacters(event)">
   <button class="btn ghost" style="width:100%;margin-top:7px" type="button" onclick="$('charactersFileInput').click()">📂 캐릭터 보관함 불러오기</button>
-  <div class="tiny" style="margin-top:7px">얼굴 사진은 무료 버전에서는 각 기기에 로컬 저장됩니다. 캐릭터 설정과 프로젝트 내용은 클라우드 동기화됩니다.</div>
+  <div class="tiny" style="margin-top:7px">캐릭터 등록은 보관함에 남아 있습니다. 「이번 이야기에서 사용」을 체크한 인물만 GPT·이미지·쇼츠 프롬프트에 들어갑니다. 주인공은 한 명만 지정할 수 있습니다.</div>
  </div>
  <div class="field"><label>현재 여주 설정(자동 연결)</label><textarea id="heroine">37세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
  <div class="heroine-face-panel">
@@ -239,10 +240,22 @@ const DEFAULT_CHARACTERS=[
 function uid(){return 'c-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
 function normalizeCharacter(c,i=0){
  const legacyText=c.text||'';
- return{id:c.id||uid(),internalId:c.internalId||`CHAR-${String(i+1).padStart(3,'0')}`,name:c.name||`캐릭터 ${i+1}`,role:c.role||'여주',scope:c.scope||'core',nameLocked:!!c.nameLocked,age:c.age||'',appearance:c.appearance||legacyText,personality:c.personality||'',outfit:c.outfit||'',prompt:c.prompt||(!legacyText?'동일 인물 유지, 장면마다 얼굴 변경 금지':''),image:c.image||'',enabled:c.enabled!==false,isDefault:!!c.isDefault};
+ return{id:c.id||uid(),internalId:c.internalId||`CHAR-${String(i+1).padStart(3,'0')}`,name:c.name||`캐릭터 ${i+1}`,role:c.role||'여주',scope:c.scope||'core',nameLocked:!!c.nameLocked,age:c.age||'',appearance:c.appearance||legacyText,personality:c.personality||'',outfit:c.outfit||'',prompt:c.prompt||(!legacyText?'동일 인물 유지, 장면마다 얼굴 변경 금지':''),image:c.image||'',enabled:c.enabled!==false,isDefault:!!c.isDefault,isProtagonist:c.isProtagonist===true};
+}
+function migrateCharacterList(rawList){
+ const list=(rawList||[]).map(normalizeCharacter);
+ if(!list.length)return DEFAULT_CHARACTERS.map(normalizeCharacter);
+ let protagonist=list.find(c=>c.isProtagonist);
+ if(!protagonist)protagonist=list.find(c=>c.role==='여주'&&c.isDefault)||list.find(c=>c.role==='여주'&&c.enabled)||list.find(c=>c.enabled)||list[0];
+ list.forEach(c=>c.isProtagonist=!!protagonist&&c.id===protagonist.id);
+ // 구버전에서는 여러 여주 프리셋이 동시에 활성화되던 문제를 자동 정리한다.
+ const hasExplicitFlag=(rawList||[]).some(c=>Object.prototype.hasOwnProperty.call(c,'isProtagonist'));
+ if(!hasExplicitFlag&&protagonist?.role==='여주')list.forEach(c=>{if(c.role==='여주'&&c.id!==protagonist.id)c.enabled=false});
+ if(protagonist)protagonist.enabled=true;
+ return list;
 }
 function getCharacters(){
- try{const saved=JSON.parse(localStorage.getItem('sseoljeng-characters-v3')||localStorage.getItem('sseoljeng-characters-v2')||localStorage.getItem('sseoljeng-characters')||'null');return Array.isArray(saved)&&saved.length?saved.map(normalizeCharacter):DEFAULT_CHARACTERS.map(normalizeCharacter)}catch{return DEFAULT_CHARACTERS.map(normalizeCharacter)}
+ try{const saved=JSON.parse(localStorage.getItem('sseoljeng-characters-v3')||localStorage.getItem('sseoljeng-characters-v2')||localStorage.getItem('sseoljeng-characters')||'null');return migrateCharacterList(Array.isArray(saved)&&saved.length?saved:DEFAULT_CHARACTERS)}catch{return migrateCharacterList(DEFAULT_CHARACTERS)}
 }
 let selectedCharacterId=localStorage.getItem('sseoljeng-selected-character-id')||'',pendingCharacterId='';
 function storeCharacters(list){localStorage.setItem('sseoljeng-characters-v3',JSON.stringify(list.map(normalizeCharacter)))}
@@ -254,8 +267,8 @@ function renderCharacters(){
  if(!list.some(c=>c.id===selectedCharacterId))selectedCharacterId=list[0].id;
  const q=($('characterSearch')?.value||'').trim().toLowerCase(),filter=$('characterFilter')?.value||'전체';grid.innerHTML='';
  list.filter(c=>(filter==='전체'||c.role===filter)&&(!q||`${c.name} ${c.role} ${c.appearance}`.toLowerCase().includes(q))).forEach(c=>{
-  const card=document.createElement('button');card.type='button';card.className='char-card'+(c.id===selectedCharacterId?' active':'')+(c.isDefault?' default':'')+(c.enabled?'':' inactive');card.title=characterText(c);card.onclick=()=>selectCharacter(c.id);
-  card.innerHTML=c.image?`<img src="${c.image}" alt="${escapeHtml(c.name)}"><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`:`<div class="char-placeholder">${roleEmoji(c.role)}</div><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`;grid.appendChild(card);
+  const card=document.createElement('button');card.type='button';card.className='char-card'+(c.id===selectedCharacterId?' active':'')+(c.isDefault?' default':'')+(c.isProtagonist?' protagonist':'')+(c.enabled?'':' inactive');card.title=characterText(c);card.onclick=()=>selectCharacter(c.id);
+  card.innerHTML=c.image?`<img src="${c.image}" alt="${escapeHtml(c.name)}"><span>${escapeHtml(c.name)}</span><span class="char-role">${c.isProtagonist?'⭐ 주인공 · ':''}${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`:`<div class="char-placeholder">${roleEmoji(c.role)}</div><span>${escapeHtml(c.name)}</span><span class="char-role">${c.isProtagonist?'⭐ 주인공 · ':''}${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`;grid.appendChild(card);
  });
  localStorage.setItem('sseoljeng-selected-character-id',selectedCharacterId);loadCharacterEditor();renderHeroineFacePanel();
 }
@@ -271,7 +284,7 @@ function renderHeroineFacePanel(){
 }
 function chooseHeroine(id){
  const list=getCharacters(),i=list.findIndex(c=>c.id===id&&c.role==='여주');if(i<0)return;
- list.forEach(c=>{if(c.role==='여주')c.isDefault=c.id===id});list[i].enabled=true;storeCharacters(list);selectedCharacterId=id;localStorage.setItem('sseoljeng-selected-character-id',id);$('heroine').value=characterText(list[i]);renderCharacters();saveLocal(true);setStatus(`${list[i].name}을(를) 현재 여주로 지정했습니다.`,'ok');
+ list.forEach(c=>{if(c.role==='여주'){c.isDefault=c.id===id;c.enabled=c.id===id}c.isProtagonist=c.id===id});list[i].enabled=true;storeCharacters(list);selectedCharacterId=id;localStorage.setItem('sseoljeng-selected-character-id',id);$('heroine').value=characterText(list[i]);renderCharacters();saveLocal(true);setStatus(`${list[i].name}을(를) 현재 여주로 지정했습니다.`,'ok');
 }
 function uploadHeroineFace(){
  const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 여주 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
@@ -279,11 +292,11 @@ function uploadHeroineFace(){
 function clearHeroineFace(){
  const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
 }
-function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;if(c.role==='여주')$('heroine').value=characterText(c)}
+function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;$('charProtagonist').checked=!!c.isProtagonist;if(c.role==='여주')$('heroine').value=characterText(c)}
 function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
-function readCharacterEditor(base={}){return normalizeCharacter({...base,name:$('charName').value.trim()||'이름 없는 캐릭터',role:$('charRole').value,scope:$('charScope').value,nameLocked:$('charNameLocked').checked,age:$('charAge').value.trim(),appearance:$('charAppearance').value.trim(),personality:$('charPersonality').value.trim(),outfit:$('charOutfit').value.trim(),prompt:$('charPrompt').value.trim(),enabled:$('charEnabled').checked})}
-function addCharacterPreset(){const list=refreshInternalIds(getCharacters()),base={id:uid(),internalId:`CHAR-${String(list.length+1).padStart(3,'0')}`,name:'',role:'기타',scope:'support',nameLocked:false,age:'',appearance:'',personality:'',outfit:'',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',enabled:true,isDefault:false};base.name=makeRandomName(base,new Set(list.map(x=>x.name)));const c=normalizeCharacter(base,list.length);list.push(c);storeCharacters(list);selectedCharacterId=c.id;renderCharacters();$('charName').focus();$('charName').select();setStatus(`새 캐릭터 ${c.name}을 추가했습니다. 역할과 나이를 설정하세요.`,'ok');saveLocal(true)}
-function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;list[i]=readCharacterEditor(list[i]);storeCharacters(list);renderCharacters();setStatus(`${list[i].name} 설정을 저장했습니다.`,'ok');saveLocal(true)}
+function readCharacterEditor(base={}){return normalizeCharacter({...base,name:$('charName').value.trim()||'이름 없는 캐릭터',role:$('charRole').value,scope:$('charScope').value,nameLocked:$('charNameLocked').checked,age:$('charAge').value.trim(),appearance:$('charAppearance').value.trim(),personality:$('charPersonality').value.trim(),outfit:$('charOutfit').value.trim(),prompt:$('charPrompt').value.trim(),enabled:$('charEnabled').checked,isProtagonist:$('charProtagonist').checked})}
+function addCharacterPreset(){const list=refreshInternalIds(getCharacters()),base={id:uid(),internalId:`CHAR-${String(list.length+1).padStart(3,'0')}`,name:'',role:'기타',scope:'support',nameLocked:false,age:'',appearance:'',personality:'',outfit:'',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',enabled:true,isDefault:false,isProtagonist:false};base.name=makeRandomName(base,new Set(list.map(x=>x.name)));const c=normalizeCharacter(base,list.length);list.push(c);storeCharacters(list);selectedCharacterId=c.id;renderCharacters();$('charName').focus();$('charName').select();setStatus(`새 캐릭터 ${c.name}을 추가했습니다. 역할과 나이를 설정하세요.`,'ok');saveLocal(true)}
+function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;const edited=readCharacterEditor(list[i]);if(edited.isProtagonist){list.forEach(c=>c.isProtagonist=false);edited.enabled=true}list[i]=edited;if(!list.some(c=>c.isProtagonist)){const fallback=list.find(c=>c.enabled)||list[i];fallback.isProtagonist=true;fallback.enabled=true}storeCharacters(list);renderCharacters();setStatus(`${list[i].name} 설정을 저장했습니다.${list[i].isProtagonist?' 이야기 주인공으로 지정했습니다.':''}`,'ok');saveLocal(true)}
 function duplicateCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(!c)return;const copy=normalizeCharacter({...c,id:uid(),name:c.name+' 복사본',isDefault:false});list.push(copy);storeCharacters(list);selectedCharacterId=copy.id;renderCharacters();setStatus('캐릭터를 복제했습니다.','ok');saveLocal(true)}
 function deleteCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(list.length<=1){setStatus('캐릭터는 최소 1개가 필요합니다.','bad');return}if(!confirm(`${c.name}을 삭제할까요?`))return;const next=list.filter(x=>x.id!==c.id);storeCharacters(next);selectedCharacterId=next[0].id;renderCharacters();setStatus('캐릭터를 삭제했습니다.','ok');saveLocal(true)}
 function setDefaultCharacter(){const list=getCharacters(),c=readCharacterEditor(selectedCharacter());list.forEach(x=>{if(x.role===c.role)x.isDefault=x.id===c.id});const i=list.findIndex(x=>x.id===c.id);list[i]=c;list[i].isDefault=true;storeCharacters(list);renderCharacters();setStatus(`${c.role} 역할의 기본 캐릭터로 지정했습니다.`,'ok');saveLocal(true)}
@@ -306,9 +319,10 @@ function refreshInternalIds(list){let n=1;return list.map(c=>({...c,internalId:c
 function randomizeSelectedName(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;const used=new Set(list.filter((_,x)=>x!==i).map(c=>c.name));list[i].name=makeRandomName(readCharacterEditor(list[i]),used);list[i].nameLocked=false;storeCharacters(refreshInternalIds(list));renderCharacters();saveLocal(true);setStatus(`선택 캐릭터 이름을 ${list[i].name}(으)로 바꿨습니다.`,'ok')}
 function randomizeAllNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.filter(c=>c.nameLocked).map(c=>c.name));let changed=0;for(const c of list){if(c.nameLocked||!c.enabled)continue;c.name=makeRandomName(c,used);used.add(c.name);changed++}storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`등장 캐릭터 ${changed}명의 이름을 중복 없이 랜덤 배정했습니다.`,'ok')}
 function ensureAssignedNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.map(c=>c.name)),generic=/^(여주|안경 여주|화려한 여주|새 캐릭터|캐릭터|이름 없는 캐릭터)(\s|$)/;let changed=false;for(const c of list){if(!c.enabled||c.nameLocked||!generic.test(c.name))continue;used.delete(c.name);c.name=makeRandomName(c,used);used.add(c.name);changed=true}if(changed){storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true)}return changed}
-function imageCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}${c.image?' · 기준 얼굴 사진 등록됨(반드시 동일 얼굴로 유지)':''}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
+function usedCharacters(){return getCharacters().filter(c=>c.enabled).sort((a,b)=>Number(b.isProtagonist)-Number(a.isProtagonist))}
+function imageCastText(){return usedCharacters().map(c=>`- [${c.internalId}] ${c.isProtagonist?'⭐ 주인공':c.scope==='core'?'핵심 조연':c.scope==='support'?'보조 인물':'단역'} · ${c.role} · 이름 ${c.name}${c.image?' · 기준 얼굴 사진 등록됨(반드시 동일 얼굴로 유지)':''}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
 function activeCastText(){return imageCastText()}
-function storyCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}${c.age?` · ${c.age}`:''}${c.personality?` · 성격: ${c.personality}`:''}`).join('\n')||'- 설정된 등장인물 없음'}
+function storyCastText(){const list=usedCharacters();if(!list.length)return '- 설정된 등장인물 없음';const main=list.find(c=>c.isProtagonist)||list[0],support=list.filter(c=>c.id!==main.id);return `[주인공]\n- [${main.internalId}] ${main.role} · 이름 ${main.name}${main.age?` · ${main.age}`:''}${main.personality?` · 성격: ${main.personality}`:''}\n\n[사용 가능한 조연]\n${support.length?support.map(c=>`- [${c.internalId}] ${c.scope==='extra'?'단역':'조연'} · ${c.role} · 이름 ${c.name}${c.age?` · ${c.age}`:''}${c.personality?` · 성격: ${c.personality}`:''}`).join('\n'):'- 없음'}\n\n※ 위 조연은 이야기에서 사용할 수 있는 인물 목록일 뿐, 전원을 반드시 등장시키라는 뜻이 아닙니다. 설계도와 사건에 필요한 인물만 자연스럽게 등장시키세요.`}
 function visualLeakTerms(){
  const generic=['안경','메탈 안경','실버 메탈','뿔테','얼굴형','계란형 얼굴','둥근 얼굴','턱선','눈매','콧대','코끝','도톰한 입술','피부톤','우윳빛 피부','윤광','헤어스타일','롱레이어드','롱펌','웨이브 헤어','S컬','시스루뱅','다크브라운','크림색 블라우스','블라우스','블랙 정장','정장 차림','원피스','재킷 차림','오똑한 코','높은 콧대'];
  const fromChars=getCharacters().filter(c=>c.enabled).flatMap(c=>[c.appearance,c.outfit,c.prompt]).filter(Boolean).flatMap(v=>String(v).split(/[,，/·]| 그리고 | 또는 /)).map(v=>v.trim()).filter(v=>v.length>=3&&v.length<=30);
@@ -321,6 +335,7 @@ function storyEngineRules(){return `[Story Engine v12.1 One-Based]
 - 모든 문단에서 반드시 새로운 사건이나 행동이 하나 이상 진행되어야 합니다. 같은 내용을 표현만 바꿔 반복하지 마세요.
 - 행동, 표정, 분위기, 대화를 자연스럽게 섞어 장면이 떠오르게 작성하세요.
 - 등장인물 목록에 없는 새로운 사람 이름은 만들지 마세요. 필요한 단역은 '직원', '은행원', '의사'처럼 역할명만 사용하세요.
+- 사용 가능한 조연 목록은 허용 목록일 뿐입니다. 사건에 필요하지 않은 조연을 억지로 등장시키지 마세요.
 - 결말을 앞당기지 말고 설계도에 지정된 순서대로 사건을 진행하세요.`}
 function openingRules(subscribe=true){return `- 1문단만 작성하세요. 0문단은 존재하지 않으며 다른 문단도 절대 출력하지 마세요.
 - 1문단은 오프닝 역할이며 반드시 220~280자로 작성하세요.
@@ -366,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.5-heroine-face-selection',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.7-story-cast-selection',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -431,7 +446,7 @@ function restoreImportBackup(){try{const raw=JSON.parse(localStorage.getItem(IMP
 function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'썰쟁-프로젝트'}
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
-['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
 
 function generationPrompt(task){
  ensureAssignedNames();
@@ -558,7 +573,7 @@ function wizardPromptFor(step){
  const [start,end]=promptWizard.ranges[step],total=Number(c.count),isFirst=start===1,isLast=end===total;
  const common=`당신은 유튜브 사연 채널용 롱폼 원고를 작성하는 전문 작가입니다.\n\n[프로젝트]\n제목: ${c.name}\n주제: ${c.topic}\n총 문단 수: ${total}문단\n이번 작성 구간: ${start}~${end}문단\n시점: ${c.pov}\n분위기: ${c.tone}\n스토리 밀도: ${c.density}\n\n[등장인물]\n${storyCastText()}\n\n[전체 문단별 고정 설계도]\n${blueprint}`;
  const continuity=isFirst?'처음 작성하는 구간입니다. 전체 이야기의 시작을 여세요.':`바로 앞서 작성한 ${start-1}문단 다음부터 이어서 작성하세요. 이전 답변의 설정·사건·감정·문체를 그대로 유지하고, 이미 쓴 내용을 요약하거나 반복하지 마세요.`;
- return `${common}\n\n[연속 작성 지시]\n${continuity}\n\n[이번 출력 규칙]\n1. 정확히 ${start}문단부터 ${end}문단까지만 출력하세요. 다른 문단은 절대 출력하지 마세요.\n2. 각 문단 제목은 한 줄에 반드시 'N문단' 형식으로 표시하세요.\n3. 문단 번호를 건너뛰거나 중복하지 마세요.\n4. 각 문단은 약 400자 내외로 작성하되 반복으로 분량을 채우지 마세요.\n5. 설계도에 정해진 사건 순서를 그대로 따르고, 등장인물에 없는 이름은 만들지 마세요.\n6. '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 자연스러운 구어체를 사용하세요.\n7. 대화는 필요한 부분에만 짧게 쓰고 나레이션 중심으로 작성하세요.\n8. 마크다운 제목 기호, 코드블록, 설명문, 요약은 출력하지 마세요.\n${c.strict?'9. 각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'9. 문단 글자 수 표시는 넣지 마세요.'}\n${isFirst?`10. 1문단은 강한 사건 후킹으로 시작하세요. 후킹 다음에는 자연스럽게 '안녕하세요. 썰쟁입니다.'와 같은 짧은 채널 인사를 넣고, 그 다음에만 '시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다.'를 한 번 넣은 뒤 본문으로 이어가세요. 구독 문구가 후킹 직후 바로 튀어나오지 않도록 하세요.`:'10. 앞 구간과 자연스럽게 이어지고 같은 내용을 다시 설명하지 마세요.'}\n${isLast?`11. 전체 결말과 여운은 오직 ${total}문단에서 완성하세요.`:`11. 아직 결말을 내리지 마세요. ${end}문단 마지막은 다음 구간으로 이어지는 행동·발견·결정·긴장으로 끝내세요.`}\n\n이제 ${start}문단부터 ${end}문단까지만 작성하세요.`;
+ return `${common}\n\n[연속 작성 지시]\n${continuity}\n\n[이번 출력 규칙]\n1. 정확히 ${start}문단부터 ${end}문단까지만 출력하세요. 다른 문단은 절대 출력하지 마세요.\n2. 각 문단 제목은 한 줄에 반드시 'N문단' 형식으로 표시하세요.\n3. 문단 번호를 건너뛰거나 중복하지 마세요.\n4. 각 문단은 약 400자 내외로 작성하되 반복으로 분량을 채우지 마세요.\n5. 설계도에 정해진 사건 순서를 그대로 따르고, 등장인물에 없는 이름은 만들지 마세요. 등록된 조연을 모두 억지로 등장시키지 말고 필요한 인물만 사용하세요.\n6. '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 자연스러운 구어체를 사용하세요.\n7. 대화는 필요한 부분에만 짧게 쓰고 나레이션 중심으로 작성하세요.\n8. 마크다운 제목 기호, 코드블록, 설명문, 요약은 출력하지 마세요.\n${c.strict?'9. 각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'9. 문단 글자 수 표시는 넣지 마세요.'}\n${isFirst?`10. 1문단은 강한 사건 후킹으로 시작하세요. 후킹 다음에는 자연스럽게 '안녕하세요. 썰쟁입니다.'와 같은 짧은 채널 인사를 넣고, 그 다음에만 '시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다.'를 한 번 넣은 뒤 본문으로 이어가세요. 구독 문구가 후킹 직후 바로 튀어나오지 않도록 하세요.`:'10. 앞 구간과 자연스럽게 이어지고 같은 내용을 다시 설명하지 마세요.'}\n${isLast?`11. 전체 결말과 여운은 오직 ${total}문단에서 완성하세요.`:`11. 아직 결말을 내리지 마세요. ${end}문단 마지막은 다음 구간으로 이어지는 행동·발견·결정·긴장으로 끝내세요.`}\n\n이제 ${start}문단부터 ${end}문단까지만 작성하세요.`;
 }
 function startPromptWizard(){
  try{
