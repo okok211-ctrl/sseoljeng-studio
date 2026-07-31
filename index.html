@@ -264,23 +264,28 @@ function visualLeakTerms(){
  return [...new Set([...generic,...fromChars])];
 }
 function findVisualLeaks(text){const value=String(text||'');return visualLeakTerms().filter(term=>value.includes(term)).slice(0,30)}
-function storyEngineRules(){return `[Story Engine v11.1 Lite]
+function storyEngineRules(){return `[Story Engine v11.2 Split]
 - 실제 사람이 말하는 것처럼 자연스러운 구어체로 작성하세요.
-- 각 문단은 반드시 420~500자로 작성하세요. (400자 미만 금지)
+- 본문 문단은 반드시 420~500자로 작성하세요. (400자 미만 금지)
 - 모든 문단에서 반드시 새로운 사건이나 행동이 하나 이상 진행되어야 합니다. 같은 내용을 표현만 바꿔 반복하지 마세요.
 - 행동, 표정, 분위기, 대화를 자연스럽게 섞어 장면이 떠오르게 작성하세요.
 - 등장인물 목록에 없는 새로운 사람 이름은 만들지 마세요. 필요한 단역은 '직원', '은행원', '의사'처럼 역할명만 사용하세요.
-- 0문단은 반드시 220~280자로 작성하고 다음 순서를 지키세요.
-  ① 강한 사건 후킹 2~3문장
-  ② '시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다.' 문구
-  ③ 오늘 이야기의 핵심 갈등과 기대감을 2~3문장으로 예고
-- 마지막 문단은 단순히 이야기를 끝내지 말고 다음 순서를 반드시 포함하세요.
-  ① 사건 마무리
-  ② 느낀 점 또는 변화
-  ③ '오늘 이야기는 여기까지입니다.'
-  ④ '여러분이라면 어떻게 하셨을까요?'와 같은 시청자 질문
-  ⑤ 댓글 참여 유도
-  ⑥ 구독·좋아요 감사 인사와 다음 이야기 예고.`}
+- 결말을 앞당기지 말고 설계도에 지정된 순서대로 사건을 진행하세요.`}
+function openingRules(subscribe=true){return `- 0문단만 작성하세요. 다른 문단은 절대 출력하지 마세요.
+- 0문단은 반드시 220~280자로 작성하세요.
+- 강한 사건 후킹 2~3문장으로 시작하세요.
+${subscribe?`- 후킹 직후 아래 문장을 글자 하나 바꾸지 말고 정확히 한 번 넣으세요.\n\"시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다.\"`:'- 홍보 문구는 넣지 마세요.'}
+- 이어서 오늘 이야기의 핵심 갈등과 궁금증을 2~3문장으로 예고하세요.
+- '오늘 이야기는 여기까지입니다', 시청자 질문, 댓글 유도, 감사 인사 같은 엔딩 문구는 절대 넣지 마세요.`}
+function bodyNoEndingRules(){return `- 이 구간은 본문 진행 구간입니다. 엔딩이나 마무리를 절대 작성하지 마세요.
+- 다음 표현과 비슷한 문장도 모두 금지합니다: '오늘 이야기는 여기까지입니다', '이야기를 마무리하겠습니다', '여기서 매듭짓겠습니다', '끝까지 시청해 주셔서 감사합니다', '여러분이라면 어떻게 하셨을까요', '댓글로 의견을 남겨주세요', '구독과 좋아요를 부탁드립니다'.
+- 마지막 문장은 다음 문단으로 자연스럽게 이어지는 행동, 발견, 결정 또는 긴장으로 끝내세요.`}
+function endingRules(number){return `- ${number}문단만 작성하세요. 다른 문단은 절대 출력하지 마세요.
+- 마지막 문단은 반드시 320~420자로 작성하세요.
+- 사건의 최종 결과와 인물의 변화를 먼저 정리하세요.
+- 이어서 '오늘 이야기는 여기까지입니다.'를 정확히 한 번 넣으세요.
+- 시청자 질문, 댓글 참여 유도, 구독·좋아요 감사, 다음 이야기 예고를 자연스럽게 한 번씩만 넣으세요.
+- 새로운 사건이나 새로운 인물을 추가하지 마세요.`}
 async function repairVisualLeaks(text,context=''){const leaks=findVisualLeaks(text);if(!leaks.length)return text;const prompt=`${storyEngineRules()}
 
 [수정 대상 원고]
@@ -542,7 +547,7 @@ async function generateAll(){
  busy=true;$('allBtn').disabled=true;
  try{
   setStatus('1/4 설계도 생성 중...');$('blueprint').value=await callGenerate('blueprint');saveLocal(true);
-  const c=cfg(),total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let built='';for(let s=1;s<=total;s+=chunkSize){const e=Math.min(total,s+chunkSize-1),chunkStart=s===1?0:s;setStatus(`2/4 롱폼 ${s}~${e}문단 생성 중...`);const prompt=storyChunkPrompt(chunkStart,e,$('blueprint').value,built);const part=await generateAndNormalizeStoryChunk(prompt,chunkStart,e,c.subscribe);built+=(built?'\n\n':'')+part.trim();$('story').value=built;saveLocal(true)}updateMeta();
+  const c=cfg();await buildSeparatedStory($('blueprint').value,msg=>setStatus('2/4 '+msg));updateMeta();
   setStatus('3/4 제작 자료 생성 중...');const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;saveLocal(true);
   setStatus('4/4 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
   active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
@@ -648,10 +653,9 @@ async function generateBlueprint(silent=false){
  try{const text=await callGenerate('blueprint');$('blueprint').value=text;saveLocal(true);if(!silent){showTab('blueprint');setStatus('설계도 생성 완료. 이 설계도를 기준으로 긴 이야기를 고정합니다.','ok')}return text}
  catch(e){if(!silent)setStatus('설계도 생성 실패: '+e.message,'bad');throw e}finally{if(!silent){busy=false;$('allBtn').disabled=false}}
 }
-function storyChunkPrompt(start,end,blueprint,existing){
+function storyBaseContext(blueprint,existing=''){
  ensureAssignedNames();
- const c=cfg(),isFirst=start===0;
- const previous=existing?existing.slice(-12000):'(없음)';
+ const c=cfg(),previous=existing?existing.slice(-12000):'(없음)';
  return `프로젝트: ${c.name}
 주제: ${c.topic}
 시점: ${c.pov}
@@ -666,17 +670,31 @@ ${storyEngineRules()}
 ${blueprint}
 
 [이미 작성된 원고의 마지막 부분]
-${previous}
+${previous}`;
+}
+function openingPrompt(blueprint){
+ const c=cfg();
+ return `${storyBaseContext(blueprint)}
 
-이제 ${isFirst?'0문단과 1':'본문 '+start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요.
-- 0문단은 180~220자로 작성하세요.
-- 본문 각 문단은 반드시 420~500자로 작성하세요. 400자 미만은 허용하지 않습니다.
+${openingRules(c.subscribe)}
+
+출력 형식은 반드시 다음과 같이 하세요.
+0문단
+
+본문`;
+}
+function bodyChunkPrompt(start,end,blueprint,existing){
+ const c=cfg();
+ return `${storyBaseContext(blueprint,existing)}
+
+이제 본문 ${start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요.
+- 각 문단은 반드시 420~500자로 작성하세요. 400자 미만은 허용하지 않습니다.
 - 한 문단에는 설계도에 지정된 새로운 사건 하나만 진행하세요.
 - 말로 읽었을 때 자연스럽고 쉽게 들리도록 작성하세요.
 - '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 같은 종결형을 세 번 연속 쓰지 마세요.
 - 1인칭 회고체라면 화자 이름을 절대 쓰지 말고 '저는, 제가, 제게'로 표현하세요.
-- 가족은 이름 대신 남편, 시어머니, 시아버지, 아들, 딸 같은 관계 호칭만 사용하세요.
-${isFirst&&c.subscribe?`- 0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 다른 홍보 문장은 금지합니다.`:''}
+- 가족은 이름 대신 남편, 시어머니, 시아버지, 아들, 딸 같은 관계 호칭을 우선 사용하세요.
+${bodyNoEndingRules()}
 
 중요 규칙:
 1. 설계도와 등장인물 목록에 없는 이름을 절대 만들지 마세요. 필요한 단역은 이름 없이 역할명으로만 처리하세요.
@@ -685,16 +703,79 @@ ${isFirst&&c.subscribe?`- 0문단은 강한 사건 후킹 1~2문장으로 시작
 4. 이 구간에는 설계도에 지정된 새 사건이 실제로 발생해야 합니다.
 5. 다음 구간으로 자연스럽게 이어지되 결말을 앞당기지 마세요.
 6. 긴 대화는 피하고 ${c.pov} 문체를 유지하세요.
-7. ${c.strict?'각 본문 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'글자 수 표시는 하지 마세요.'}`
+7. ${c.strict?'각 본문 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'글자 수 표시는 하지 마세요.'}`;
+}
+function endingPrompt(number,blueprint,existing){
+ const c=cfg();
+ return `${storyBaseContext(blueprint,existing)}
+
+${endingRules(number)}
+- 말로 읽었을 때 자연스럽고 쉽게 들리도록 작성하세요.
+- ${c.pov} 문체와 기존 원고의 사실을 그대로 유지하세요.
+
+출력 형식은 반드시 다음과 같이 하세요.
+${number}문단
+
+본문`;
+}
+// 기존 호출과의 호환용. 0문단과 본문을 한 번에 생성하지 않습니다.
+function storyChunkPrompt(start,end,blueprint,existing){
+ if(start===0&&end===0)return openingPrompt(blueprint);
+ return bodyChunkPrompt(Math.max(1,start),end,blueprint,existing);
+}
+function paragraphRangeIssues(text,start,end,mode='body'){
+ const expected=[];for(let n=start;n<=end;n++)expected.push(n);
+ const map=parseNumberedParagraphs(text,expected),issues=[];
+ const endingPattern=/(오늘 이야기는 여기까지입니다|이야기를 마무리|여기서 .*매듭|끝까지 시청해 주셔서|여러분이라면 어떻게 하셨을까요|댓글로 .*의견|구독과 좋아요)/;
+ for(const n of expected){
+  const body=map.get(n)||'';const len=paragraphCharCount(body);
+  if(mode==='opening'&&(len<200||len>310))issues.push(`${n}문단 ${len}자`);
+  if(mode==='body'&&(len<400||len>530))issues.push(`${n}문단 ${len}자`);
+  if(mode==='ending'&&(len<280||len>470))issues.push(`${n}문단 ${len}자`);
+  if(mode==='body'&&endingPattern.test(body))issues.push(`${n}문단 엔딩 문구`);
+ }
+ return issues;
+}
+async function generateValidatedChunk(prompt,start,end,subscribe=false,mode='body'){
+ let last='';
+ for(let attempt=1;attempt<=3;attempt++){
+  let request=prompt;
+  if(attempt>1)request+=`\n\n[자동 재작성 요청]\n직전 출력의 사건과 설정은 유지하되 다음 문제를 고쳐 전체 구간을 다시 출력하세요: ${paragraphRangeIssues(last,start,end,mode).join(', ')||'형식 오류'}. 번호 누락 없이 각 제목은 줄 하나에 'N문단'만 적으세요.`;
+  last=await callGeneratePrompt(request,'storychunk');
+  const leaks=findVisualLeaks(last);if(leaks.length)last=await repairVisualLeaks(last,`현재 구간은 ${start}~${end}문단입니다. 엔딩 위치와 문단 번호는 바꾸지 마세요.`);
+  if(mode==='opening')last=normalizeOpening(last,subscribe);
+  const checked=normalizeStoryChunk(last,start,end),issues=paragraphRangeIssues(last,start,end,mode);
+  if(!checked.missing.length&&!issues.length)return checked.text;
+  if(attempt<3)setStatus(`${start}~${end}문단 자동 보정 중 · ${[...checked.missing.map(x=>x+'문단 누락'),...issues].join(', ')}`);
+ }
+ const checked=normalizeStoryChunk(last,start,end);
+ if(!checked.missing.length)return checked.text; // 길이만 약간 벗어난 경우 결과는 살려 둡니다.
+ throw new Error(`AI가 ${start}~${end}문단 형식을 완성하지 못했습니다. 누락 문단: ${checked.missing.join(', ')}. 다시 생성해 주세요.`);
+}
+async function buildSeparatedStory(blueprint,onProgress=()=>{}){
+ const c=cfg(),total=Number(c.count),lastBody=Math.max(1,total-1),chunkSize=c.quality==='최고 품질'?5:10;
+ let story='';
+ onProgress('0문단 오프닝 생성 중...');
+ const opening=await generateValidatedChunk(openingPrompt(blueprint),0,0,c.subscribe,'opening');
+ story=opening.trim();$('story').value=story;updateMeta();saveLocal(true);
+ const ranges=[];for(let s=1;s<=lastBody;s+=chunkSize)ranges.push([s,Math.min(lastBody,s+chunkSize-1)]);
+ for(let i=0;i<ranges.length;i++){
+  const [start,end]=ranges[i];onProgress(`본문 ${start}~${end}문단 생성 중 (${i+1}/${ranges.length})...`);
+  const part=await generateValidatedChunk(bodyChunkPrompt(start,end,blueprint,story),start,end,false,'body');
+  story+='\n\n'+part.trim();$('story').value=story;updateMeta();saveLocal(true);
+ }
+ onProgress(`${total}문단 엔딩 생성 중...`);
+ const ending=await generateValidatedChunk(endingPrompt(total,blueprint,story),total,total,false,'ending');
+ story+='\n\n'+ending.trim();$('story').value=story;updateMeta();saveLocal(true);
+ return story;
 }
 async function generateStableStory(){
  if(busy)return;const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
  busy=true;$('allBtn').disabled=true;$('shortsOnlyBtn').disabled=true;
  try{
   let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
-  const total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let story='';let starts=[];for(let s=1;s<=total;s+=chunkSize)starts.push([s,Math.min(total,s+chunkSize-1)]);
-  for(let i=0;i<starts.length;i++){const [start,end]=starts[i],chunkStart=start===1?0:start;setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(chunkStart,end,blueprint,story);const part=await generateAndNormalizeStoryChunk(prompt,chunkStart,end,c.subscribe);story+=(story?'\n\n':'')+part.trim();$('story').value=story;updateMeta();saveLocal(true)}
-  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${total}문단 생성 완료 · 외모 표현 ${remaining.length}건이 남아 설정 검사를 권장합니다.`:`${total}문단 생성 완료 · Story/Image Engine 분리 및 외모 표현 자동 검사 통과.` ,remaining.length?'bad':'ok')
+  const story=await buildSeparatedStory(blueprint,msg=>setStatus('2단계: '+msg));
+  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${c.count}문단 생성 완료 · 외모 표현 ${remaining.length}건이 남아 설정 검사를 권장합니다.`:`${c.count}문단 생성 완료 · 오프닝·본문·엔딩 분리 생성 완료.` ,remaining.length?'bad':'ok')
  }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
 }
 function makeVoice(silent=false){
