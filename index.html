@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.1 Production Edition</title>
+<title>썰쟁 Studio v13.6 Workflow Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,12 +49,29 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.1</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Split Prompt Edition</span>
+ <div><h1>🎬 썰쟁 Studio v13.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Workflow Fix Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
  <h2>이야기 설정</h2>
+ <div class="wizard">
+  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
+  <div class="wizard-grid">
+   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
+   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
+   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
+   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
+  </div>
+  <div id="wizardProgress" class="wizard-progress">20·40·60문단도 자동으로 나누어 같은 대화에서 이어 쓰도록 안내합니다.</div>
+  <div id="wizardList" class="wizard-list"></div>
+ </div>
  <div class="cloud-box">
   <div class="cloud-head"><div class="cloud-title">☁️ 클라우드</div><div id="cloudUser" class="cloud-user">로그아웃 상태</div></div>
   <div class="cloud-row"><button id="loginBtn" class="btn primary" type="button" onclick="googleLogin()">Google 로그인</button><button id="logoutBtn" class="btn ghost hidden" type="button" onclick="googleLogout()">로그아웃</button></div>
@@ -158,23 +175,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="tiny" style="margin-top:7px">롱폼과 기존 제작 자료는 건드리지 않습니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
  </div>
 
- <div class="wizard">
-  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
-  <div class="wizard-grid">
-   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
-   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
-   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
-   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
-  </div>
-  <div id="wizardProgress" class="wizard-progress">20·40·60문단도 자동으로 나누어 같은 대화에서 이어 쓰도록 안내합니다.</div>
-  <div id="wizardList" class="wizard-list"></div>
- </div>
  <div class="project-actions">
   <button class="btn ghost" onclick="exportProject()">📦 프로젝트 내보내기</button>
   <button class="btn ghost" onclick="$('projectFileInput').click()">📂 프로젝트 불러오기</button>
