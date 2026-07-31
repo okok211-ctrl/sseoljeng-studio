@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.4 Workflow Edition</title>
+<title>썰쟁 Studio v13.1 Production Edition</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -37,41 +37,24 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .hidden{display:none!important}.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}.checks{display:grid;gap:6px;margin:10px 0}.check{display:flex;gap:7px;color:#c6d2df;font-size:12px;line-height:1.45}.check input{width:auto}
 .character-tools{display:grid;grid-template-columns:1fr 120px;gap:7px}.character-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;max-height:310px;overflow:auto;padding-right:2px}.char-card{position:relative;min-height:110px;border:1px solid var(--line);border-radius:11px;background:#07111f;padding:6px;cursor:pointer;text-align:center;color:#dbe7f5}.char-card.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,121,23,.18)}.char-card.default::after{content:'★';position:absolute;right:7px;top:7px;background:#07111fdd;color:#ffd76a;border-radius:99px;padding:2px 5px;font-size:11px}.char-card.inactive{opacity:.55}.char-card img,.char-placeholder{width:100%;height:65px;border-radius:8px;object-fit:cover;background:#14233a;display:flex;align-items:center;justify-content:center;font-size:27px}.char-card span{display:block;margin-top:5px;font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.char-role{color:var(--muted)!important;font-size:9px!important;margin-top:2px!important}.mini-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}.file-input{display:none}.project-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.char-editor{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#07111f}.char-editor h3{font-size:13px;margin:0 0 8px}.char-editor .field{margin:7px 0}.char-editor textarea{min-height:60px}.tiny{font-size:10px;color:var(--muted)}
+.heroine-face-panel{margin-top:8px;padding:10px;border:1px solid #31506f;border-radius:12px;background:#081829}.heroine-face-head{display:flex;gap:9px;align-items:center}.heroine-face-preview{width:72px;height:72px;border-radius:12px;object-fit:cover;background:#14233a;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 72px}.heroine-face-info{min-width:0;flex:1}.heroine-face-info select{margin-top:4px}.heroine-face-state{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}.heroine-face-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
 
 .cloud-box{margin-top:12px;padding:12px;border:1px solid rgba(78,160,255,.35);border-radius:13px;background:rgba(28,75,125,.18)}
 .cloud-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cloud-title{font-size:13px;font-weight:900}.cloud-user{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
 .cloud-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.cloud-select{margin-top:8px}.cloud-state{font-size:10px;color:#b8c7da;margin-top:7px;line-height:1.45}.cloud-state.ok{color:#baffd5}.cloud-state.bad{color:#ffc2c7}
 .wizard{margin-top:12px;padding:12px;border:1px solid rgba(255,121,23,.35);border-radius:13px;background:rgba(255,121,23,.07)}.wizard-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.wizard-title{font-size:13px;font-weight:900}.wizard-step{font-size:11px;color:#ffd7b8;font-weight:900}.wizard-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.wizard-progress{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}.wizard-list{max-height:150px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:9px;padding:7px;background:#06101d}.wizard-item{font-size:11px;padding:5px 7px;border-radius:7px;color:var(--muted)}.wizard-item.current{background:rgba(255,121,23,.15);color:#ffd7b8;font-weight:900}.wizard-item.done{color:#baffd5}
-.wizard-top{margin-top:0;margin-bottom:12px;box-shadow:0 0 0 1px rgba(255,121,23,.08),0 10px 24px rgba(0,0,0,.16)}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.4</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Workflow Edition</span>
+ <div><h1>🎬 썰쟁 Studio v13.1</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Split Prompt Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
  <h2>이야기 설정</h2>
- <div class="wizard wizard-top">
-  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
-  <div class="wizard-grid">
-   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
-   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
-   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
-   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
-  </div>
-  <div id="wizardProgress" class="wizard-progress">문단 수 설정에 맞춰 자동 분할합니다. 아래에서 문단 수를 바꾸면 단계도 자동 갱신됩니다.</div>
-  <div id="wizardList" class="wizard-list"></div>
- </div>
  <div class="cloud-box">
   <div class="cloud-head"><div class="cloud-title">☁️ 클라우드</div><div id="cloudUser" class="cloud-user">로그아웃 상태</div></div>
   <div class="cloud-row"><button id="loginBtn" class="btn primary" type="button" onclick="googleLogin()">Google 로그인</button><button id="logoutBtn" class="btn ghost hidden" type="button" onclick="googleLogout()">로그아웃</button></div>
@@ -108,6 +91,14 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="tiny" style="margin-top:7px">얼굴 사진은 무료 버전에서는 각 기기에 로컬 저장됩니다. 캐릭터 설정과 프로젝트 내용은 클라우드 동기화됩니다.</div>
  </div>
  <div class="field"><label>현재 여주 설정(자동 연결)</label><textarea id="heroine">37세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
+ <div class="heroine-face-panel">
+  <div class="heroine-face-head">
+   <div id="heroineFacePreview" class="heroine-face-preview">👩</div>
+   <div class="heroine-face-info"><label>현재 여주 선택 · 기준 얼굴</label><select id="heroineSelect" onchange="chooseHeroine(this.value)"></select><div id="heroineFaceState" class="heroine-face-state">여주를 선택한 뒤 얼굴 사진을 등록하세요.</div></div>
+  </div>
+  <div class="heroine-face-actions"><button class="btn primary" type="button" onclick="uploadHeroineFace()">📷 여주 얼굴 지정</button><button class="btn ghost" type="button" onclick="clearHeroineFace()">얼굴 지정 해제</button></div>
+  <div class="tiny" style="margin-top:7px">등록한 사진은 해당 여주 캐릭터에 저장되고, 이미지 프롬프트에서 기준 얼굴이 등록된 캐릭터로 표시됩니다.</div>
+ </div>
  <div class="row">
   <div class="field"><label>문단 수</label><select id="count"><option>15</option><option selected>20</option><option>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option value="custom">직접 입력</option></select><input id="customCount" type="number" min="10" max="100" value="40" style="margin-top:6px;display:none" placeholder="10~100"></div>
   <div class="field"><label>이미지 수</label><select id="images"><option>3</option><option selected>4</option><option>6</option><option>8</option><option>10</option></select></div>
@@ -167,6 +158,23 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="tiny" style="margin-top:7px">롱폼과 기존 제작 자료는 건드리지 않습니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
  </div>
 
+ <div class="wizard">
+  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
+  <div class="wizard-grid">
+   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
+   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
+   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
+   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
+  </div>
+  <div id="wizardProgress" class="wizard-progress">20·40·60문단도 자동으로 나누어 같은 대화에서 이어 쓰도록 안내합니다.</div>
+  <div id="wizardList" class="wizard-list"></div>
+ </div>
  <div class="project-actions">
   <button class="btn ghost" onclick="exportProject()">📦 프로젝트 내보내기</button>
   <button class="btn ghost" onclick="$('projectFileInput').click()">📂 프로젝트 불러오기</button>
@@ -249,9 +257,28 @@ function renderCharacters(){
   const card=document.createElement('button');card.type='button';card.className='char-card'+(c.id===selectedCharacterId?' active':'')+(c.isDefault?' default':'')+(c.enabled?'':' inactive');card.title=characterText(c);card.onclick=()=>selectCharacter(c.id);
   card.innerHTML=c.image?`<img src="${c.image}" alt="${escapeHtml(c.name)}"><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`:`<div class="char-placeholder">${roleEmoji(c.role)}</div><span>${escapeHtml(c.name)}</span><span class="char-role">${escapeHtml(c.role)}${c.enabled?'':' · 미사용'}</span>`;grid.appendChild(card);
  });
- localStorage.setItem('sseoljeng-selected-character-id',selectedCharacterId);loadCharacterEditor();
+ localStorage.setItem('sseoljeng-selected-character-id',selectedCharacterId);loadCharacterEditor();renderHeroineFacePanel();
 }
 function escapeHtml(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderHeroineFacePanel(){
+ const select=$('heroineSelect'),preview=$('heroineFacePreview'),state=$('heroineFaceState');if(!select||!preview||!state)return;
+ const heroines=getCharacters().filter(c=>c.role==='여주');
+ const current=heroines.find(c=>c.enabled&&c.isDefault)||heroines.find(c=>c.enabled)||heroines[0];
+ select.innerHTML=heroines.length?heroines.map(c=>`<option value="${escapeHtml(c.id)}" ${current&&c.id===current.id?'selected':''}>${escapeHtml(c.name)}${c.image?' · 얼굴 등록됨':''}${c.enabled?'':' · 미사용'}</option>`).join(''):'<option value="">여주 캐릭터 없음</option>';
+ if(!current){preview.innerHTML='👩';state.textContent='여주 역할 캐릭터를 먼저 추가하세요.';return}
+ preview.innerHTML=current.image?`<img src="${current.image}" alt="${escapeHtml(current.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:11px">`:'👩';
+ state.textContent=current.image?`${current.name}의 기준 얼굴이 지정되어 있습니다. 이미지 제작 시 이 얼굴을 기준으로 사용하세요.`:`${current.name}의 기준 얼굴이 아직 없습니다.`;
+}
+function chooseHeroine(id){
+ const list=getCharacters(),i=list.findIndex(c=>c.id===id&&c.role==='여주');if(i<0)return;
+ list.forEach(c=>{if(c.role==='여주')c.isDefault=c.id===id});list[i].enabled=true;storeCharacters(list);selectedCharacterId=id;localStorage.setItem('sseoljeng-selected-character-id',id);$('heroine').value=characterText(list[i]);renderCharacters();saveLocal(true);setStatus(`${list[i].name}을(를) 현재 여주로 지정했습니다.`,'ok');
+}
+function uploadHeroineFace(){
+ const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 여주 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
+}
+function clearHeroineFace(){
+ const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
+}
 function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;if(c.role==='여주')$('heroine').value=characterText(c)}
 function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
 function readCharacterEditor(base={}){return normalizeCharacter({...base,name:$('charName').value.trim()||'이름 없는 캐릭터',role:$('charRole').value,scope:$('charScope').value,nameLocked:$('charNameLocked').checked,age:$('charAge').value.trim(),appearance:$('charAppearance').value.trim(),personality:$('charPersonality').value.trim(),outfit:$('charOutfit').value.trim(),prompt:$('charPrompt').value.trim(),enabled:$('charEnabled').checked})}
@@ -260,7 +287,7 @@ function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>
 function duplicateCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(!c)return;const copy=normalizeCharacter({...c,id:uid(),name:c.name+' 복사본',isDefault:false});list.push(copy);storeCharacters(list);selectedCharacterId=copy.id;renderCharacters();setStatus('캐릭터를 복제했습니다.','ok');saveLocal(true)}
 function deleteCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(list.length<=1){setStatus('캐릭터는 최소 1개가 필요합니다.','bad');return}if(!confirm(`${c.name}을 삭제할까요?`))return;const next=list.filter(x=>x.id!==c.id);storeCharacters(next);selectedCharacterId=next[0].id;renderCharacters();setStatus('캐릭터를 삭제했습니다.','ok');saveLocal(true)}
 function setDefaultCharacter(){const list=getCharacters(),c=readCharacterEditor(selectedCharacter());list.forEach(x=>{if(x.role===c.role)x.isDefault=x.id===c.id});const i=list.findIndex(x=>x.id===c.id);list[i]=c;list[i].isDefault=true;storeCharacters(list);renderCharacters();setStatus(`${c.role} 역할의 기본 캐릭터로 지정했습니다.`,'ok');saveLocal(true)}
-function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
+function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){if(id===selectedCharacterId)list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
 function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
 const KOREAN_SURNAMES=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황','안','송','류','홍'];
 const NAME_POOLS={
@@ -279,7 +306,7 @@ function refreshInternalIds(list){let n=1;return list.map(c=>({...c,internalId:c
 function randomizeSelectedName(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0)return;const used=new Set(list.filter((_,x)=>x!==i).map(c=>c.name));list[i].name=makeRandomName(readCharacterEditor(list[i]),used);list[i].nameLocked=false;storeCharacters(refreshInternalIds(list));renderCharacters();saveLocal(true);setStatus(`선택 캐릭터 이름을 ${list[i].name}(으)로 바꿨습니다.`,'ok')}
 function randomizeAllNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.filter(c=>c.nameLocked).map(c=>c.name));let changed=0;for(const c of list){if(c.nameLocked||!c.enabled)continue;c.name=makeRandomName(c,used);used.add(c.name);changed++}storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`등장 캐릭터 ${changed}명의 이름을 중복 없이 랜덤 배정했습니다.`,'ok')}
 function ensureAssignedNames(){const list=refreshInternalIds(getCharacters()),used=new Set(list.map(c=>c.name)),generic=/^(여주|안경 여주|화려한 여주|새 캐릭터|캐릭터|이름 없는 캐릭터)(\s|$)/;let changed=false;for(const c of list){if(!c.enabled||c.nameLocked||!generic.test(c.name))continue;used.delete(c.name);c.name=makeRandomName(c,used);used.add(c.name);changed=true}if(changed){storeCharacters(list);renderCharacters();syncHeroineFromDefault();saveLocal(true)}return changed}
-function imageCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
+function imageCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}${c.image?' · 기준 얼굴 사진 등록됨(반드시 동일 얼굴로 유지)':''}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
 function activeCastText(){return imageCastText()}
 function storyCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}${c.age?` · ${c.age}`:''}${c.personality?` · 성격: ${c.personality}`:''}`).join('\n')||'- 설정된 등장인물 없음'}
 function visualLeakTerms(){
@@ -339,7 +366,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.1-split-prompt-edition',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.5-heroine-face-selection',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
