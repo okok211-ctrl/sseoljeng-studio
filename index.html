@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v10.0 Alpha · POV Engine</title>
+<title>썰쟁 Studio v9.2.3 Image Prompt Separate</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -258,50 +258,6 @@ function ensureAssignedNames(){const list=refreshInternalIds(getCharacters()),us
 function imageCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}: ${characterText(c)}`).join('\n')||'- 설정된 등장인물 없음'}
 function activeCastText(){return imageCastText()}
 function storyCastText(){return getCharacters().filter(c=>c.enabled).map(c=>`- [${c.internalId}] ${c.scope==='core'?'핵심':c.scope==='support'?'보조':'단역'} · ${c.role} · 이름 ${c.name}${c.age?` · ${c.age}`:''}${c.personality?` · 성격: ${c.personality}`:''}`).join('\n')||'- 설정된 등장인물 없음'}
-function protagonistCharacter(){
- const list=getCharacters().filter(c=>c.enabled);
- return list.find(c=>c.role==='여주'&&c.isDefault)||list.find(c=>c.role==='여주')||list.find(c=>c.scope==='core')||list[0]||null;
-}
-function povEngineRules(pov=cfg().pov){
- const hero=protagonistCharacter(),name=hero?.name||'주인공',role=hero?.role||'주인공';
- if(pov==='1인칭 회고체')return `[POV Engine v10 — 1인칭 절대 규칙]
-- 화자는 ${role} ${name}입니다. 첫 자기소개에서만 이름을 한 번 사용할 수 있습니다.
-- 자기소개 이후 화자 자신을 이름으로 부르지 말고 반드시 저, 저는, 제가, 저를, 제, 저와, 저에게, 저희로 표현하세요.
-- 특히 '${name}는/은/가/이/를/을/의/와/과/에게' 같은 3인칭 자기 지칭을 금지합니다.
-- '${name}의 남편', '${name}의 시어머니', '${name}의 아들'처럼 쓰지 말고 남편, 시어머니, 아들처럼 화자의 관계어로 표현하세요.
-- 화자가 알 수 없는 타인의 속마음을 확정해서 서술하지 말고, 직접 본 행동과 당시 느낀 감정 중심으로 회고하세요.
-- 모든 문단에서 1인칭 회고 시점을 유지하세요.`;
- return `[POV Engine v10 — 3인칭 절대 규칙]
-- ${role} ${name}을 중심으로 한 3인칭 관찰자 시점을 유지하세요.
-- 저, 저는, 제가, 저를, 제, 저희 같은 1인칭 화자 표현을 서술문에 사용하지 마세요.
-- 인물 이름을 매 문장 반복하지 말고 문맥상 분명할 때는 그녀, 그, 주인공, 관계 호칭을 자연스럽게 사용하세요.
-- 관찰자가 확인할 수 없는 속마음을 과도하게 단정하지 말고 행동과 반응으로 드러내세요.`;
-}
-function findPovLeaks(text,pov=cfg().pov){
- const value=String(text||''),hero=protagonistCharacter(),name=hero?.name||'';
- if(pov==='1인칭 회고체'&&name){
-  const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const re=new RegExp(`${escaped}(?:은|는|이|가|을|를|의|와|과|에게|한테|도|만|부터|까지)`, 'g');
-  return [...new Set(value.match(re)||[])].slice(0,20);
- }
- if(pov==='3인칭 관찰자')return [...new Set(value.match(/(?:^|[\s“"'])저(?:는|가|를|의|와|에게|희)?/gm)||[])].slice(0,20);
- return [];
-}
-async function repairPovLeaks(text,context=''){
- const leaks=findPovLeaks(text);if(!leaks.length)return text;
- const prompt=`${storyEngineRules()}
-
-${povEngineRules()}
-
-[수정 대상 원고]
-${text}
-
-[검출된 시점 위반]
-${leaks.join(', ')}
-
-문단 번호, 사건, 의미, 분량, 인물 관계와 결말을 그대로 유지하면서 시점 위반만 자연스럽게 고치세요. 요약하거나 새 사건을 추가하지 말고 수정된 원고만 출력하세요. ${context}`;
- return (await callGeneratePrompt(prompt,'storyrepair')).trim()||text;
-}
 function visualLeakTerms(){
  const generic=['안경','메탈 안경','실버 메탈','뿔테','얼굴형','계란형 얼굴','둥근 얼굴','턱선','눈매','콧대','코끝','도톰한 입술','피부톤','우윳빛 피부','윤광','헤어스타일','롱레이어드','롱펌','웨이브 헤어','S컬','시스루뱅','다크브라운','크림색 블라우스','블라우스','블랙 정장','정장 차림','원피스','재킷 차림','오똑한 코','높은 콧대'];
  const fromChars=getCharacters().filter(c=>c.enabled).flatMap(c=>[c.appearance,c.outfit,c.prompt]).filter(Boolean).flatMap(v=>String(v).split(/[,，/·]| 그리고 | 또는 /)).map(v=>v.trim()).filter(v=>v.length>=3&&v.length<=30);
@@ -345,7 +301,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=5,APP_VERSION='10.0.1-alpha',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=5,APP_VERSION='10.0.1-srt-fix',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -444,8 +400,6 @@ ${storyCast}
 4. 보조 인물과 단역을 핵심 인물처럼 확대하지 마세요.
 
 ${storyEngineRules()}
-
-${povEngineRules(c.pov)}
 시점: ${c.pov}
 분위기: ${c.tone}
 문단 수: ${c.count}
@@ -457,7 +411,7 @@ ${povEngineRules(c.pov)}
 반드시 포함: [한 줄 주제], [결말 고정], [등장인물 성경], [절대 바뀌면 안 되는 설정], [핵심 갈등], [복선과 회수], [에피소드 지도].
 에피소드 지도는 전체 ${c.count}문단을 5문단 단위로 나누고, 각 구간마다 새로운 사건·갈등·감정 변화·다음 구간 연결점을 구체적으로 적으세요.
 문단 수를 채우기 위한 반복은 금지하며, 위 목록에 없는 새 이름은 만들지 마세요. 꼭 필요한 단역은 이름 없이 역할명으로만 설계하세요. 결말과 인물의 이름·ID·나이·직업·관계·성격은 이후 절대 바뀌지 않도록 명확히 고정하세요.`;
- if(task==='story')return `${storyCommon}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하고, 각 문단은 약 420~450자로 작성하세요. 대화체는 최소화하고 선택한 시점에 맞는 몰입감 있는 서술을 사용하세요. ${c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 채널 소개나 정기 연재 문구는 금지합니다.`:''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
+ if(task==='story')return `${storyCommon}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하고, 각 문단은 약 420~450자로 작성하세요. 대화체는 최소화하고 몰입감 있는 회고형 서술을 사용하세요. ${c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 채널 소개나 정기 연재 문구는 금지합니다.`:''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
  if(task==='images')return `${imageCommon}
 
 다음 롱폼 원고만 바탕으로 본문용 이미지 프롬프트 ${c.images}개만 작성하세요.
@@ -584,11 +538,21 @@ async function generateAll(){
   active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
  }catch(e){setStatus('전체 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
 }
+function cleanSrtSourceLine(line){
+ return String(line||'')
+  .replace(/^\s*(?:\[?\s*\d+\s*문단\s*\]?|\d+\s*문단|문단\s*\d+)\s*[:：.\-]?\s*/,'')
+  .replace(/^\s*\[?\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]?\s*$/,'')
+  .replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'')
+  .replace(/\(\s*(?:문단\s*)?글자\s*수?\s*[:：]?\s*[0-9,]+\s*자\s*\)/g,'')
+  .replace(/\[?\s*[0-9,]+\s*자\s*\]?\s*$/g,'')
+  .replace(/\(\s*[0-9,]+\s*자\s*\)\s*$/g,'')
+  .trim();
+}
 function makeSrt(silent=false){
  const text=$('story').value.trim();if(!text){if(!silent)setStatus('먼저 롱폼을 생성하세요.','bad');return}
- const parts=text.split(/\n+/).map(x=>x.replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()).filter(Boolean);let t=0,out=[];
+ const parts=text.split(/\n+/).map(cleanSrtSourceLine).filter(Boolean);let t=0,out=[];
  const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
- parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('SRT 자막을 만들었습니다.','ok')}}
+ parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('문단 번호와 글자 수를 제거한 SRT 자막을 만들었습니다.','ok')}}
 
 async function copyCurrent(){await navigator.clipboard.writeText($(fields[active]).value);setStatus('현재 내용을 복사했습니다.','ok')}
 async function downloadZip(){
@@ -616,7 +580,7 @@ function storyChunkPrompt(start,end,blueprint,existing){
  ensureAssignedNames();
  const c=cfg(),isFirst=start===0;
  const previous=existing?existing.slice(-12000):'(없음)';
- return `프로젝트: ${c.name}\n주제: ${c.topic}\n시점: ${c.pov}\n분위기: ${c.tone}\n밀도: ${c.density}\n등장인물(서사용 정보만):\n${storyCastText()}\n\n[자연스러운 본문 작성 규칙]\n- 얼굴형, 눈매, 피부색, 머리색, 헤어스타일, 의상 색상 등 이미지용 외형 정보를 본문에 쓰지 마세요.\n- '다크브라운 롱레이어드 헤어', '크림색 블라우스', '계란형 얼굴' 같은 이미지 프롬프트식 표현을 금지합니다.\n- 인물이 거울을 보며 외모를 나열하거나 자기 옷차림을 카탈로그처럼 설명하지 마세요.\n- 의상은 사건에 꼭 필요할 때만 짧게 언급하고, 행동·감정·사건·관계 변화를 중심으로 쓰세요.\n\n${povEngineRules(c.pov)}\n\n[고정 스토리 설계도]\n${blueprint}\n\n[이미 작성된 원고의 마지막 부분]\n${previous}\n\n이제 ${isFirst?'0문단과 1':'본문 '+start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요. 각 본문 문단은 약 420~450자로 쓰고 문단 번호를 명확히 표시하세요. ${isFirst&&c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 다른 홍보 문장은 금지합니다.`:''}\n중요 규칙:\n1. 설계도와 등장인물 목록에 없는 이름을 절대 만들지 마세요. 필요한 단역은 이름 없이 역할명으로만 처리하세요.\n2. 이전 원고와 설계도의 사실을 절대 변경하지 마세요.\n3. 같은 갈등·감정·설명을 반복해 분량을 늘리지 마세요.\n4. 이 구간에는 설계도에 지정된 새 사건이 실제로 발생해야 합니다.\n5. 다음 구간으로 자연스럽게 이어지되 결말을 앞당기지 마세요.\n6. 대화는 최소화하고 ${c.pov} 문체를 유지하세요.\n7. ${c.strict?'각 본문 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'글자 수 표시는 하지 마세요.'}`
+ return `프로젝트: ${c.name}\n주제: ${c.topic}\n시점: ${c.pov}\n분위기: ${c.tone}\n밀도: ${c.density}\n등장인물(서사용 정보만):\n${storyCastText()}\n\n[자연스러운 본문 작성 규칙]\n- 얼굴형, 눈매, 피부색, 머리색, 헤어스타일, 의상 색상 등 이미지용 외형 정보를 본문에 쓰지 마세요.\n- '다크브라운 롱레이어드 헤어', '크림색 블라우스', '계란형 얼굴' 같은 이미지 프롬프트식 표현을 금지합니다.\n- 인물이 거울을 보며 외모를 나열하거나 자기 옷차림을 카탈로그처럼 설명하지 마세요.\n- 의상은 사건에 꼭 필요할 때만 짧게 언급하고, 행동·감정·사건·관계 변화를 중심으로 쓰세요.\n\n[고정 스토리 설계도]\n${blueprint}\n\n[이미 작성된 원고의 마지막 부분]\n${previous}\n\n이제 ${isFirst?'0문단과 1':'본문 '+start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요. 각 본문 문단은 약 420~450자로 쓰고 문단 번호를 명확히 표시하세요. ${isFirst&&c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 다른 홍보 문장은 금지합니다.`:''}\n중요 규칙:\n1. 설계도와 등장인물 목록에 없는 이름을 절대 만들지 마세요. 필요한 단역은 이름 없이 역할명으로만 처리하세요.\n2. 이전 원고와 설계도의 사실을 절대 변경하지 마세요.\n3. 같은 갈등·감정·설명을 반복해 분량을 늘리지 마세요.\n4. 이 구간에는 설계도에 지정된 새 사건이 실제로 발생해야 합니다.\n5. 다음 구간으로 자연스럽게 이어지되 결말을 앞당기지 마세요.\n6. 대화는 최소화하고 ${c.pov} 문체를 유지하세요.\n7. ${c.strict?'각 본문 문단 끝에 [문단 글자 수: N자]를 표시하세요.':'글자 수 표시는 하지 마세요.'}`
 }
 async function generateStableStory(){
  if(busy)return;const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
@@ -624,8 +588,8 @@ async function generateStableStory(){
  try{
   let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
   const total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let story='';let starts=[];for(let s=1;s<=total;s+=chunkSize)starts.push([s,Math.min(total,s+chunkSize-1)]);
-  for(let i=0;i<starts.length;i++){const [start,end]=starts[i];setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(start===1?0:start,end,blueprint,story);let part=await callGeneratePrompt(prompt,'storychunk');const leaks=findVisualLeaks(part);if(leaks.length){setStatus(`2단계: ${start}~${end}문단 외모 묘사 ${leaks.length}건 자동 수정 중...`);part=await repairVisualLeaks(part,`현재 구간은 ${start}~${end}문단입니다.`)}const povLeaks=findPovLeaks(part,c.pov);if(povLeaks.length){setStatus(`2단계: ${start}~${end}문단 시점 위반 ${povLeaks.length}건 자동 수정 중...`);part=await repairPovLeaks(part,`현재 구간은 ${start}~${end}문단입니다.`)}story+=(story?'\n\n':'')+part.trim();story=normalizeOpening(story,c.subscribe);$('story').value=story;updateMeta();saveLocal(true)}
-  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story),remainingPov=findPovLeaks(story,c.pov);const issueCount=remaining.length+remainingPov.length;setStatus(issueCount?`${total}문단 생성 완료 · 외모 ${remaining.length}건, 시점 ${remainingPov.length}건이 남아 설정 검사를 권장합니다.`:`${total}문단 생성 완료 · Story/Image 분리, 외모 검사, POV 검사 통과.` ,issueCount?'bad':'ok')
+  for(let i=0;i<starts.length;i++){const [start,end]=starts[i];setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(start===1?0:start,end,blueprint,story);let part=await callGeneratePrompt(prompt,'storychunk');const leaks=findVisualLeaks(part);if(leaks.length){setStatus(`2단계: ${start}~${end}문단 외모 묘사 ${leaks.length}건 자동 수정 중...`);part=await repairVisualLeaks(part,`현재 구간은 ${start}~${end}문단입니다.`)}story+=(story?'\n\n':'')+part.trim();story=normalizeOpening(story,c.subscribe);$('story').value=story;updateMeta();saveLocal(true)}
+  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${total}문단 생성 완료 · 외모 표현 ${remaining.length}건이 남아 설정 검사를 권장합니다.`:`${total}문단 생성 완료 · Story/Image Engine 분리 및 외모 표현 자동 검사 통과.` ,remaining.length?'bad':'ok')
  }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
 }
 function makeVoice(silent=false){
