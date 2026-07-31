@@ -103,7 +103,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  </div>
  <div class="checks">
   <label class="check"><input id="subscribe" type="checkbox" checked>0문단 구독·좋아요·알림 멘트</label>
-  <label class="check"><input id="strict" type="checkbox" checked>문단당 420~450자 최대한 준수</label>
+  <label class="check"><input id="strict" type="checkbox" checked>문단당 420~500자(400자 미만 금지)</label>
  </div>
  <div class="char-editor" style="margin-top:12px">
   <h3>🖼 썸네일 Pro 설정</h3>
@@ -266,7 +266,9 @@ function visualLeakTerms(){
 function findVisualLeaks(text){const value=String(text||'');return visualLeakTerms().filter(term=>value.includes(term)).slice(0,30)}
 function storyEngineRules(){return `[Story Engine v11.1 Lite]
 - 실제 사람이 말하는 것처럼 자연스러운 구어체로 작성하세요.
-- 각 문단은 약 450자로 작성하세요.
+- 각 문단은 반드시 420~500자로 작성하세요. (400자 미만 금지)
+- 모든 문단에서 반드시 새로운 사건이나 행동이 하나 이상 진행되어야 합니다. 같은 내용을 표현만 바꿔 반복하지 마세요.
+- 행동, 표정, 분위기, 대화를 자연스럽게 섞어 장면이 떠오르게 작성하세요.
 - 등장인물 목록에 없는 새로운 사람 이름은 만들지 마세요. 필요한 단역은 '직원', '은행원', '의사'처럼 역할명만 사용하세요.`}
 async function repairVisualLeaks(text,context=''){const leaks=findVisualLeaks(text);if(!leaks.length)return text;const prompt=`${storyEngineRules()}
 
@@ -408,7 +410,7 @@ ${storyEngineRules()}
 반드시 포함: [한 줄 주제], [결말 고정], [등장인물 성경], [절대 바뀌면 안 되는 설정], [핵심 갈등], [복선과 회수], [에피소드 지도].
 에피소드 지도는 전체 ${c.count}문단을 5문단 단위로 나누고, 각 구간마다 새로운 사건·갈등·감정 변화·다음 구간 연결점을 구체적으로 적으세요.
 문단 수를 채우기 위한 반복은 금지하며, 위 목록에 없는 새 이름은 만들지 마세요. 꼭 필요한 단역은 이름 없이 역할명으로만 설계하세요. 결말과 인물의 이름·ID·나이·직업·관계·성격은 이후 절대 바뀌지 않도록 명확히 고정하세요.`;
- if(task==='story')return `${storyCommon}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하세요. 0문단은 180~220자, 본문 각 문단은 320~380자로 작성하세요. 실제 사람이 편하게 이야기하는 1인칭 구어체를 우선하고, 어려운 문학 표현과 뉴스식 설명은 사용하지 마세요. '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 '~했어요, ~였지요, ~더군요, ~였거든요, ~했는데요' 등을 자연스럽게 섞으세요. 같은 종결형을 세 문장 연속 쓰지 마세요. ${c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 채널 소개나 정기 연재 문구는 금지합니다.`:''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
+ if(task==='story')return `${storyCommon}\n\n한국 유튜브 사연 채널용 롱폼 원고를 작성하세요. 0문단 오프닝과 본문 ${c.count}문단으로 구성하세요. 0문단은 180~220자, 본문 각 문단은 반드시 420~500자로 작성하세요. 400자 미만은 허용하지 않습니다. 실제 사람이 편하게 이야기하는 1인칭 구어체를 우선하고, 어려운 문학 표현과 뉴스식 설명은 사용하지 마세요. '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 '~했어요, ~였지요, ~더군요, ~였거든요, ~했는데요' 등을 자연스럽게 섞으세요. 같은 종결형을 세 문장 연속 쓰지 마세요. ${c.subscribe?`0문단은 강한 사건 후킹 1~2문장으로 시작한 직후 정확히 다음 문장을 한 번만 넣으세요: "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다." 채널 소개나 정기 연재 문구는 금지합니다.`:''} ${c.strict?'각 문단 끝에 [문단 글자 수: N자]를 표시하세요.':''}`;
  if(task==='images')return `${imageCommon}
 
 다음 롱폼 원고만 바탕으로 본문용 이미지 프롬프트 ${c.images}개만 작성하세요.
@@ -640,7 +642,7 @@ ${previous}
 
 이제 ${isFirst?'0문단과 1':'본문 '+start}문단부터 ${end}문단까지만 작성하세요. 다른 문단은 출력하지 마세요.
 - 0문단은 180~220자로 작성하세요.
-- 본문 각 문단은 320~380자로 작성하세요.
+- 본문 각 문단은 반드시 420~500자로 작성하세요. 400자 미만은 허용하지 않습니다.
 - 한 문단에는 설계도에 지정된 새로운 사건 하나만 진행하세요.
 - 말로 읽었을 때 자연스럽고 쉽게 들리도록 작성하세요.
 - '~다/~습니다' 종결은 전체 문장의 10% 이하로 제한하고 같은 종결형을 세 번 연속 쓰지 마세요.
