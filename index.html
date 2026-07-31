@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.1 Production Edition</title>
+<title>썰쟁 Studio v13.4 Workflow Edition</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -42,18 +42,36 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .cloud-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.cloud-title{font-size:13px;font-weight:900}.cloud-user{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
 .cloud-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.cloud-select{margin-top:8px}.cloud-state{font-size:10px;color:#b8c7da;margin-top:7px;line-height:1.45}.cloud-state.ok{color:#baffd5}.cloud-state.bad{color:#ffc2c7}
 .wizard{margin-top:12px;padding:12px;border:1px solid rgba(255,121,23,.35);border-radius:13px;background:rgba(255,121,23,.07)}.wizard-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.wizard-title{font-size:13px;font-weight:900}.wizard-step{font-size:11px;color:#ffd7b8;font-weight:900}.wizard-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.wizard-progress{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}.wizard-list{max-height:150px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:9px;padding:7px;background:#06101d}.wizard-item{font-size:11px;padding:5px 7px;border-radius:7px;color:var(--muted)}.wizard-item.current{background:rgba(255,121,23,.15);color:#ffd7b8;font-weight:900}.wizard-item.done{color:#baffd5}
+.wizard-top{margin-top:0;margin-bottom:12px;box-shadow:0 0 0 1px rgba(255,121,23,.08),0 10px 24px rgba(0,0,0,.16)}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.1</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Split Prompt Edition</span>
+ <div><h1>🎬 썰쟁 Studio v13.4</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Workflow Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
  <h2>이야기 설정</h2>
+ <div class="wizard wizard-top">
+  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
+  <div class="wizard-grid">
+   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
+   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
+   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
+  </div>
+  <div class="wizard-grid">
+   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
+   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
+  </div>
+  <div id="wizardProgress" class="wizard-progress">문단 수 설정에 맞춰 자동 분할합니다. 아래에서 문단 수를 바꾸면 단계도 자동 갱신됩니다.</div>
+  <div id="wizardList" class="wizard-list"></div>
+ </div>
  <div class="cloud-box">
   <div class="cloud-head"><div class="cloud-title">☁️ 클라우드</div><div id="cloudUser" class="cloud-user">로그아웃 상태</div></div>
   <div class="cloud-row"><button id="loginBtn" class="btn primary" type="button" onclick="googleLogin()">Google 로그인</button><button id="logoutBtn" class="btn ghost hidden" type="button" onclick="googleLogout()">로그아웃</button></div>
@@ -149,23 +167,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="tiny" style="margin-top:7px">롱폼과 기존 제작 자료는 건드리지 않습니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
  </div>
 
- <div class="wizard">
-  <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
-  <div class="wizard-grid">
-   <div class="field" style="margin:6px 0 0"><label>한 번에 작성</label><select id="chunkSize" onchange="resetPromptWizard(false)"><option value="3">3문단씩</option><option value="5" selected>5문단씩 · 추천</option><option value="7">7문단씩</option><option value="10">10문단씩</option></select></div>
-   <div class="field" style="margin:6px 0 0"><label>진행 단계</label><select id="wizardJump" onchange="jumpPromptWizard()"><option value="0">1단계</option></select></div>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn primary" type="button" onclick="startPromptWizard()">마법사 시작</button>
-   <button class="btn ghost" type="button" onclick="copyWizardPrompt()">현재 프롬프트 복사</button>
-  </div>
-  <div class="wizard-grid">
-   <button class="btn success" type="button" onclick="completeWizardStep()">완료하고 다음</button>
-   <button class="btn ghost" type="button" onclick="resetPromptWizard(true)">진행 초기화</button>
-  </div>
-  <div id="wizardProgress" class="wizard-progress">20·40·60문단도 자동으로 나누어 같은 대화에서 이어 쓰도록 안내합니다.</div>
-  <div id="wizardList" class="wizard-list"></div>
- </div>
  <div class="project-actions">
   <button class="btn ghost" onclick="exportProject()">📦 프로젝트 내보내기</button>
   <button class="btn ghost" onclick="$('projectFileInput').click()">📂 프로젝트 불러오기</button>
