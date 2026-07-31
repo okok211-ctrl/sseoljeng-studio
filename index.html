@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v9.2.3 Image Prompt Separate</title>
+<title>썰쟁 Studio v10.0.2 Paragraph Guard</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -301,7 +301,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=5,APP_VERSION='10.0.1-srt-fix',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=5,APP_VERSION='10.0.2-paragraph-guard',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -532,7 +532,7 @@ async function generateAll(){
  busy=true;$('allBtn').disabled=true;
  try{
   setStatus('1/4 설계도 생성 중...');$('blueprint').value=await callGenerate('blueprint');saveLocal(true);
-  const c=cfg(),total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let built='';for(let s=1;s<=total;s+=chunkSize){const e=Math.min(total,s+chunkSize-1);setStatus(`2/4 롱폼 ${s}~${e}문단 생성 중...`);built+=(built?'\n\n':'')+(await callGeneratePrompt(storyChunkPrompt(s===1?0:s,e,$('blueprint').value,built),'storychunk')).trim();$('story').value=built;saveLocal(true)}updateMeta();
+  const c=cfg(),total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let built='';for(let s=1;s<=total;s+=chunkSize){const e=Math.min(total,s+chunkSize-1),chunkStart=s===1?0:s;setStatus(`2/4 롱폼 ${s}~${e}문단 생성 중...`);const prompt=storyChunkPrompt(chunkStart,e,$('blueprint').value,built);const part=await generateAndNormalizeStoryChunk(prompt,chunkStart,e,c.subscribe);built+=(built?'\n\n':'')+part.trim();$('story').value=built;saveLocal(true)}updateMeta();
   setStatus('3/4 제작 자료 생성 중...');const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;saveLocal(true);
   setStatus('4/4 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
   active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
@@ -569,6 +569,51 @@ async function downloadZip(){
 function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
+function paragraphCharCount(text){
+ return Array.from(String(text||'').replace(/\r?\n/g,'')).length;
+}
+function parseNumberedParagraphs(text){
+ const source=String(text||'').replace(/\r/g,'').trim();
+ const marker=/^\s*(?:\[?\s*(\d+)\s*문단\s*\]?|(\d+)\s*[.)])\s*[:：.\-]?\s*/gm;
+ const matches=[...source.matchAll(marker)],map=new Map();
+ if(matches.length){
+  matches.forEach((m,i)=>{
+   const number=Number(m[1]||m[2]);
+   const start=m.index+m[0].length,end=i+1<matches.length?matches[i+1].index:source.length;
+   const body=source.slice(start,end)
+    .replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'')
+    .replace(/\(\s*(?:문단\s*)?글자\s*수?\s*[:：]?\s*[0-9,]+\s*자\s*\)/g,'')
+    .replace(/^\s+|\s+$/g,'');
+   if(body&&!map.has(number))map.set(number,body);
+  });
+ }
+ return map;
+}
+function normalizeStoryChunk(text,start,end){
+ const expected=[];if(start===0)expected.push(0);for(let n=Math.max(1,start);n<=end;n++)expected.push(n);
+ const map=parseNumberedParagraphs(text),missing=expected.filter(n=>!map.get(n));
+ const normalized=expected.filter(n=>map.get(n)).map(n=>{
+  const body=map.get(n).trim();
+  return `${n}문단\n\n${body}\n\n[문단 글자 수: ${paragraphCharCount(body)}자]`;
+ }).join('\n\n');
+ return {text:normalized,missing,expected};
+}
+async function generateAndNormalizeStoryChunk(prompt,start,end,subscribe){
+ let lastText='';
+ for(let attempt=1;attempt<=2;attempt++){
+  let request=prompt;
+  if(attempt===2)request+=`\n\n[출력 형식 재강조]\n반드시 ${start===0?'0문단부터 ':''}${Math.max(1,start)}문단부터 ${end}문단까지 모든 번호를 빠짐없이 한 번씩 출력하세요. 각 문단은 반드시 'N문단'이라는 독립된 제목으로 시작하세요. 제목 없이 본문부터 시작하거나 번호를 합치지 마세요.`;
+  lastText=await callGeneratePrompt(request,'storychunk');
+  const leaks=findVisualLeaks(lastText);
+  if(leaks.length)lastText=await repairVisualLeaks(lastText,`현재 구간은 ${start}~${end}문단입니다.`);
+  if(start===0)lastText=normalizeOpening(lastText,subscribe);
+  const checked=normalizeStoryChunk(lastText,start,end);
+  if(!checked.missing.length)return checked.text;
+  if(attempt===1)setStatus(`${start}~${end}문단 번호 누락(${checked.missing.join(', ')}) 감지 · 자동 재생성 중...`);
+ }
+ const finalCheck=normalizeStoryChunk(lastText,start,end);
+ throw new Error(`문단 번호 자동 복구 실패: ${finalCheck.missing.join(', ')}문단이 누락되었습니다. 다시 생성해 주세요.`);
+}
 async function callGeneratePrompt(prompt,task){const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));return data.text||''}
 async function generateBlueprint(silent=false){
  if(busy&&!silent)return '';const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return ''}
@@ -588,7 +633,7 @@ async function generateStableStory(){
  try{
   let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
   const total=Number(c.count),chunkSize=c.quality==='최고 품질'?5:10;let story='';let starts=[];for(let s=1;s<=total;s+=chunkSize)starts.push([s,Math.min(total,s+chunkSize-1)]);
-  for(let i=0;i<starts.length;i++){const [start,end]=starts[i];setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(start===1?0:start,end,blueprint,story);let part=await callGeneratePrompt(prompt,'storychunk');const leaks=findVisualLeaks(part);if(leaks.length){setStatus(`2단계: ${start}~${end}문단 외모 묘사 ${leaks.length}건 자동 수정 중...`);part=await repairVisualLeaks(part,`현재 구간은 ${start}~${end}문단입니다.`)}story+=(story?'\n\n':'')+part.trim();story=normalizeOpening(story,c.subscribe);$('story').value=story;updateMeta();saveLocal(true)}
+  for(let i=0;i<starts.length;i++){const [start,end]=starts[i],chunkStart=start===1?0:start;setStatus(`2단계: ${start}~${end}문단 안정 생성 중 (${i+1}/${starts.length})...`);const prompt=storyChunkPrompt(chunkStart,end,blueprint,story);const part=await generateAndNormalizeStoryChunk(prompt,chunkStart,end,c.subscribe);story+=(story?'\n\n':'')+part.trim();$('story').value=story;updateMeta();saveLocal(true)}
   makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${total}문단 생성 완료 · 외모 표현 ${remaining.length}건이 남아 설정 검사를 권장합니다.`:`${total}문단 생성 완료 · Story/Image Engine 분리 및 외모 표현 자동 검사 통과.` ,remaining.length?'bad':'ok')
  }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
 }
