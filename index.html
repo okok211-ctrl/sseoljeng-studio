@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.9.5 쇼츠 공통 빌더 쇼츠</title>
+<title>썰쟁 Studio v13.9.6 쇼츠 공통 빌더 쇼츠</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,7 +49,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.9.5</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v13.9.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">초강력 글꼴 쇼츠 Edition</span>
 </header>
 <div class="layout">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.5-unified-shorts-builder',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.6-curiosity-narration-ending',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -480,9 +480,12 @@ function shortsViewsEngineRules(){
 - 일반 자막처럼 작고 얌전하게 만들지 마세요.
 
 [나레이션]
-- 한 컷당 1~2문장, 약 20~45자로 작성하세요.
-- 본문을 전부 설명하지 말고, 해당 컷의 충격적인 상황을 직접적으로 들려준 뒤 다음 컷이 궁금하게 끊으세요.
-- 점잖은 감상문이나 교훈형 문장보다 실제 유튜브 사연 채널의 빠르고 자극적인 말투를 사용하세요.
+- 1~3컷은 한 컷당 1~2문장, 약 20~45자로 작성하세요.
+- 1~3컷은 장면에서 실제로 벌어진 핵심 상황을 한 문장으로만 전달하고, 그 의미·원인·범인·해결·결말은 설명하지 마세요.
+- 1컷은 발견 또는 이상 징후, 2컷은 충격적인 반응, 3컷은 결정적 단서나 상대의 수상한 태도까지만 보여주세요.
+- 나레이션만 들어도 전체 사건이나 결말을 알 수 있으면 실패입니다.
+- 화면 문구를 그대로 반복하지 말고, 화면 문구가 던진 충격을 나레이션이 자연스럽게 이어받게 작성하세요.
+- 점잖은 감상문이나 교훈형 문장보다 실제 유튜브 사연 채널의 빠르고 직접적인 말투를 사용하세요.
 - 허위 사건을 새로 만들거나 롱폼에 없는 핵심 사실을 조작하지 마세요.
 
 [이미지]
@@ -495,10 +498,12 @@ function shortsViewsEngineRules(){
 - 화면 문구는 반드시 정확히 두 줄로 작성하세요.
 결말은
 본편에서
-- 4컷 나레이션은 반드시 정확히 다음과 같이 작성하세요.
-결말은...
-본편에서 확인해 보세요.
-- 마지막 컷에서도 사건의 결말은 설명하지 마세요.`;
+- 4컷 나레이션은 반드시 두 부분을 한 문장 흐름으로 이어서 작성하세요.
+  ① 해당 사연의 마지막 충격·증거·반전 가능성을 한 문장으로 강하게 암시합니다.
+  ② 바로 이어서 반드시 정확히 "결말은 본편에서 확인해 보세요."로 끝냅니다.
+- 형식 예시: "그 음성파일 하나가 남편의 모든 거짓말을 밝혀냈습니다. 결말은 본편에서 확인해 보세요."
+- 첫 문장은 사연마다 다르게 작성하되, 실제 최종 결말과 처벌·화해·승패를 미리 공개하지 마세요.
+- "결말은... 본편에서 확인해 보세요."만 단독으로 쓰면 안 됩니다.`;
 }
 
 
