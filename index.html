@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.9.6 쇼츠 공통 빌더 쇼츠</title>
+<title>썰쟁 Studio v13.9.7 쇼츠 공통 빌더 쇼츠</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,7 +49,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.9.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v13.9.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">초강력 글꼴 쇼츠 Edition</span>
 </header>
 <div class="layout">
@@ -173,7 +173,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
    <div class="field"><label>스타일</label><select id="shortsStyle"><option value="mixed" selected>각기 다른 스타일</option><option value="hook">강한 후킹형</option><option value="twist">반전형</option><option value="emotion">감동형</option><option value="anger">분노·사이다형</option></select></div>
   </div>
   <button id="shortsOnlyBtn" class="btn primary" style="width:100%" type="button" onclick="generateShortsOnly()">조회수형 쇼츠 생성</button>
-  <div class="tiny" style="margin-top:7px">전체 생성과 재생성 모두 같은 조회수형 쇼츠 엔진을 사용합니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
+  <div class="tiny" style="margin-top:7px">전체 생성·상단 버튼·하단 버튼 모두 동일한 callGenerate('shorts') 공통 엔진을 사용합니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
  </div>
 
  <div class="project-actions">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.6-curiosity-narration-ending',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.7-exact-shorts-engine',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -573,7 +573,7 @@ ${story}
 4. 각 프롬프트 마지막에도 '16:9 가로형, 동일 인물과 의상 연속성 유지, 텍스트·자막·말풍선·로고·워터마크 없음.'을 명시하세요.
 5. 9:16 세로형은 절대 사용하지 마세요.
 6. 각 번호마다 [사용 문단], [장면 설명], [생성 프롬프트]를 구분하세요.`;
- if(task==='assets')return `${imageCommon}
+ if(task==='assets'||task==='assetsNoShorts')return `${imageCommon}
 
 다음 롱폼 원고를 바탕으로 제작 자료를 작성하세요.
 
@@ -582,7 +582,6 @@ ${story}
 
 출력 순서:
 [이미지 프롬프트] 본문용 이미지 ${c.images}개. 모든 이미지는 반드시 가로형 16:9 비율의 실사 한국 드라마 영화 스틸로 작성하세요. 9:16 세로형은 절대 사용하지 마세요. 각 번호의 프롬프트 첫 문장과 마지막 조건에 모두 '16:9 가로형'을 명시하세요. 동일 인물과 의상 연속성을 유지하고, 본문 이미지는 문구·자막·말풍선·로고 없음.
-${buildUnifiedShortsPrompt({embedded:true})}
 [유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.
 [썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. 인물은 최대 ${c.thumbPeople}명이며 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
  if(task==='thumbnail')return `${imageCommon}
@@ -739,10 +738,14 @@ async function generateProductionAssets(){
  if(!validatePastedStory())return;
  busy=true;$('allBtn').disabled=true;
  try{
-  setStatus('1/3 이미지·쇼츠·유튜브·썸네일 생성 중...');
-  const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;
-  setStatus('2/3 SRT와 음성용 원고 생성 중...');makeSrt(true);makeVoice(true);
-  setStatus('3/3 프로젝트 저장 중...');saveLocal(true);scheduleCloudSave();showTab('images');
+  setStatus('1/4 이미지·유튜브·썸네일 생성 중...');
+  const a=splitAssets(await callGenerate('assetsNoShorts'));
+  $('imagesOut').value=a.images;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;
+  setStatus('2/4 쇼츠 공통 엔진으로 생성 중...');
+  const shortsText=await callGenerate('shorts');
+  $('shorts').value=normalizeAspectRatio(shortsText.trim(),'shorts');
+  setStatus('3/4 SRT와 음성용 원고 생성 중...');makeSrt(true);makeVoice(true);
+  setStatus('4/4 프로젝트 저장 중...');saveLocal(true);scheduleCloudSave();showTab('images');
   setStatus('제작 자료 전체 생성 완료. 롱폼 원고는 변경하지 않았습니다.','ok');
  }catch(e){setStatus('제작 자료 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
 }
@@ -816,8 +819,9 @@ async function generateAll(){
  try{
   setStatus('1/4 설계도 생성 중...');$('blueprint').value=await callGenerate('blueprint');saveLocal(true);
   const c=cfg();await buildSeparatedStory($('blueprint').value,msg=>setStatus('2/4 '+msg));updateMeta();
-  setStatus('3/4 제작 자료 생성 중...');const a=splitAssets(await callGenerate('assets'));$('imagesOut').value=a.images;$('shorts').value=a.shorts;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;saveLocal(true);
-  setStatus('4/4 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
+  setStatus('3/5 이미지·유튜브·썸네일 생성 중...');const a=splitAssets(await callGenerate('assetsNoShorts'));$('imagesOut').value=a.images;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;
+  setStatus('4/5 쇼츠 공통 엔진으로 생성 중...');$('shorts').value=normalizeAspectRatio((await callGenerate('shorts')).trim(),'shorts');saveLocal(true);
+  setStatus('5/5 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
   active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
  }catch(e){setStatus('전체 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
 }
