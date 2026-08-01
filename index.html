@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v13.9.2 YouTube Hook Fix</title>
+<title>썰쟁 Studio v13.9.3 조회수형 쇼츠 통합</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,8 +49,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v13.9.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">YouTube Hook Edition</span>
+ <div><h1>🎬 썰쟁 Studio v13.9.3</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">조회수형 쇼츠 통합 Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -152,7 +152,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn ghost wide" onclick="validatePastedStory()">✅ 붙여넣은 롱폼 확인</button>
   <button id="allBtn" class="btn primary wide" onclick="generateProductionAssets()">✨ 제작 자료 전체 생성</button>
   <button class="btn secondary" onclick="generate('images')">🖼 이미지 프롬프트</button>
-  <button class="btn secondary" onclick="generateShortsOnly()">📱 쇼츠만 생성</button>
+  <button class="btn secondary" onclick="generateShortsOnly()">🔥 조회수형 쇼츠</button>
   <button class="btn secondary" onclick="generate('thumbnail')">🧲 썸네일</button>
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
@@ -163,7 +163,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn ghost" onclick="loadLocal()">이 PC에서 불러오기</button>
  </div>
  <div class="char-editor" style="margin-top:12px">
-  <h3>📱 쇼츠 독립 생성</h3>
+  <h3>🔥 조회수형 쇼츠 생성</h3>
   <div class="row">
    <div class="field"><label>생성 개수</label><select id="shortsCount"><option value="1">1개</option><option value="3" selected>3개</option><option value="5">5개</option></select></div>
    <div class="field"><label>결과 저장</label><select id="shortsSaveMode"><option value="append" selected>기존 결과에 추가</option><option value="replace">기존 결과 교체</option></select></div>
@@ -172,8 +172,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
    <div class="field"><label>원본</label><select id="shortsSource"><option value="story" selected>현재 롱폼 사용</option><option value="topic">주제만 사용</option></select></div>
    <div class="field"><label>스타일</label><select id="shortsStyle"><option value="mixed" selected>각기 다른 스타일</option><option value="hook">강한 후킹형</option><option value="twist">반전형</option><option value="emotion">감동형</option><option value="anger">분노·사이다형</option></select></div>
   </div>
-  <button id="shortsOnlyBtn" class="btn primary" style="width:100%" type="button" onclick="generateShortsOnly()">쇼츠만 새로 생성</button>
-  <div class="tiny" style="margin-top:7px">롱폼과 기존 제작 자료는 건드리지 않습니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
+  <button id="shortsOnlyBtn" class="btn primary" style="width:100%" type="button" onclick="generateShortsOnly()">조회수형 쇼츠 생성</button>
+  <div class="tiny" style="margin-top:7px">전체 생성과 재생성 모두 같은 조회수형 쇼츠 엔진을 사용합니다. ‘기존 결과에 추가’를 선택하면 같은 사연으로 쇼츠를 계속 쌓을 수 있습니다.</div>
  </div>
 
  <div class="project-actions">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.2-youtube-hook-fix',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='13.9.3-views-shorts-unified',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -447,6 +447,55 @@ function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
 ['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+
+
+function shortsViewsEngineRules(){
+ return `[조회수형 쇼츠 공통 엔진]
+- 이 규칙은 「제작 자료 전체 생성」과 「쇼츠만 생성·재생성」에 똑같이 적용합니다.
+- 영화 예고편처럼 점잖거나 추상적으로 쓰지 마세요.
+- 유튜브 사연 쇼츠에서 첫 화면부터 시선을 빼앗는 자극형 후킹 콘텐츠로 만드세요.
+- 정확히 4컷, 전체 25초 안팎으로 구성하세요.
+
+[1~3컷 전개]
+- 롱폼 전체를 순서대로 요약하지 마세요.
+- 사건의 핵심 소재는 숨기지 말고 일부 드러내되, 원인·범인·해결·결말은 공개하지 마세요.
+- 각 컷마다 충격, 황당함, 배신감, 분노, 의문 중 하나를 강하게 터뜨리세요.
+- 1컷은 사건 자체가 바로 보이는 질문형 또는 폭로형 후킹으로 시작하세요.
+- 2컷은 「그런데」, 「알고 보니」처럼 더 큰 문제를 암시하세요.
+- 3컷은 가장 충격적인 단서나 주인공의 반격 직전에서 끊으세요.
+- 「그날…」, 「뭔가 이상했습니다」, 「진실은 달랐습니다」처럼 어느 사연에도 붙일 수 있는 점잖고 추상적인 표현만 단독으로 사용하지 마세요.
+- 화면 문구와 나레이션은 서로 같은 문장을 반복하지 말고, 함께 봤을 때 긴장감이 더 커지게 작성하세요.
+
+[화면 문구]
+- 2~3줄, 전체 8~24자 안팎으로 작성하세요.
+- 질문형·충격형·배신형·분노형 문구를 우선하세요.
+- 사건의 구체적인 핵심 단어를 최소 하나 포함하세요. 예: 생활비, 통장, 장례식, 시어머니, 남편, 계약서, 비밀번호.
+- 모바일 화면의 약 35~50%를 차지할 만큼 매우 크고 굵게 보이도록 지시하세요.
+- 기본은 흰색 굵은 글자, 핵심 단어는 빨간색 또는 노란색 강조, 전체에 두꺼운 검은 외곽선과 강한 그림자를 적용하세요.
+- 화면 상단 또는 중앙에 배치하되 인물의 눈과 핵심 표정을 가리지 마세요.
+- 일반 자막처럼 작고 얌전하게 만들지 마세요.
+
+[나레이션]
+- 한 컷당 1~2문장, 약 20~45자로 작성하세요.
+- 본문을 전부 설명하지 말고, 해당 컷의 충격적인 상황을 직접적으로 들려준 뒤 다음 컷이 궁금하게 끊으세요.
+- 점잖은 감상문이나 교훈형 문장보다 실제 유튜브 사연 채널의 빠르고 자극적인 말투를 사용하세요.
+- 허위 사건을 새로 만들거나 롱폼에 없는 핵심 사실을 조작하지 마세요.
+
+[이미지]
+- 각 컷은 9:16 세로형 실사 한국 드라마 장면 한 장입니다.
+- 4분할, 콜라주, 말풍선, 대화풍선, 로고, 워터마크는 금지합니다.
+- 화면 문구 외의 추가 글자는 넣지 마세요.
+- 인물의 분노·충격·당황·결심이 즉시 보이는 강한 표정과 구도를 사용하세요.
+
+[4컷 고정]
+- 화면 문구는 반드시 정확히 두 줄로 작성하세요.
+결말은
+본편에서
+- 4컷 나레이션은 반드시 정확히 다음과 같이 작성하세요.
+결말은...
+본편에서 확인해 보세요.
+- 마지막 컷에서도 사건의 결말은 설명하지 마세요.`;
+}
 
 function generationPrompt(task){
  ensureAssignedNames();
@@ -515,8 +564,8 @@ ${story}
 
 출력 순서:
 [이미지 프롬프트] 본문용 이미지 ${c.images}개. 모든 이미지는 반드시 가로형 16:9 비율의 실사 한국 드라마 영화 스틸로 작성하세요. 9:16 세로형은 절대 사용하지 마세요. 각 번호의 프롬프트 첫 문장과 마지막 조건에 모두 '16:9 가로형'을 명시하세요. 동일 인물과 의상 연속성을 유지하고, 본문 이미지는 문구·자막·말풍선·로고 없음.
-[쇼츠 4컷] 유튜브 자극형 후킹 스타일로 작성하세요. 롱폼 내용을 요약하거나 사건의 원인·전개·결말을 설명하지 말고, 1~3컷은 궁금증과 긴장감만 높이세요. 각 컷마다 강렬하고 짧은 화면 문구, 짧고 강한 유튜브 후킹형 나레이션, 9:16 이미지 프롬프트를 작성하세요. 화면 문구는 5~12자의 짧은 문장으로 만들고, 이미지에는 매우 크고 굵은 흰색 글자, 두꺼운 검은 외곽선, 은은한 그림자 효과로 표현하세요. 4번째 컷의 화면 문구는 반드시 정확히 두 줄로 '결말은\n본편에서'를 사용하고, 나레이션은 반드시 '결말은...
-본편에서 확인해 보세요.'로 고정하세요. 쇼츠 이미지는 컷별 독립 이미지이며 말풍선·대화풍선·로고·워터마크는 금지하세요.
+[쇼츠 4컷]
+${shortsViewsEngineRules()}
 [유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.
 [썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. 인물은 최대 ${c.thumbPeople}명이며 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
  if(task==='thumbnail')return `${imageCommon}
@@ -542,8 +591,22 @@ ${story}
   const count=Number($('shortsCount')?.value||1),source=$('shortsSource')?.value||'story',style=$('shortsStyle')?.value||'mixed';
   const sourceText=source==='story'&&story?`현재 롱폼 원고:\n${story}`:`주제와 등장인물 설정만 사용하세요. 롱폼 원고를 새로 만들지는 마세요.`;
   const styleText=({mixed:'각 쇼츠의 후킹 방향과 전개를 서로 다르게 구성',hook:'첫 2초가 매우 강한 후킹형',twist:'정체나 사건의 반전을 중심으로 구성',emotion:'감정 몰입과 여운 중심',anger:'분노를 유발한 뒤 통쾌한 결말을 암시'})[style]||'서로 다른 방식';
-  return `${imageCommon}\n\n${sourceText}\n\n이 자료로 서로 중복되지 않는 유튜브 쇼츠 ${count}개를 독립적으로 작성하세요. ${styleText}하세요.\n각 쇼츠는 정확히 4컷이며 25초 안팎입니다. 각 안은 [쇼츠 1안], [쇼츠 2안]처럼 구분하세요.\n\n[핵심 제작 방향]\n- 쇼츠는 롱폼 요약본이 아니라 유튜브 자극형 후킹 콘텐츠여야 합니다.\n- 본문 내용을 순서대로 설명하지 마세요.\n- 사건의 원인, 해결 과정, 범인의 정체, 결말을 직접 말하지 마세요.\n- 1~3컷은 강한 의문, 충격, 분노, 배신감, 불길한 징후를 중심으로 구성하고 다음 장면이 궁금하게 끝내세요.\n- 나레이션은 한 컷당 1~2문장, 15~25자 정도로 짧고 강하게 작성하세요. 추상적인 영화 예고편 문구보다 유튜브 클릭을 유도하는 직접적인 후킹 표현을 우선하되 결말은 숨기세요.\n\n각 컷마다 다음 항목을 반드시 포함하세요.\n- 시간 구간\n- 강렬하고 짧은 화면 문구\n- 유튜브 자극형 후킹 나레이션\n- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트\n\n[화면 문구 스타일]\n- 5~12자의 짧고 강한 문구\n- 모바일에서도 즉시 읽히는 매우 크고 굵은 글꼴\n- 흰색 굵은 글자 + 두꺼운 검은 외곽선 + 은은한 그림자\n- 화면 상단 또는 중앙의 시선이 먼저 가는 위치에 배치\n- 일반 자막처럼 작게 넣지 마세요.\n\n[4번째 컷 고정 규칙]\n- 화면 문구는 반드시 정확히 두 줄로 작성하세요.\n결말은\n본편에서\n- 4번째 컷 나레이션은 반드시 정확히 다음 문장으로 작성하세요.\n결말은...
-본편에서 확인해 보세요.\n- 4번째 컷에서도 사건의 결말을 설명하지 마세요.\n\n쇼츠 이미지는 4분할이나 콜라주가 아닌 컷별 독립 이미지입니다. 해당 화면 문구 외의 글자, 말풍선, 대화풍선, 로고, 워터마크는 넣지 마세요.\n각 쇼츠 마지막에 유튜브 제목 3개, 짧은 설명, 해시태그를 붙이세요. 채널 검색 유도 문구는 쓰지 마세요.`;
+  return `${imageCommon}
+
+${sourceText}
+
+이 자료로 서로 중복되지 않는 유튜브 쇼츠 ${count}개를 독립적으로 작성하세요. ${styleText}하세요.
+각 안은 [쇼츠 1안], [쇼츠 2안]처럼 구분하세요.
+
+${shortsViewsEngineRules()}
+
+각 컷마다 반드시 다음 항목을 출력하세요.
+- 시간 구간
+- 강렬하고 짧은 화면 문구
+- 조회수형 유튜브 후킹 나레이션
+- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트
+
+각 쇼츠 마지막에 유튜브 제목 3개, 짧은 설명, 해시태그를 붙이세요. 채널 검색 유도 문구는 쓰지 마세요.`;
  }
  if(task==='japanese')return `${storyCommon}\n\n아래 한국어 원고를 일본 시청자에게 자연스러운 일본어 사연 콘텐츠로 번역·현지화하세요. 문단 번호와 구조를 유지하고 의미를 임의로 생략하지 마세요.\n\n원고:\n${story}`;
  return '';
