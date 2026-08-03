@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v14.4 전체생성 이미지 공통 엔진</title>
+<title>썰쟁 Studio v15.0 CTR Boost Edition</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,8 +49,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v14.4</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">전체생성 이미지 공통 엔진 Edition</span>
+ <div><h1>🎬 썰쟁 Studio v15.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">CTR Boost Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='15.0-ctr-boost',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='15.0-ctr-boost-edition',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -450,16 +450,7 @@ function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout
 
 
 function shortsViewsEngineRules(){
- return `[조회수형 쇼츠 공통 엔진 v14]
-[CTR BOOST 이미지 스타일]
-- 일반 고딕 느낌 금지.
-- 예능 자막/영화 포스터/유튜브 썸네일용 디스플레이 글꼴.
-- 글자는 화면의 45~55% 크기.
-- 2~4줄 자동 줄바꿈.
-- 얼굴 클로즈업.
-- 강한 명암과 그림자.
-- 화면 문구만 이미지에 출력, 나레이션 출력 금지.
-
+ return `[조회수형 쇼츠 공통 엔진 v15 · CTR BOOST]
 [이미지 텍스트 규칙]
 - 이미지에는 '화면 문구'만 넣습니다.
 - 나레이션은 절대 이미지에 넣지 않습니다.
@@ -478,6 +469,19 @@ function shortsViewsEngineRules(){
 - 「그날…」, 「뭔가 이상했습니다」처럼 어느 사연에도 붙일 수 있는 추상적인 문구만 단독으로 사용하지 마세요.
 - 화면 문구와 나레이션은 같은 내용을 반복하지 마세요.
 
+[CTR BOOST 타이포그래피 절대 규칙]
+- 일반 고딕체를 굵게 키운 결과는 실패입니다.
+- Noto Sans KR, Pretendard, Apple SD Gothic, 기본 산세리프처럼 반듯하고 균일한 글꼴을 연상시키면 안 됩니다.
+- 실제 폰트가 아니라 디자이너가 손으로 만든 한국 예능 타이틀 레터링처럼 보여야 합니다.
+- 획 굵기는 일부러 불균일하고, 모서리는 묵직하며, 글자 폭은 강하게 압축하고, 세로 높이는 과장하세요.
+- 단정하고 딱딱한 정렬보다 살짝 비틀린 각도, 겹침, 층차, 키워드 크기 차이를 활용하세요.
+- 핵심 단어 1~2개는 다른 글자보다 120~150% 크게 강조하세요.
+- 화면 문구는 2~4줄로 시각적으로 재배치하되 문구 자체의 글자는 바꾸지 마세요.
+- 글자 블록이 화면의 45~55%를 차지하게 하세요.
+- 인물은 가슴 위 클로즈업, 얼굴과 감정이 화면의 약 60~70%를 차지하게 하세요.
+- 분노, 경악, 배신감, 억울함, 결심이 한눈에 보이는 과감한 표정을 사용하세요.
+- 높은 명암 대비, 깊은 검정, 밝은 피부 톤, 강한 입체 그림자를 사용하세요.
+
 [화면 문구]
 - 2~3줄, 전체 8~20자 안팎으로 작성하세요.
 - 질문형·충격형·배신형·분노형 문구를 우선하세요.
@@ -490,7 +494,7 @@ function shortsViewsEngineRules(){
 - 부드러운 둥근 글꼴, 손글씨, 일반 고딕체 느낌은 금지합니다.
 - 기본은 흰색 글자, 핵심 단어는 빨간색 또는 노란색 강조, 전체에 매우 두꺼운 검은 외곽선과 강한 입체 그림자를 적용하세요.
 - 이미지 프롬프트 끝에는 다음 영문 지시를 반드시 포함하세요:
-CUSTOM Korean TV variety-show display lettering, NOT Gothic, NOT Noto Sans, NOT Pretendard, ultra-heavy condensed, blocky poster lettering, Korean TV variety-show headline style, viral YouTube thumbnail typography, extremely thick strokes, tight letter spacing, NOT standard Gothic, NOT regular sans-serif, white letters with red or yellow keyword accents, massive black outline, deep hard drop shadow.
+CUSTOM KOREAN DISPLAY LETTERING ONLY — absolutely NOT a standard font. NOT Noto Sans KR, NOT Pretendard, NOT Apple SD Gothic, NOT ordinary Gothic, NOT regular sans-serif. Korean TV variety-show title lettering, viral YouTube thumbnail typography, movie-poster display lettering, and hand-shaped commercial POP headline energy. Extremely heavy compressed block forms, chunky uneven strokes, slightly distorted custom letter shapes, tight stacking, aggressive rhythm, rough-edged poster impact, oversized 45–55% headline coverage, white letters with red or yellow keyword accents, massive black outline, deep hard 3D shadow, explosive CTR-focused visual impact.
 IMPORTANT IMAGE TEXT RULE:
 - The image may contain ONLY the exact on-screen headline.
 - NEVER render narration, voice-over text, subtitles, dialogue, explanations or long sentences.
