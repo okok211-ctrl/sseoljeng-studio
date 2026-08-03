@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v14.0 짧은 나레이션·초강력 글꼴</title>
+<title>썰쟁 Studio v14.2 이미지 문단 범위 표시</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,8 +49,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v14.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">짧은 나레이션·초강력 글꼴 Edition</span>
+ <div><h1>🎬 썰쟁 Studio v14.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">이미지 문단 범위 Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='14.0-short-narration-heavy-font',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='14.2-image-paragraph-ranges',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -522,12 +522,73 @@ Ultra-heavy condensed Korean display typeface, blocky poster lettering, Korean T
 - "결말은 본편에서 확인해 보세요."만 단독으로 쓰지 마세요.`;
 }
 
+
+function sseoljengYoutubeStyleRules(){
+ return `[썰쟁 Style Engine · 유튜브 정보]
+- 평범한 Gemini식 범용 문구가 아니라, 한국 사연 채널 「썰쟁」 운영자가 직접 작성한 듯한 자연스럽고 구체적인 문장으로 작성하세요.
+- 사건과 갈등이 제목만 봐도 바로 이해되어야 하며, 추상적인 수식어만 앞세우지 마세요.
+- 결말은 공개하지 않되 핵심 사건과 관계는 숨기지 마세요.
+
+[제목 3개]
+1. 세 제목은 서로 다른 문장 구조로 작성하세요.
+2. 제목마다 사건의 핵심 행동·관계·장소 중 최소 2개를 구체적으로 넣으세요.
+3. 다음처럼 사건이 바로 보이는 문장을 우선하세요.
+   - "휴가를 다녀왔더니 시누이 자식들이 우리 집에서 살고 있었습니다."
+   - "남편이 제 허락도 없이 집 비밀번호를 알려줬습니다."
+   - "친정엄마 장례식 날 남편은 골프를 치러 갔습니다."
+4. "충격적인 비밀", "놀라운 반전", "역대급 사건", "소름 돋는 진실"처럼 내용이 보이지 않는 추상적 제목만 단독으로 쓰지 마세요.
+5. 과도한 낚시, 느낌표 남발, 사실과 다른 표현은 금지합니다.
+6. 제목은 실제 유튜브 업로드에 바로 쓸 수 있는 자연스러운 한 문장으로 작성하세요.
+
+[설명]
+1. 첫 문단은 사건의 시작을 2~3문장으로 구체적으로 보여 주세요.
+2. 둘째 문단은 더 큰 갈등이나 배신을 2~3문장으로 이어 주세요.
+3. 셋째 문단은 결말을 말하지 않고 영상에서 확인하도록 자연스럽게 유도하세요.
+4. 마지막에는 "여러분이라면 어떻게 하셨을까요? 댓글로 의견도 들려주세요."처럼 자연스러운 참여 문구를 넣으세요.
+5. 설명은 짧은 홍보문이 아니라 5~8문장 정도의 읽기 쉬운 소개글로 작성하세요.
+6. "드라마틱한 이야기", "충격적인 전말", "흥미진진한 영상"처럼 내용 없는 홍보 문장을 반복하지 마세요.
+
+[해시태그]
+1. 8~12개 작성하세요.
+2. 채널 기본 태그를 중심으로 구성하세요:
+   #사연 #사연라디오 #실화사연 #감동사연 #인생사연 #사이다사연
+3. 사연 성격에 맞는 관계 태그를 2~3개 추가하세요:
+   예) #가족갈등 #시댁갈등 #부부갈등 #시어머니 #시누이 #남편 #며느리
+4. 사건 핵심 태그는 꼭 필요한 것만 1~2개 추가하세요:
+   예) #장례식 #생활비 #무단침입 #집비밀번호 #코인
+5. 문장처럼 지나치게 긴 해시태그, 어색한 합성어, 같은 뜻의 태그 반복은 금지합니다.
+6. #드라마틱 #브이로그처럼 사연 채널과 맞지 않는 범용 태그는 사용하지 마세요.
+7. 마지막에 #썰쟁을 넣으세요.
+
+[고정댓글]
+- 짧고 따뜻하게 작성하세요.
+- 시청 감사 1문장 + 시청자 의견이나 경험을 묻는 1문장으로 구성하세요.
+- 예:
+  "끝까지 시청해 주셔서 감사합니다.
+  여러분이라면 어떤 선택을 하셨을지 댓글로 들려주세요."`;
+}
+
 function buildUnifiedShortsPrompt({imageCommon='',sourceText='',count=1,styleText='',embedded=false}={}){
  const shared=shortsViewsEngineRules();
  if(embedded){
   return `[쇼츠 4컷]\n${shared}\n\n각 컷마다 반드시 다음 항목을 출력하세요.\n- 시간 구간\n- 조회수형 초대형 헤드라인 화면 문구\n- 조회수형 유튜브 후킹 나레이션\n- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트`;
  }
- return `${imageCommon}\n\n${sourceText}\n\n이 자료로 서로 중복되지 않는 유튜브 쇼츠 ${count}개를 독립적으로 작성하세요. ${styleText}하세요.\n각 안은 [쇼츠 1안], [쇼츠 2안]처럼 구분하세요.\n\n${shared}\n\n각 컷마다 반드시 다음 항목을 출력하세요.\n- 시간 구간\n- 조회수형 초대형 헤드라인 화면 문구\n- 조회수형 유튜브 후킹 나레이션\n- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트\n\n각 쇼츠 마지막에 유튜브 제목 3개, 짧은 설명, 해시태그를 붙이세요. 채널 검색 유도 문구는 쓰지 마세요.`;
+ return `${imageCommon}\n\n${sourceText}\n\n이 자료로 서로 중복되지 않는 유튜브 쇼츠 ${count}개를 독립적으로 작성하세요. ${styleText}하세요.\n각 안은 [쇼츠 1안], [쇼츠 2안]처럼 구분하세요.\n\n${shared}\n\n각 컷마다 반드시 다음 항목을 출력하세요.\n- 시간 구간\n- 조회수형 초대형 헤드라인 화면 문구\n- 조회수형 유튜브 후킹 나레이션\n- 해당 컷 한 장만 생성하는 9:16 실사 한국 드라마 이미지 프롬프트\n\n각 쇼츠 마지막에 아래 썰쟁 스타일 규칙에 따라 유튜브 제목 3개, 설명, 해시태그, 고정댓글을 작성하세요.
+${sseoljengYoutubeStyleRules()}
+채널 검색을 지시하는 문구는 쓰지 마세요.`;
+}
+
+
+function imageParagraphRangeGuide(totalParagraphs,imageCount){
+ const total=Math.max(1,Number(totalParagraphs)||1);
+ const count=Math.max(1,Math.min(total,Number(imageCount)||1));
+ const ranges=[];
+ for(let i=0;i<count;i++){
+  const start=Math.floor(i*total/count)+1;
+  const end=Math.floor((i+1)*total/count);
+  ranges.push(`${i+1}번 이미지: ${start}문단~${end}문단`);
+ }
+ return ranges.join('\n');
 }
 
 function generationPrompt(task){
@@ -587,7 +648,13 @@ ${story}
 3. 모든 프롬프트는 반드시 '한국 드라마 실사 영화 스틸, 16:9 가로형.'으로 시작하세요.
 4. 각 프롬프트 마지막에도 '16:9 가로형, 동일 인물과 의상 연속성 유지, 텍스트·자막·말풍선·로고·워터마크 없음.'을 명시하세요.
 5. 9:16 세로형은 절대 사용하지 마세요.
-6. 각 번호마다 [사용 문단], [장면 설명], [생성 프롬프트]를 구분하세요.`;
+6. 각 번호마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [생성 프롬프트]를 구분하세요.
+7. [사용 문단]에는 한 문단 번호만 쓰지 말고 반드시 해당 이미지가 담당하는 범위를 '1문단~5문단'처럼 표시하세요.
+8. 아래 문단 배분표를 그대로 따르세요. 각 범위 안에서 가장 강렬하고 시각적인 한 장면을 골라 [대표 장면 문단]에 정확한 문단 번호를 표시하세요.
+9. 모든 문단 범위는 겹치거나 빠지지 않게 전체 원고를 순서대로 고르게 나눕니다.
+
+[이미지별 사용 문단 배분]
+${imageParagraphRangeGuide(c.count,c.images)}`;
  if(task==='assets'||task==='assetsNoShorts')return `${imageCommon}
 
 다음 롱폼 원고를 바탕으로 제작 자료를 작성하세요.
@@ -597,8 +664,22 @@ ${story}
 
 출력 순서:
 [이미지 프롬프트] 본문용 이미지 ${c.images}개. 모든 이미지는 반드시 가로형 16:9 비율의 실사 한국 드라마 영화 스틸로 작성하세요. 9:16 세로형은 절대 사용하지 마세요. 각 번호의 프롬프트 첫 문장과 마지막 조건에 모두 '16:9 가로형'을 명시하세요. 동일 인물과 의상 연속성을 유지하고, 본문 이미지는 문구·자막·말풍선·로고 없음.
-[유튜브 정보] 제목 3개, 설명, 해시태그, 고정댓글.
+각 이미지마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [생성 프롬프트]를 출력하세요. [사용 문단]은 해당 이미지가 담당하는 문단 범위를 뜻하며 한 문단만 적지 마세요. 아래 배분표를 그대로 따르고, 각 범위 안에서 가장 강렬하고 시각적인 한 장면을 선택해 [대표 장면 문단]에 정확한 번호를 표시하세요. 문단 범위는 서로 겹치거나 빠지지 않아야 합니다.
+
+[이미지별 사용 문단 배분]
+${imageParagraphRangeGuide(c.count,c.images)}
+[유튜브 정보]
+${sseoljengYoutubeStyleRules()}
 [썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. 인물은 최대 ${c.thumbPeople}명이며 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
+
+ if(task==='youtube')return `${imageCommon}
+
+현재 롱폼 원고:
+${story}
+
+아래 규칙에 따라 유튜브 제목, 설명, 해시태그, 고정댓글만 작성하세요.
+
+${sseoljengYoutubeStyleRules()}`;
  if(task==='thumbnail')return `${imageCommon}
 
 현재 롱폼 원고:
