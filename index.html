@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v14.2 이미지 문단 범위 표시</title>
+<title>썰쟁 Studio v14.3 전체생성 이미지 공통 엔진</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -49,8 +49,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v14.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">이미지 문단 범위 Edition</span>
+ <div><h1>🎬 썰쟁 Studio v14.3</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">전체생성 이미지 공통 엔진 Edition</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='14.2-image-paragraph-ranges',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='14.3-unified-image-engine',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -834,15 +834,26 @@ async function generateProductionAssets(){
  if(!validatePastedStory())return;
  busy=true;$('allBtn').disabled=true;
  try{
-  setStatus('1/4 이미지·유튜브·썸네일 생성 중...');
-  const a=splitAssets(await callGenerate('assetsNoShorts'));
-  $('imagesOut').value=a.images;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;
-  setStatus('2/4 쇼츠 공통 엔진으로 생성 중...');
+  setStatus('1/6 이미지 공통 엔진으로 생성 중...');
+  const imagesText=await callGenerate('images');
+  $('imagesOut').value=normalizeAspectRatio(imagesText.trim(),'images');
+
+  setStatus('2/6 유튜브 정보 생성 중...');
+  $('youtube').value=(await callGenerate('youtube')).trim();
+
+  setStatus('3/6 썸네일 생성 중...');
+  $('thumbnail').value=normalizeAspectRatio((await callGenerate('thumbnail')).trim(),'thumbnail');
+
+  setStatus('4/6 쇼츠 공통 엔진으로 생성 중...');
   const shortsText=await callGenerate('shorts');
   $('shorts').value=normalizeAspectRatio(shortsText.trim(),'shorts');
-  setStatus('3/4 SRT와 음성용 원고 생성 중...');makeSrt(true);makeVoice(true);
-  setStatus('4/4 프로젝트 저장 중...');saveLocal(true);scheduleCloudSave();showTab('images');
-  setStatus('제작 자료 전체 생성 완료. 롱폼 원고는 변경하지 않았습니다.','ok');
+
+  setStatus('5/6 SRT와 음성용 원고 생성 중...');
+  makeSrt(true);makeVoice(true);
+
+  setStatus('6/6 프로젝트 저장 중...');
+  saveLocal(true);scheduleCloudSave();showTab('images');
+  setStatus('제작 자료 전체 생성 완료. 이미지 단독 생성과 동일한 문단 범위 형식을 적용했습니다.','ok');
  }catch(e){setStatus('제작 자료 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
 }
 async function callGenerate(task){
@@ -915,9 +926,11 @@ async function generateAll(){
  try{
   setStatus('1/4 설계도 생성 중...');$('blueprint').value=await callGenerate('blueprint');saveLocal(true);
   const c=cfg();await buildSeparatedStory($('blueprint').value,msg=>setStatus('2/4 '+msg));updateMeta();
-  setStatus('3/5 이미지·유튜브·썸네일 생성 중...');const a=splitAssets(await callGenerate('assetsNoShorts'));$('imagesOut').value=a.images;$('youtube').value=a.youtube;$('thumbnail').value=a.thumbnail;
-  setStatus('4/5 쇼츠 공통 엔진으로 생성 중...');$('shorts').value=normalizeAspectRatio((await callGenerate('shorts')).trim(),'shorts');saveLocal(true);
-  setStatus('5/5 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
+  setStatus('3/7 이미지 공통 엔진으로 생성 중...');$('imagesOut').value=normalizeAspectRatio((await callGenerate('images')).trim(),'images');
+  setStatus('4/7 유튜브 정보 생성 중...');$('youtube').value=(await callGenerate('youtube')).trim();
+  setStatus('5/7 썸네일 생성 중...');$('thumbnail').value=normalizeAspectRatio((await callGenerate('thumbnail')).trim(),'thumbnail');
+  setStatus('6/7 쇼츠 공통 엔진으로 생성 중...');$('shorts').value=normalizeAspectRatio((await callGenerate('shorts')).trim(),'shorts');saveLocal(true);
+  setStatus('7/7 일본어판 생성 중...');$('japanese').value=await callGenerate('japanese');makeSrt(true);makeVoice(true);
   active='story';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='story'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='story'));updateMeta();saveLocal(true);scheduleCloudSave();setStatus('전체 자동 생성이 완료되었습니다.','ok');
  }catch(e){setStatus('전체 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false}
 }
