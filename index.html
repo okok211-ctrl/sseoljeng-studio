@@ -381,7 +381,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='14.4-headline-only-images',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=6,APP_VERSION='15.0-ctr-boost',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -451,6 +451,15 @@ function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout
 
 function shortsViewsEngineRules(){
  return `[조회수형 쇼츠 공통 엔진 v14]
+[CTR BOOST 이미지 스타일]
+- 일반 고딕 느낌 금지.
+- 예능 자막/영화 포스터/유튜브 썸네일용 디스플레이 글꼴.
+- 글자는 화면의 45~55% 크기.
+- 2~4줄 자동 줄바꿈.
+- 얼굴 클로즈업.
+- 강한 명암과 그림자.
+- 화면 문구만 이미지에 출력, 나레이션 출력 금지.
+
 [이미지 텍스트 규칙]
 - 이미지에는 '화면 문구'만 넣습니다.
 - 나레이션은 절대 이미지에 넣지 않습니다.
@@ -481,7 +490,7 @@ function shortsViewsEngineRules(){
 - 부드러운 둥근 글꼴, 손글씨, 일반 고딕체 느낌은 금지합니다.
 - 기본은 흰색 글자, 핵심 단어는 빨간색 또는 노란색 강조, 전체에 매우 두꺼운 검은 외곽선과 강한 입체 그림자를 적용하세요.
 - 이미지 프롬프트 끝에는 다음 영문 지시를 반드시 포함하세요:
-Ultra-heavy condensed Korean display typeface, blocky poster lettering, Korean TV variety-show headline style, viral YouTube thumbnail typography, extremely thick strokes, tight letter spacing, NOT standard Gothic, NOT regular sans-serif, white letters with red or yellow keyword accents, massive black outline, deep hard drop shadow.
+CUSTOM Korean TV variety-show display lettering, NOT Gothic, NOT Noto Sans, NOT Pretendard, ultra-heavy condensed, blocky poster lettering, Korean TV variety-show headline style, viral YouTube thumbnail typography, extremely thick strokes, tight letter spacing, NOT standard Gothic, NOT regular sans-serif, white letters with red or yellow keyword accents, massive black outline, deep hard drop shadow.
 IMPORTANT IMAGE TEXT RULE:
 - The image may contain ONLY the exact on-screen headline.
 - NEVER render narration, voice-over text, subtitles, dialogue, explanations or long sentences.

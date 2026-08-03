@@ -1,6 +1,6 @@
 {
   "name": "sseoljeng-studio-production-edition",
-  "version": "14.4.0",
+  "version": "15.0.0",
   "private": true,
   "engines": {
     "node": "22.x"
