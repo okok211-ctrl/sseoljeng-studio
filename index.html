@@ -44,12 +44,18 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .cloud-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}.cloud-select{margin-top:8px}.cloud-state{font-size:10px;color:#b8c7da;margin-top:7px;line-height:1.45}.cloud-state.ok{color:#baffd5}.cloud-state.bad{color:#ffc2c7}
 .wizard{margin-top:12px;padding:12px;border:1px solid rgba(255,121,23,.35);border-radius:13px;background:rgba(255,121,23,.07)}.wizard-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.wizard-title{font-size:13px;font-weight:900}.wizard-step{font-size:11px;color:#ffd7b8;font-weight:900}.wizard-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.wizard-progress{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}.wizard-list{max-height:150px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:9px;padding:7px;background:#06101d}.wizard-item{font-size:11px;padding:5px 7px;border-radius:7px;color:var(--muted)}.wizard-item.current{background:rgba(255,121,23,.15);color:#ffd7b8;font-weight:900}.wizard-item.done{color:#baffd5}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
+
+.quality-tools{margin:0 0 10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#091525}
+.quality-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.quality-issues{display:grid;gap:7px;max-height:180px;overflow:auto}
+.quality-issue{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#06101d;font-size:12px;line-height:1.45}
+.quality-empty{color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v16.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v16.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">CTR Boost Edition</span>
 </header>
 <div class="layout">
@@ -165,6 +171,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
   <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
   <button class="btn secondary" onclick="checkConsistency()">🔍 설정 검사</button>
+  <button class="btn secondary" onclick="runManualQualityReport()">🧠 품질 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
   <button class="btn ghost" onclick="loadLocal()">이 PC에서 불러오기</button>
@@ -222,7 +229,16 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="srt" class="output hidden"></textarea>
  <textarea id="voice" class="output hidden"></textarea>
  <textarea id="consistency" class="output hidden"></textarea>
- <textarea id="qualityReport" class="output hidden" placeholder="자동 품질 검사 결과가 표시됩니다."></textarea>
+ <div id="qualityTools" class="quality-tools hidden">
+  <div class="quality-actions">
+   <button class="btn primary" type="button" onclick="runManualQualityReport()">🧠 현재 원고 품질 검사</button>
+   <button class="btn success" type="button" onclick="regenerateSelectedParagraphs()">✨ 선택 문단만 재생성</button>
+   <button class="btn ghost" type="button" onclick="selectAllQualityIssues(true)">전체 선택</button>
+   <button class="btn ghost" type="button" onclick="selectAllQualityIssues(false)">선택 해제</button>
+  </div>
+  <div id="qualityIssueList" class="quality-issues"><div class="quality-empty">품질 검사를 실행하면 수정 권장 문단이 여기에 표시됩니다.</div></div>
+ </div>
+ <textarea id="qualityReport" class="output hidden" placeholder="품질 검사 결과가 표시됩니다."></textarea>
 </section>
 </div>
 </div>
@@ -338,7 +354,7 @@ function visualLeakTerms(){
  return [...new Set([...generic,...fromChars])];
 }
 function findVisualLeaks(text){const value=String(text||'');return visualLeakTerms().filter(term=>value.includes(term)).slice(0,30)}
-function storyEngineRules(){return `[Story Engine v16.0 Ending Flow]
+function storyEngineRules(){return `[Story Engine v16.2 Quality Repair]
 - 실제 사람이 말하는 것처럼 자연스러운 구어체로 작성하세요.
 - 본문 문단은 약 400자 내외를 목표로 자연스럽게 작성하세요. 권장 범위는 380~450자이며, 글자 수 때문에 내용을 억지로 늘리거나 줄이지 마세요.
 - 모든 문단에서 반드시 새로운 사건이나 행동이 하나 이상 진행되어야 합니다. 같은 내용을 표현만 바꿔 반복하지 마세요.
@@ -1016,7 +1032,8 @@ async function downloadZip(){
 }
 
 
-function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));updateMeta()}
+function syncQualityTools(){$('qualityTools')?.classList.toggle('hidden',active!=='qualityreport')}
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));syncQualityTools();updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
 function paragraphCharCount(text){
@@ -1227,7 +1244,7 @@ async function generateStableStory(){
    setStatus('3단계: 중복·결말·문단 역할 자동 품질 검사 및 수정 중...');
    const quality=await runAutoQualityPass(story,blueprint);
    if(quality.revised){story=quality.revised;$('story').value=story}
-   $('qualityReport').value=quality.report||'품질 검사 결과를 받지 못했습니다.';
+   $('qualityReport').value=quality.report||'품질 검사 결과를 받지 못했습니다.';renderQualityIssues($('qualityReport').value);
    saveLocal(true);
   }else $('qualityReport').value='자동 품질 검사가 꺼져 있습니다.';
   makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${c.count}문단 생성 완료 · 자동 품질 교정 완료 · 외모 표현 ${remaining.length}건이 남았습니다.`:`${c.count}문단 생성 완료 · 자동 품질 교정과 엔딩 반복 검사를 마쳤습니다.` ,remaining.length?'bad':'ok')
@@ -1239,6 +1256,50 @@ function makeVoice(silent=false){
  const parts=[];for(let i=0;i<paras.length;i+=10)parts.push(`===== Part ${Math.floor(i/10)+1} (${i+1}~${Math.min(i+10,paras.length)}문단) =====\n\n${paras.slice(i,i+10).join('\n\n')}`);
  $('voice').value=parts.join('\n\n\n');saveLocal(true);if(!silent){showTab('voice');setStatus('시간·번호·글자 수를 뺀 음성 AI용 원고를 10문단씩 나눴습니다.','ok')}
 }
+
+function parseNumberedStory(text){
+ const src=String(text||'').replace(/\r/g,'');
+ const re=/(?:^|\n)\s*(\d+)\s*문단\s*\n/gm, matches=[];let m;
+ while((m=re.exec(src)))matches.push({num:Number(m[1]),start:m.index+(m[0].startsWith('\n')?1:0),bodyStart:re.lastIndex});
+ return matches.map((x,i)=>({num:x.num,start:x.start,end:i+1<matches.length?matches[i+1].start:src.length,raw:src.slice(x.start,i+1<matches.length?matches[i+1].start:src.length).trim()}));
+}
+function renderQualityIssues(report){
+ const box=$('qualityIssueList');if(!box)return;
+ const lines=String(report||'').split('\n'),issues=[];
+ for(const line of lines){const m=line.match(/^\s*[-•]\s*(\d+)\s*문단\s*\|\s*([^|]+)\|\s*(.+)$/);if(m)issues.push({num:Number(m[1]),type:m[2].trim(),reason:m[3].trim()})}
+ if(!issues.length){box.innerHTML='<div class="quality-empty">AI가 재생성을 권장한 특정 문단이 없습니다. 리포트 내용을 확인하세요.</div>';return}
+ box.innerHTML=issues.map((x,i)=>`<label class="quality-issue"><input type="checkbox" class="qualityPick" value="${x.num}" checked><span><b>${x.num}문단 · ${escapeHtml(x.type)}</b><br>${escapeHtml(x.reason)}</span></label>`).join('');
+}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function selectAllQualityIssues(on){document.querySelectorAll('.qualityPick').forEach(x=>x.checked=on)}
+function selectedQualityParagraphs(){return [...document.querySelectorAll('.qualityPick:checked')].map(x=>Number(x.value)).filter(Boolean).sort((a,b)=>a-b)}
+async function runManualQualityReport(){
+ if(busy)return;const story=$('story').value.trim();if(!story){setStatus('먼저 롱폼 원고를 붙여넣거나 생성하세요.','bad');showTab('story');return}
+ busy=true;$('allBtn').disabled=true;setStatus('원고의 중복·정보 밀도·결말 흐름을 검사 중...');
+ try{
+  const total=Number(cfg().count),blueprint=$('blueprint').value.trim()||'(설계도 없음 — 현재 원고 기준으로 검사)';
+  const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래 원고를 다시 쓰지 말고 문제를 진단하세요.\n\n[설계도]\n${blueprint}\n\n[원고]\n${story}\n\n[검사 기준]\n- 같은 감정·설명·사건을 표현만 바꾸어 반복하는지\n- 각 문단에 새로운 정보·행동·결정이 있는지\n- 앞 문단 내용을 다음 문단에서 불필요하게 요약하는지\n- 마지막 5문단의 역할이 겹치는지\n- ${total}문단 엔딩에 오늘 이야기는 어떠셨나요, 공감 질문, 댓글 유도, 구독과 좋아요, 감사 인사가 자연스럽게 들어갔는지\n- 인물·사건 순서·핵심 결말은 평가만 하고 새 설정을 만들지 말 것\n\n반드시 아래 형식으로만 출력하세요. 특정 문제가 있는 문단은 최대 8개까지만 고르세요.\n[품질 검사 결과]\n- 전체 점수: 100점 만점\n- 전체 판정: 통과/보완 필요\n- 결말 반복: 없음/약간/있음\n- 감정·설명 반복: 낮음/보통/높음\n- 정보 밀도: 5점 만점\n- 문단 역할 분리: 5점 만점\n- 엔딩 완성도: 5점 만점\n\n[수정 권장 문단]\n- N문단 | 문제 유형 | 구체적인 이유와 수정 방향\n문제가 없으면 정확히 "- 없음"이라고 쓰세요.\n\n[좋았던 점]\n- 3줄 이내`;
+  const report=(await callGeneratePrompt(prompt,'qualityreport')).trim();$('qualityReport').value=report;renderQualityIssues(report);showTab('qualityreport');saveLocal(true);setStatus('품질 검사가 완료되었습니다. 수정할 문단을 선택해 재생성할 수 있습니다.','ok');
+ }catch(e){setStatus('품질 검사 실패: '+e.message,'bad')}finally{busy=false;$('allBtn').disabled=false}
+}
+function replaceStoryParagraphs(original,replacements){
+ const parts=parseNumberedStory(original);if(!parts.length)throw new Error('문단 번호 형식을 찾지 못했습니다. 예: 1문단');
+ let out='',cursor=0;for(const p of parts){out+=original.slice(cursor,p.start);out+=replacements[p.num]||original.slice(p.start,p.end).trim();cursor=p.end}out+=original.slice(cursor);return out.replace(/\n{3,}/g,'\n\n').trim();
+}
+async function regenerateSelectedParagraphs(){
+ if(busy)return;const nums=selectedQualityParagraphs();if(!nums.length){setStatus('재생성할 문단을 먼저 선택하세요.','bad');return}
+ const story=$('story').value.trim(),parts=parseNumberedStory(story);if(!parts.length){setStatus('원고에서 ‘1문단’ 형식을 찾지 못했습니다.','bad');return}
+ busy=true;$('allBtn').disabled=true;setStatus(`${nums.join(', ')}문단만 재생성 중...`);
+ try{
+  const total=Number(cfg().count),selected=parts.filter(p=>nums.includes(p.num));
+  const contexts=selected.map(p=>{const idx=parts.findIndex(x=>x.num===p.num);return `[${p.num}문단 주변]\n이전: ${idx>0?parts[idx-1].raw:'없음'}\n현재: ${p.raw}\n다음: ${idx+1<parts.length?parts[idx+1].raw:'없음'}`}).join('\n\n');
+  const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래에서 선택된 문단만 다시 작성하세요.\n\n[고정 설계도]\n${$('blueprint').value.trim()||'(없음)'}\n\n[선택 문단]\n${nums.join(', ')}문단\n\n[주변 문맥]\n${contexts}\n\n[절대 규칙]\n- 선택된 ${nums.length}개 문단만 출력하고 다른 문단은 출력하지 마세요.\n- 문단 번호, 인물, 사건 순서, 핵심 사실과 다음 문단으로 이어지는 연결을 유지하세요.\n- 반복된 감정·설명은 새로운 행동·정보·결정으로 바꾸세요.\n- 새 인물, 새 사건, 과장된 법적 결과를 추가하지 마세요.\n- 1문단이면 220~280자, ${total}문단이면 260~340자, 나머지는 380~450자 내외로 작성하세요.\n- ${total}문단은 주인공의 새 일상 뒤 “오늘 이야기는 어떠셨나요?” → 공감 질문 → 댓글 유도 → 구독과 좋아요 → 감사 인사로 끝내세요.\n- 각 문단 끝에 [문단 글자 수: N자] 형식을 포함하세요.\n\n출력 형식:\nN문단\n\n본문\n[문단 글자 수: N자]`;
+  const revised=(await callGeneratePrompt(prompt,'paragraphrepair')).trim(),newParts=parseNumberedStory(revised),repl={};newParts.forEach(p=>{if(nums.includes(p.num))repl[p.num]=p.raw});
+  const missing=nums.filter(n=>!repl[n]);if(missing.length)throw new Error(`${missing.join(', ')}문단 결과를 읽지 못했습니다.`);
+  $('story').value=replaceStoryParagraphs(story,repl);makeSrt(true);makeVoice(true);saveLocal(true);scheduleCloudSave();showTab('story');setStatus(`${nums.join(', ')}문단만 원고에 반영했습니다. 나머지 문단은 그대로 유지했습니다.`,'ok');
+ }catch(e){setStatus('선택 문단 재생성 실패: '+e.message,'bad')}finally{busy=false;$('allBtn').disabled=false}
+}
+
 async function checkConsistency(){
  if(busy)return;if(!$('story').value.trim()){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}if(!$('blueprint').value.trim()){setStatus('먼저 스토리 설계도를 생성하세요.','bad');return}
  busy=true;$('allBtn').disabled=true;setStatus('등장인물·시간·직업·관계·결말 설정 충돌 검사 중...');
