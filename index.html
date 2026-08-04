@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v15.0 CTR Boost Edition</title>
+<title>썰쟁 Studio v16.5 Prompt Quality Edition</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -45,17 +45,12 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .wizard{margin-top:12px;padding:12px;border:1px solid rgba(255,121,23,.35);border-radius:13px;background:rgba(255,121,23,.07)}.wizard-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.wizard-title{font-size:13px;font-weight:900}.wizard-step{font-size:11px;color:#ffd7b8;font-weight:900}.wizard-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.wizard-progress{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}.wizard-list{max-height:150px;overflow:auto;margin-top:8px;border:1px solid var(--line);border-radius:9px;padding:7px;background:#06101d}.wizard-item{font-size:11px;padding:5px 7px;border-radius:7px;color:var(--muted)}.wizard-item.current{background:rgba(255,121,23,.15);color:#ffd7b8;font-weight:900}.wizard-item.done{color:#baffd5}
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
 
-.quality-tools{margin:0 0 10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#091525}
-.quality-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.quality-issues{display:grid;gap:7px;max-height:180px;overflow:auto}
-.quality-issue{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#06101d;font-size:12px;line-height:1.45}
-.quality-empty{color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v16.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v16.5</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">CTR Boost Edition</span>
 </header>
 <div class="layout">
@@ -138,9 +133,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div class="checks">
   <label class="check"><input id="subscribe" type="checkbox" checked>1문단 오프닝·구독 멘트</label>
   <label class="check"><input id="strict" type="checkbox" checked>문단별 글자 수 표시</label>
-  <label class="check"><input id="autoQualityCheck" type="checkbox" checked>자동 품질 검사·중복 수정</label>
  </div>
- <div class="tiny" style="margin-top:-4px;margin-bottom:8px">원고 생성 후 같은 감정·사건·결말 반복을 검사하고, 문단 수와 핵심 사건을 유지한 채 자동으로 다듬습니다.</div>
  <div class="row">
   <div class="field"><label>마지막 엔딩 스타일</label><select id="endingStyle"><option value="auto" selected>AI 자동 추천</option><option value="empathy">감동형</option><option value="cider">사이다형</option><option value="hope">희망형</option><option value="debate">토론형 · 댓글 유도</option></select></div>
   <div class="field"><label>결말 구성</label><select id="endingLength"><option value="compact" selected>짧고 강하게</option><option value="normal">보통</option></select></div>
@@ -171,7 +164,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
   <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
   <button class="btn secondary" onclick="checkConsistency()">🔍 설정 검사</button>
-  <button class="btn secondary" onclick="runManualQualityReport()">🧠 품질 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
   <button class="btn ghost" onclick="loadLocal()">이 PC에서 불러오기</button>
@@ -215,7 +207,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="srt">SRT</button>
   <button class="tab" data-tab="voice">음성용</button>
   <button class="tab" data-tab="consistency">설정 검사</button>
-  <button class="tab" data-tab="qualityreport">품질 리포트</button>
  </nav>
  <div class="toolbar"><span id="meta" class="meta">0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
  <textarea id="story" class="output" placeholder="ChatGPT에서 작성한 1문단~마지막 문단 원고를 그대로 붙여넣으세요."></textarea>
@@ -229,16 +220,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="srt" class="output hidden"></textarea>
  <textarea id="voice" class="output hidden"></textarea>
  <textarea id="consistency" class="output hidden"></textarea>
- <div id="qualityTools" class="quality-tools hidden">
-  <div class="quality-actions">
-   <button class="btn primary" type="button" onclick="runManualQualityReport()">🧠 현재 원고 품질 검사</button>
-   <button class="btn success" type="button" onclick="regenerateSelectedParagraphs()">✨ 선택 문단만 재생성</button>
-   <button class="btn ghost" type="button" onclick="selectAllQualityIssues(true)">전체 선택</button>
-   <button class="btn ghost" type="button" onclick="selectAllQualityIssues(false)">선택 해제</button>
-  </div>
-  <div id="qualityIssueList" class="quality-issues"><div class="quality-empty">품질 검사를 실행하면 수정 권장 문단이 여기에 표시됩니다.</div></div>
- </div>
- <textarea id="qualityReport" class="output hidden" placeholder="품질 검사 결과가 표시됩니다."></textarea>
 </section>
 </div>
 </div>
@@ -256,7 +237,7 @@ function setStatus(message,type=''){
  el.className='status'+(type?' '+type:'');
 }
 let active='story',busy=false;
-const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency',qualityreport:'qualityReport'};
+const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
  {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
@@ -424,7 +405,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=7,APP_VERSION='16.0-ending-flow-edition',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=7,APP_VERSION='16.5-prompt-quality-edition',LOCAL_KEY='sseoljeng-v7',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v7',BACKUP_RING_KEY='sseoljeng-backup-ring-v7';
 function outputsNow(){return Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value]))}
 
 function updateMeta(){
@@ -445,7 +426,7 @@ function cfg(){
   count:String($('count').value==='custom'?Math.max(10,Math.min(100,Number($('customCount').value||40))):$('count').value||20),images:String($('images').value||3),
   pov:$('pov').value,tone:$('tone').value,density:$('density').value,quality:$('quality').value,
   subscribe:$('subscribe').checked,strict:$('strict').checked,
-  endingStyle:$('endingStyle').value,endingLength:$('endingLength').value,autoQualityCheck:$('autoQualityCheck').checked,
+  endingStyle:$('endingStyle').value,endingLength:$('endingLength').value,
   thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value
  };
 }
@@ -456,7 +437,7 @@ function normalizeProject(raw){
  let config={},characters=[],outputs={},selected='';
  if(raw.app===APP_ID&&raw.schemaVersion){config=raw.project?.config||raw.config||{};selected=raw.project?.selectedCharacterId||raw.selectedCharacterId||'';characters=raw.characters||raw.project?.characters||[];outputs=raw.outputs||raw.project?.outputs||{}}
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,blueprint:raw.blueprint,gptprompt:raw.gptprompt||raw.gptPrompt,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
- const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',autoQualityCheck:config.autoQualityCheck!==false,thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
+ const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
  const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:''};for(const k in cleanOut)cleanOut[k]=String(outputs?.[k]??'');
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:cleanChars,outputs:cleanOut};
@@ -464,7 +445,6 @@ function normalizeProject(raw){
 function applyProject(raw){
  const p=normalizeProject(raw),c=p.project.config,o=p.outputs;
  for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','endingStyle','endingLength','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])$(k).value=c[k]??'';
- $('autoQualityCheck').checked=c.autoQualityCheck!==false;
  for(const k of ['subscribe','strict'])$(k).checked=!!c[k];
  for(const k of Object.keys(o))$(fields[k]).value=o[k];
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
@@ -491,7 +471,7 @@ function restoreImportBackup(){try{const raw=JSON.parse(localStorage.getItem(IMP
 function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'썰쟁-프로젝트'}
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
-['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','autoQualityCheck','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
 
 
 function shortsViewsEngineRules(){
@@ -1032,8 +1012,7 @@ async function downloadZip(){
 }
 
 
-function syncQualityTools(){$('qualityTools')?.classList.toggle('hidden',active!=='qualityreport')}
-function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));syncQualityTools();updateMeta()}
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
 function paragraphCharCount(text){
@@ -1223,83 +1202,6 @@ async function buildSeparatedStory(blueprint,onProgress=()=>{}){
  story+='\n\n'+ending.trim();$('story').value=story;updateMeta();saveLocal(true);
  return story;
 }
-function stripQualityWrapper(text){
- return String(text||'').replace(/^\s*\[수정 원고\]\s*/,'').trim();
-}
-async function runAutoQualityPass(story,blueprint){
- const c=cfg(),total=Number(c.count);
- const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래 완성 원고를 품질 교정하세요.\n\n[고정 설계도]\n${blueprint}\n\n[교정 대상 원고]\n${story}\n\n[절대 유지]\n- 정확히 1문단부터 ${total}문단까지, 문단 수와 번호 유지\n- 인물 이름·나이·관계·사건 순서·핵심 반전·결말 유지\n- 1인칭 시점과 현재 말투 유지\n- 각 문단의 [문단 글자 수: N자] 표시는 실제 본문 기준으로 다시 계산하기 어려우므로 기존 형식만 유지하고 숫자를 임의로 바꾸지 말 것\n\n[자동 교정]\n1. 같은 감정이나 의미를 표현만 바꿔 반복한 문장을 삭제하거나 새로운 행동·정보로 교체하세요.\n2. 모든 문단에는 이전 문단과 다른 새로운 정보·행동·결정 중 최소 하나가 있어야 합니다.\n3. 이미 설명한 사건을 다음 문단에서 다시 요약하지 마세요.\n4. 마지막 5문단은 각각 최종 대면 → 책임·정리 → 악역 결과 → 주인공 새 출발 → 시청자 엔딩 역할이 겹치지 않게 하세요.\n5. 악역의 몰락·이혼·배상·폐업은 한 번 종결한 뒤 다시 요약하지 마세요.\n6. 마지막 ${total}문단은 주인공의 새로운 일상 장면 뒤에 “오늘 이야기는 어떠셨나요?” → 사연에 맞는 구체적 공감 질문 → 댓글 유도 → 구독과 좋아요 부탁 → 감사 인사 순서로 마무리하세요.\n7. 억지로 분량을 줄이지 말고 문단당 약 380~450자 흐름을 최대한 유지하세요.\n8. 새 사건, 새 인물, 과장된 법적 결과는 추가하지 마세요.\n\n설명이나 보고서 없이 수정된 전체 원고만 출력하세요.`;
- const revised=stripQualityWrapper(await callGeneratePrompt(prompt,'storyquality'));
- const reportPrompt=`아래 교정 완료 원고를 짧게 평가하세요.\n\n${revised}\n\n다음 형식만 사용하세요.\n[품질 검사 결과]\n- 전체 판정: 통과/보완 필요\n- 결말 반복: 없음/있음\n- 감정·설명 반복: 낮음/보통/높음\n- 정보 밀도: 5점 만점\n- 문단 역할 분리: 5점 만점\n- 엔딩 완성도: 5점 만점\n- 주요 수정 내용: 3줄 이내\n- 남은 주의점: 2줄 이내`;
- const report=(await callGeneratePrompt(reportPrompt,'qualityreport')).trim();
- return {revised,report};
-}
-async function generateStableStory(){
- if(busy)return;const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
- busy=true;$('allBtn').disabled=true;$('shortsOnlyBtn').disabled=true;
- try{
-  let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
-  let story=await buildSeparatedStory(blueprint,msg=>setStatus('2단계: '+msg));
-  if(c.autoQualityCheck){
-   setStatus('3단계: 중복·결말·문단 역할 자동 품질 검사 및 수정 중...');
-   const quality=await runAutoQualityPass(story,blueprint);
-   if(quality.revised){story=quality.revised;$('story').value=story}
-   $('qualityReport').value=quality.report||'품질 검사 결과를 받지 못했습니다.';renderQualityIssues($('qualityReport').value);
-   saveLocal(true);
-  }else $('qualityReport').value='자동 품질 검사가 꺼져 있습니다.';
-  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${c.count}문단 생성 완료 · 자동 품질 교정 완료 · 외모 표현 ${remaining.length}건이 남았습니다.`:`${c.count}문단 생성 완료 · 자동 품질 교정과 엔딩 반복 검사를 마쳤습니다.` ,remaining.length?'bad':'ok')
- }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
-}
-function makeVoice(silent=false){
- const text=cleanParagraphText($('story').value);if(!text){if(!silent)setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}
- const paras=text.split(/\n+/).map(x=>x.replace(/^\s*(?:\[?\d+\s*문단\]?|\d+\.)\s*[:：-]?\s*/,'').trim()).filter(Boolean);
- const parts=[];for(let i=0;i<paras.length;i+=10)parts.push(`===== Part ${Math.floor(i/10)+1} (${i+1}~${Math.min(i+10,paras.length)}문단) =====\n\n${paras.slice(i,i+10).join('\n\n')}`);
- $('voice').value=parts.join('\n\n\n');saveLocal(true);if(!silent){showTab('voice');setStatus('시간·번호·글자 수를 뺀 음성 AI용 원고를 10문단씩 나눴습니다.','ok')}
-}
-
-function parseNumberedStory(text){
- const src=String(text||'').replace(/\r/g,'');
- const re=/(?:^|\n)\s*(\d+)\s*문단\s*\n/gm, matches=[];let m;
- while((m=re.exec(src)))matches.push({num:Number(m[1]),start:m.index+(m[0].startsWith('\n')?1:0),bodyStart:re.lastIndex});
- return matches.map((x,i)=>({num:x.num,start:x.start,end:i+1<matches.length?matches[i+1].start:src.length,raw:src.slice(x.start,i+1<matches.length?matches[i+1].start:src.length).trim()}));
-}
-function renderQualityIssues(report){
- const box=$('qualityIssueList');if(!box)return;
- const lines=String(report||'').split('\n'),issues=[];
- for(const line of lines){const m=line.match(/^\s*[-•]\s*(\d+)\s*문단\s*\|\s*([^|]+)\|\s*(.+)$/);if(m)issues.push({num:Number(m[1]),type:m[2].trim(),reason:m[3].trim()})}
- if(!issues.length){box.innerHTML='<div class="quality-empty">AI가 재생성을 권장한 특정 문단이 없습니다. 리포트 내용을 확인하세요.</div>';return}
- box.innerHTML=issues.map((x,i)=>`<label class="quality-issue"><input type="checkbox" class="qualityPick" value="${x.num}" checked><span><b>${x.num}문단 · ${escapeHtml(x.type)}</b><br>${escapeHtml(x.reason)}</span></label>`).join('');
-}
-function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function selectAllQualityIssues(on){document.querySelectorAll('.qualityPick').forEach(x=>x.checked=on)}
-function selectedQualityParagraphs(){return [...document.querySelectorAll('.qualityPick:checked')].map(x=>Number(x.value)).filter(Boolean).sort((a,b)=>a-b)}
-async function runManualQualityReport(){
- if(busy)return;const story=$('story').value.trim();if(!story){setStatus('먼저 롱폼 원고를 붙여넣거나 생성하세요.','bad');showTab('story');return}
- busy=true;$('allBtn').disabled=true;setStatus('원고의 중복·정보 밀도·결말 흐름을 검사 중...');
- try{
-  const total=Number(cfg().count),blueprint=$('blueprint').value.trim()||'(설계도 없음 — 현재 원고 기준으로 검사)';
-  const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래 원고를 다시 쓰지 말고 문제를 진단하세요.\n\n[설계도]\n${blueprint}\n\n[원고]\n${story}\n\n[검사 기준]\n- 같은 감정·설명·사건을 표현만 바꾸어 반복하는지\n- 각 문단에 새로운 정보·행동·결정이 있는지\n- 앞 문단 내용을 다음 문단에서 불필요하게 요약하는지\n- 마지막 5문단의 역할이 겹치는지\n- ${total}문단 엔딩에 오늘 이야기는 어떠셨나요, 공감 질문, 댓글 유도, 구독과 좋아요, 감사 인사가 자연스럽게 들어갔는지\n- 인물·사건 순서·핵심 결말은 평가만 하고 새 설정을 만들지 말 것\n\n반드시 아래 형식으로만 출력하세요. 특정 문제가 있는 문단은 최대 8개까지만 고르세요.\n[품질 검사 결과]\n- 전체 점수: 100점 만점\n- 전체 판정: 통과/보완 필요\n- 결말 반복: 없음/약간/있음\n- 감정·설명 반복: 낮음/보통/높음\n- 정보 밀도: 5점 만점\n- 문단 역할 분리: 5점 만점\n- 엔딩 완성도: 5점 만점\n\n[수정 권장 문단]\n- N문단 | 문제 유형 | 구체적인 이유와 수정 방향\n문제가 없으면 정확히 "- 없음"이라고 쓰세요.\n\n[좋았던 점]\n- 3줄 이내`;
-  const report=(await callGeneratePrompt(prompt,'qualityreport')).trim();$('qualityReport').value=report;renderQualityIssues(report);showTab('qualityreport');saveLocal(true);setStatus('품질 검사가 완료되었습니다. 수정할 문단을 선택해 재생성할 수 있습니다.','ok');
- }catch(e){setStatus('품질 검사 실패: '+e.message,'bad')}finally{busy=false;$('allBtn').disabled=false}
-}
-function replaceStoryParagraphs(original,replacements){
- const parts=parseNumberedStory(original);if(!parts.length)throw new Error('문단 번호 형식을 찾지 못했습니다. 예: 1문단');
- let out='',cursor=0;for(const p of parts){out+=original.slice(cursor,p.start);out+=replacements[p.num]||original.slice(p.start,p.end).trim();cursor=p.end}out+=original.slice(cursor);return out.replace(/\n{3,}/g,'\n\n').trim();
-}
-async function regenerateSelectedParagraphs(){
- if(busy)return;const nums=selectedQualityParagraphs();if(!nums.length){setStatus('재생성할 문단을 먼저 선택하세요.','bad');return}
- const story=$('story').value.trim(),parts=parseNumberedStory(story);if(!parts.length){setStatus('원고에서 ‘1문단’ 형식을 찾지 못했습니다.','bad');return}
- busy=true;$('allBtn').disabled=true;setStatus(`${nums.join(', ')}문단만 재생성 중...`);
- try{
-  const total=Number(cfg().count),selected=parts.filter(p=>nums.includes(p.num));
-  const contexts=selected.map(p=>{const idx=parts.findIndex(x=>x.num===p.num);return `[${p.num}문단 주변]\n이전: ${idx>0?parts[idx-1].raw:'없음'}\n현재: ${p.raw}\n다음: ${idx+1<parts.length?parts[idx+1].raw:'없음'}`}).join('\n\n');
-  const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래에서 선택된 문단만 다시 작성하세요.\n\n[고정 설계도]\n${$('blueprint').value.trim()||'(없음)'}\n\n[선택 문단]\n${nums.join(', ')}문단\n\n[주변 문맥]\n${contexts}\n\n[절대 규칙]\n- 선택된 ${nums.length}개 문단만 출력하고 다른 문단은 출력하지 마세요.\n- 문단 번호, 인물, 사건 순서, 핵심 사실과 다음 문단으로 이어지는 연결을 유지하세요.\n- 반복된 감정·설명은 새로운 행동·정보·결정으로 바꾸세요.\n- 새 인물, 새 사건, 과장된 법적 결과를 추가하지 마세요.\n- 1문단이면 220~280자, ${total}문단이면 260~340자, 나머지는 380~450자 내외로 작성하세요.\n- ${total}문단은 주인공의 새 일상 뒤 “오늘 이야기는 어떠셨나요?” → 공감 질문 → 댓글 유도 → 구독과 좋아요 → 감사 인사로 끝내세요.\n- 각 문단 끝에 [문단 글자 수: N자] 형식을 포함하세요.\n\n출력 형식:\nN문단\n\n본문\n[문단 글자 수: N자]`;
-  const revised=(await callGeneratePrompt(prompt,'paragraphrepair')).trim(),newParts=parseNumberedStory(revised),repl={};newParts.forEach(p=>{if(nums.includes(p.num))repl[p.num]=p.raw});
-  const missing=nums.filter(n=>!repl[n]);if(missing.length)throw new Error(`${missing.join(', ')}문단 결과를 읽지 못했습니다.`);
-  $('story').value=replaceStoryParagraphs(story,repl);makeSrt(true);makeVoice(true);saveLocal(true);scheduleCloudSave();showTab('story');setStatus(`${nums.join(', ')}문단만 원고에 반영했습니다. 나머지 문단은 그대로 유지했습니다.`,'ok');
- }catch(e){setStatus('선택 문단 재생성 실패: '+e.message,'bad')}finally{busy=false;$('allBtn').disabled=false}
-}
-
 async function checkConsistency(){
  if(busy)return;if(!$('story').value.trim()){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}if(!$('blueprint').value.trim()){setStatus('먼저 스토리 설계도를 생성하세요.','bad');return}
  busy=true;$('allBtn').disabled=true;setStatus('등장인물·시간·직업·관계·결말 설정 충돌 검사 중...');
