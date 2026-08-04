@@ -132,7 +132,9 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div class="checks">
   <label class="check"><input id="subscribe" type="checkbox" checked>1문단 오프닝·구독 멘트</label>
   <label class="check"><input id="strict" type="checkbox" checked>문단별 글자 수 표시</label>
+  <label class="check"><input id="autoQualityCheck" type="checkbox" checked>자동 품질 검사·중복 수정</label>
  </div>
+ <div class="tiny" style="margin-top:-4px;margin-bottom:8px">원고 생성 후 같은 감정·사건·결말 반복을 검사하고, 문단 수와 핵심 사건을 유지한 채 자동으로 다듬습니다.</div>
  <div class="row">
   <div class="field"><label>마지막 엔딩 스타일</label><select id="endingStyle"><option value="auto" selected>AI 자동 추천</option><option value="empathy">감동형</option><option value="cider">사이다형</option><option value="hope">희망형</option><option value="debate">토론형 · 댓글 유도</option></select></div>
   <div class="field"><label>결말 구성</label><select id="endingLength"><option value="compact" selected>짧고 강하게</option><option value="normal">보통</option></select></div>
@@ -206,6 +208,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="srt">SRT</button>
   <button class="tab" data-tab="voice">음성용</button>
   <button class="tab" data-tab="consistency">설정 검사</button>
+  <button class="tab" data-tab="qualityreport">품질 리포트</button>
  </nav>
  <div class="toolbar"><span id="meta" class="meta">0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
  <textarea id="story" class="output" placeholder="ChatGPT에서 작성한 1문단~마지막 문단 원고를 그대로 붙여넣으세요."></textarea>
@@ -219,6 +222,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="srt" class="output hidden"></textarea>
  <textarea id="voice" class="output hidden"></textarea>
  <textarea id="consistency" class="output hidden"></textarea>
+ <textarea id="qualityReport" class="output hidden" placeholder="자동 품질 검사 결과가 표시됩니다."></textarea>
 </section>
 </div>
 </div>
@@ -236,7 +240,7 @@ function setStatus(message,type=''){
  el.className='status'+(type?' '+type:'');
 }
 let active='story',busy=false;
-const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
+const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency',qualityreport:'qualityReport'};
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
  {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
@@ -425,7 +429,7 @@ function cfg(){
   count:String($('count').value==='custom'?Math.max(10,Math.min(100,Number($('customCount').value||40))):$('count').value||20),images:String($('images').value||3),
   pov:$('pov').value,tone:$('tone').value,density:$('density').value,quality:$('quality').value,
   subscribe:$('subscribe').checked,strict:$('strict').checked,
-  endingStyle:$('endingStyle').value,endingLength:$('endingLength').value,
+  endingStyle:$('endingStyle').value,endingLength:$('endingLength').value,autoQualityCheck:$('autoQualityCheck').checked,
   thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value
  };
 }
@@ -436,7 +440,7 @@ function normalizeProject(raw){
  let config={},characters=[],outputs={},selected='';
  if(raw.app===APP_ID&&raw.schemaVersion){config=raw.project?.config||raw.config||{};selected=raw.project?.selectedCharacterId||raw.selectedCharacterId||'';characters=raw.characters||raw.project?.characters||[];outputs=raw.outputs||raw.project?.outputs||{}}
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,blueprint:raw.blueprint,gptprompt:raw.gptprompt||raw.gptPrompt,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
- const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
+ const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',autoQualityCheck:config.autoQualityCheck!==false,thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2')};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
  const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:''};for(const k in cleanOut)cleanOut[k]=String(outputs?.[k]??'');
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:cleanChars,outputs:cleanOut};
@@ -444,6 +448,7 @@ function normalizeProject(raw){
 function applyProject(raw){
  const p=normalizeProject(raw),c=p.project.config,o=p.outputs;
  for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','endingStyle','endingLength','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])$(k).value=c[k]??'';
+ $('autoQualityCheck').checked=c.autoQualityCheck!==false;
  for(const k of ['subscribe','strict'])$(k).checked=!!c[k];
  for(const k of Object.keys(o))$(fields[k]).value=o[k];
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
@@ -470,7 +475,7 @@ function restoreImportBackup(){try{const raw=JSON.parse(localStorage.getItem(IMP
 function safeFileName(v){return String(v).replace(/[\\/:*?"<>|]/g,'_').trim()||'썰쟁-프로젝트'}
 let autoSaveTimer;
 function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>saveLocal(true),1200);scheduleCloudSave()}
-['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
+['name','topic','heroine','count','customCount','images','pov','tone','density','quality','subscribe','strict','autoQualityCheck','shortsCount','shortsSaveMode','shortsSource','shortsStyle','thumbLayout','thumbStyle','thumbTextLength','thumbPeople','charName','charRole','charScope','charNameLocked','charAge','charAppearance','charPersonality','charOutfit','charPrompt','charEnabled','charProtagonist',...Object.values(fields)].forEach(id=>$(id).addEventListener('input',scheduleAutoSave));
 
 
 function shortsViewsEngineRules(){
@@ -1201,13 +1206,31 @@ async function buildSeparatedStory(blueprint,onProgress=()=>{}){
  story+='\n\n'+ending.trim();$('story').value=story;updateMeta();saveLocal(true);
  return story;
 }
+function stripQualityWrapper(text){
+ return String(text||'').replace(/^\s*\[수정 원고\]\s*/,'').trim();
+}
+async function runAutoQualityPass(story,blueprint){
+ const c=cfg(),total=Number(c.count);
+ const prompt=`당신은 한국 유튜브 사연 채널의 수석 원고 편집자입니다. 아래 완성 원고를 품질 교정하세요.\n\n[고정 설계도]\n${blueprint}\n\n[교정 대상 원고]\n${story}\n\n[절대 유지]\n- 정확히 1문단부터 ${total}문단까지, 문단 수와 번호 유지\n- 인물 이름·나이·관계·사건 순서·핵심 반전·결말 유지\n- 1인칭 시점과 현재 말투 유지\n- 각 문단의 [문단 글자 수: N자] 표시는 실제 본문 기준으로 다시 계산하기 어려우므로 기존 형식만 유지하고 숫자를 임의로 바꾸지 말 것\n\n[자동 교정]\n1. 같은 감정이나 의미를 표현만 바꿔 반복한 문장을 삭제하거나 새로운 행동·정보로 교체하세요.\n2. 모든 문단에는 이전 문단과 다른 새로운 정보·행동·결정 중 최소 하나가 있어야 합니다.\n3. 이미 설명한 사건을 다음 문단에서 다시 요약하지 마세요.\n4. 마지막 5문단은 각각 최종 대면 → 책임·정리 → 악역 결과 → 주인공 새 출발 → 시청자 엔딩 역할이 겹치지 않게 하세요.\n5. 악역의 몰락·이혼·배상·폐업은 한 번 종결한 뒤 다시 요약하지 마세요.\n6. 마지막 ${total}문단은 주인공의 새로운 일상 장면 뒤에 “오늘 이야기는 어떠셨나요?” → 사연에 맞는 구체적 공감 질문 → 댓글 유도 → 구독과 좋아요 부탁 → 감사 인사 순서로 마무리하세요.\n7. 억지로 분량을 줄이지 말고 문단당 약 380~450자 흐름을 최대한 유지하세요.\n8. 새 사건, 새 인물, 과장된 법적 결과는 추가하지 마세요.\n\n설명이나 보고서 없이 수정된 전체 원고만 출력하세요.`;
+ const revised=stripQualityWrapper(await callGeneratePrompt(prompt,'storyquality'));
+ const reportPrompt=`아래 교정 완료 원고를 짧게 평가하세요.\n\n${revised}\n\n다음 형식만 사용하세요.\n[품질 검사 결과]\n- 전체 판정: 통과/보완 필요\n- 결말 반복: 없음/있음\n- 감정·설명 반복: 낮음/보통/높음\n- 정보 밀도: 5점 만점\n- 문단 역할 분리: 5점 만점\n- 엔딩 완성도: 5점 만점\n- 주요 수정 내용: 3줄 이내\n- 남은 주의점: 2줄 이내`;
+ const report=(await callGeneratePrompt(reportPrompt,'qualityreport')).trim();
+ return {revised,report};
+}
 async function generateStableStory(){
  if(busy)return;const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
  busy=true;$('allBtn').disabled=true;$('shortsOnlyBtn').disabled=true;
  try{
   let blueprint=$('blueprint').value.trim();if(!blueprint){setStatus('1단계: 전체 설계도 생성 중...');blueprint=await callGenerate('blueprint');$('blueprint').value=blueprint;saveLocal(true)}
-  const story=await buildSeparatedStory(blueprint,msg=>setStatus('2단계: '+msg));
-  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${c.count}문단 생성 완료 · 외모 표현 ${remaining.length}건이 남아 설정 검사를 권장합니다.`:`${c.count}문단 생성 완료 · 오프닝·본문·엔딩 분리 생성 완료.` ,remaining.length?'bad':'ok')
+  let story=await buildSeparatedStory(blueprint,msg=>setStatus('2단계: '+msg));
+  if(c.autoQualityCheck){
+   setStatus('3단계: 중복·결말·문단 역할 자동 품질 검사 및 수정 중...');
+   const quality=await runAutoQualityPass(story,blueprint);
+   if(quality.revised){story=quality.revised;$('story').value=story}
+   $('qualityReport').value=quality.report||'품질 검사 결과를 받지 못했습니다.';
+   saveLocal(true);
+  }else $('qualityReport').value='자동 품질 검사가 꺼져 있습니다.';
+  makeSrt(true);makeVoice(true);showTab('story');scheduleCloudSave();const remaining=findVisualLeaks(story);setStatus(remaining.length?`${c.count}문단 생성 완료 · 자동 품질 교정 완료 · 외모 표현 ${remaining.length}건이 남았습니다.`:`${c.count}문단 생성 완료 · 자동 품질 교정과 엔딩 반복 검사를 마쳤습니다.` ,remaining.length?'bad':'ok')
  }catch(e){setStatus('롱폼 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;$('allBtn').disabled=false;$('shortsOnlyBtn').disabled=false}
 }
 function makeVoice(silent=false){
