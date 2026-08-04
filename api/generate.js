@@ -83,8 +83,20 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: "요청문이 너무 깁니다." });
   }
 
-  const maxTokens = task === "japanese" ? 30000 : ["story","storychunk","storyrepair"].includes(task) ? 12000 : 12000;
-  const models = await candidateModels(apiKey);
+  const taskConfig = {
+    japanese: { maxTokens: 30000, temperature: 0.45, modelLimit: 6 },
+    story: { maxTokens: 12000, temperature: 0.62, modelLimit: 6 },
+    storychunk: { maxTokens: 12000, temperature: 0.62, modelLimit: 6 },
+    storyrepair: { maxTokens: 12000, temperature: 0.22, modelLimit: 4 },
+    storyquality: { maxTokens: 12000, temperature: 0.18, modelLimit: 4 },
+    qualityreport: { maxTokens: 5000, temperature: 0.15, modelLimit: 3 },
+    paragraphrepair: { maxTokens: 7000, temperature: 0.20, modelLimit: 3 },
+    blueprint: { maxTokens: 12000, temperature: 0.35, modelLimit: 5 },
+    consistency: { maxTokens: 7000, temperature: 0.25, modelLimit: 4 }
+  };
+  const config = taskConfig[task] || { maxTokens: 12000, temperature: 0.65, modelLimit: 5 };
+  const maxTokens = config.maxTokens;
+  const models = (await candidateModels(apiKey)).slice(0, config.modelLimit);
 
   if (!models.length) {
     return res.status(503).json({
@@ -106,9 +118,9 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: task === "storyrepair" ? 0.22 : task === "story" || task === "storychunk" ? 0.62 : task === "blueprint" || task === "consistency" ? 0.35 : 0.65,
+            temperature: config.temperature,
             maxOutputTokens: maxTokens,
-            topP: 0.95
+            topP: task === "paragraphrepair" || task === "qualityreport" ? 0.9 : 0.95
           }
         })
       });
@@ -126,7 +138,12 @@ export default async function handler(req, res) {
       const raw = data?.error?.message || `HTTP ${response.status}`;
       attempts.push(`${model}: ${response.status} ${raw}`);
 
-      // 모델 미지원·한도 초과·일시 장애는 다음 사용 가능한 모델로 자동 재시도합니다.
+      // 프로젝트 전체 무료 할당량이 0이거나 소진된 경우 모델을 계속 바꿔도 성공하지 않으므로
+      // 불필요한 연속 호출을 줄이고 즉시 사용자에게 안내합니다.
+      const hardQuota = response.status === 429 && /quota.*(?:0|exceed)|free tier.*(?:0|not available)|billing/i.test(raw);
+      if (hardQuota) break;
+
+      // 모델 미지원·일시 장애·모델별 한도 초과는 다음 사용 가능한 모델로 자동 재시도합니다.
       if (![400, 404, 429, 500, 502, 503, 504].includes(response.status)) {
         if (response.status === 403) {
           return res.status(403).json({
@@ -142,10 +159,17 @@ export default async function handler(req, res) {
   }
 
   const quotaHit = attempts.some(x => x.includes(": 429"));
+  const paragraphTask = task === "paragraphrepair";
   return res.status(quotaHit ? 429 : 502).json({
     error: quotaHit
-      ? "현재 계정에서 사용할 수 있는 Gemini 모델의 무료 한도에 도달했거나 무료 할당량이 제공되지 않았습니다. 잠시 후 다시 시도하세요."
-      : "사용 가능한 Gemini 모델을 자동으로 찾아 재시도했지만 생성에 실패했습니다.",
-    detail: attempts.slice(0, 8).join(" | ")
+      ? paragraphTask
+        ? "선택 문단 재생성에 필요한 Gemini 사용 한도가 부족합니다. 원고와 선택 내용은 그대로 유지되니, 잠시 후 다시 누르거나 Google AI Studio의 사용 한도·결제 상태를 확인하세요."
+        : "현재 Gemini 사용 한도에 도달했거나 이 프로젝트에 무료 할당량이 제공되지 않습니다. 잠시 후 다시 시도하거나 Google AI Studio의 사용 한도·결제 상태를 확인하세요."
+      : paragraphTask
+        ? "선택 문단 재생성에 실패했습니다. 선택 문단과 기존 원고는 변경되지 않았습니다."
+        : "사용 가능한 Gemini 모델을 자동으로 찾아 재시도했지만 생성에 실패했습니다.",
+    code: quotaHit ? "GEMINI_QUOTA" : "GEMINI_GENERATION_FAILED",
+    task: task || "unknown",
+    detail: attempts.slice(0, 6).join(" | ")
   });
 }
