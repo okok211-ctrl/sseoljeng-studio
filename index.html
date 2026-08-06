@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v16.6 Longform & Vrew Edition</title>
+<title>썰쟁 Studio v17.0 Stable Situation Image Engine</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -59,8 +59,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v16.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Longform · Vrew Edition</span>
+ <div><h1>🎬 썰쟁 Studio v17.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Stable Situation Image Engine</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -271,6 +271,57 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+
+function stableSituationImageRules(target='longform'){
+  const common = `[Stable Situation Image Engine v17.0]
+- 원고·문단·쇼츠 컷·제목을 먼저 읽고, 그 장면에서 실제로 벌어지는 사건을 한 장면으로 연출하세요.
+- 등장인물은 무조건 한 명으로 고정하지 말고, 장면 이해에 필요한 핵심 인물만 1~4명 자동 선택하세요.
+- 독백·결심·새 출발은 1명, 대화는 2명, 배신·폭로·대치는 2~3명, 가족 집단 갈등은 최대 4명을 권장합니다.
+- 등록된 캐릭터 중 이번 이야기에서 사용하는 인물만 선택하세요. 모든 인물을 억지로 넣지 마세요.
+- 주인공은 전경이나 가장 선명한 위치, 핵심 갈등 상대는 중앙 또는 맞은편, 제3자는 후경이나 측면에 배치하세요.
+- 등장인물이 모두 나란히 서서 카메라만 바라보는 단체사진 구도는 금지합니다.
+- 반드시 시선, 거리, 손동작, 몸 방향, 물건을 건네거나 숨기거나 붙잡는 행동으로 관계를 보여주세요.
+- 인물마다 감정을 다르게 배정하세요. 예: 주인공은 충격, 남편은 당황, 시어머니는 분노, 제3자는 회피 또는 비웃음.
+- 휴대전화, 통장, 계약서, 병원서류, 여행가방, 영정사진 등 핵심 소품은 사건 이해에 꼭 필요할 때만 사용하세요.
+- 같은 장소, 같은 포즈, 같은 카메라 앵글을 반복하지 마세요.
+- 콜라주, 분할 화면, 좌우 반반 합성, 서로 다른 시간과 장소를 한 이미지에 섞는 구도는 금지합니다.
+- 예쁜 인물 소개보다 사건이 보이는 행동 중심의 한국 드라마 실사 영화 스틸을 우선하세요.
+- 얼굴이 너무 작아지지 않도록 상반신 중심의 타이트한 미디엄샷, 오버숄더, 대치 구도, 측면 구도를 우선하세요.`;
+
+  if(target==='thumbnail'){
+    return `${common}
+[썸네일 전용]
+- 16:9 유튜브 썸네일 한 장면입니다.
+- 제목과 원고에서 클릭률이 가장 높은 결정적 갈등 장면을 선택하세요.
+- 주인공과 핵심 갈등 상대가 명확하면 2~3명을 우선 사용하세요.
+- 1초 안에 피해자·가해자·갈등 관계가 읽혀야 합니다.
+- 영화 포스터 같은 강한 구도와 큰 표정을 사용하되 과도한 왜곡은 금지합니다.
+- 헤드라인 공간은 단순한 벽면이나 어두운 배경으로 자연스럽게 확보하세요.
+- 출력에는 장면, 인물 수와 역할, 위치, 표정, 시선, 행동, 소품, 배경, 조명을 구체적으로 적으세요.`;
+  }
+
+  if(target==='shorts'){
+    return `${common}
+[쇼츠 이미지 전용]
+- 9:16 세로형이며, 각 컷은 1초 안에 상황이 읽혀야 합니다.
+- 4컷 모두 같은 여주 혼자 반복하지 마세요.
+- 컷1은 강한 갈등 또는 이상 징후, 컷2는 숨겨진 관계나 증거, 컷3은 대치·폭로·결정적 행동, 컷4는 결말을 완전히 공개하지 않는 강한 여운을 우선하세요.
+- 사건 진행에 따라 등장인물 구성을 바꾸세요.
+- 화면 문구가 들어갈 공간은 확보하되 인물이 너무 작아지지 않게 하세요.
+- 말풍선은 금지하고, 행동과 표정으로 상황을 보여주세요.`;
+  }
+
+  return `${common}
+[롱폼 이미지 전용]
+- 16:9 한국 드라마 실사 영화 스틸입니다.
+- 각 이미지가 서로 다른 문단 범위와 다른 사건 기능을 가져야 합니다.
+- 같은 주인공 한 명의 놀란 표정만 반복하지 마세요.
+- 대화·대치·폭로·가족 갈등 장면은 필요한 인물 2~4명을 자연스럽게 함께 배치하세요.
+- 독백·결심·회복·새 출발처럼 혼자가 자연스러운 장면만 1명을 사용하세요.
+- 이미지마다 카메라 거리와 앵글을 바꾸고, 대표 행동이 분명한 순간을 선택하세요.`;
+}
+
+
 const $=id=>document.getElementById(id);
 function setStatus(message,type=''){
  const el=$('status');
@@ -1166,7 +1217,22 @@ async function generateAndNormalizeStoryChunk(prompt,start,end,subscribe){
  const finalCheck=normalizeStoryChunk(lastText,start,end);
  throw new Error(`AI가 ${start}~${end}문단 형식을 완성하지 못했습니다. 누락 문단: ${finalCheck.missing.join(', ')}. 다시 생성해 주세요.`);
 }
-async function callGeneratePrompt(prompt,task){const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));return data.text||''}
+async function callGeneratePrompt(prompt,task){
+  // STABLE_SITUATION_ENGINE_INJECTED
+  if(task==='images' || task==='imageprompts'){
+    prompt = `${stableSituationImageRules('longform')}
+
+${prompt}`;
+  }else if(task==='thumbnail'){
+    prompt = `${stableSituationImageRules('thumbnail')}
+
+${prompt}`;
+  }else if(task==='shorts'){
+    prompt = `${stableSituationImageRules('shorts')}
+
+${prompt}`;
+  }
+const response=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,task})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error+(data.detail?' · '+data.detail:''));return data.text||''}
 async function generateBlueprint(silent=false){
  if(busy&&!silent)return '';const c=cfg();if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return ''}
  if(!silent){busy=true;$('allBtn').disabled=true;setStatus('스토리 설계도와 설정 성경 생성 중...')}
