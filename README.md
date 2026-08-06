@@ -1,3 +1,10 @@
+# 썰쟁 Studio v18.3 Vrew Duration Restored
+
+- 목표 영상 길이 30분·60분·90분 UI 복원
+- 30분=20문단, 60분=40문단, 90분=60문단 자동 연결
+- 문단 수를 직접 바꾸면 영상 길이 UI도 자동 동기화
+- 로그인, 클라우드, Vrew 출력, 통합 상황형 이미지 엔진 유지
+
 # 썰쟁 Studio v18.2 Vrew Login Fixed
 
 - v18.1의 JavaScript 문법 오류 수정
