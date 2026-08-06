@@ -1,3 +1,12 @@
+# 썰쟁 Studio v18.4 Original Voice Workflow Restored
+
+## 복구 내용
+- 이후에 추가했던 Vrew 전용 탭·버튼·30/60/90분 UI 전부 제거
+- v16.5 원본과 동일하게 `음성용`과 `SRT` 기능만 유지
+- Google 로그인·클라우드 기능 유지
+- 통합 상황형 썸네일·롱폼 이미지·쇼츠 이미지 엔진 유지
+- JavaScript 문법 검사 완료
+
 # 썰쟁 Studio v18.3 Vrew Duration Restored
 
 - 목표 영상 길이 30분·60분·90분 UI 복원
