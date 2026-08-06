@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.0 Unified Situation Image Engine</title>
+<title>썰쟁 Studio v18.1 Vrew Restored Stable</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -50,8 +50,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v18.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Unified Situation Image Engine</span>
+ <div><h1>🎬 썰쟁 Studio v18.1</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Vrew Restored Stable</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -159,7 +159,21 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn primary" style="width:100%" type="button" onclick="generate('thumbnail')">썸네일만 새로 생성</button>
   <div class="tiny" style="margin-top:7px">사연의 핵심 갈등이 한눈에 보이는 상황형 단일 장면을 사용합니다. AI가 필요한 핵심 인물 1~3명을 자동 선택하며 콜라주·분할 화면·억지 빈 공간은 금지합니다.</div>
  </div>
- <div class="actions">
+ 
+  <div class="char-editor" style="margin-top:12px">
+   <h3>🎬 Vrew 출력 설정</h3>
+   <div class="row">
+    <div class="field"><label>출력 방식</label><select id="vrewMode"><option value="clean" selected>원고만 · 추천</option><option value="paragraph">문단 번호 포함</option><option value="scene">장면 구분 포함</option></select></div>
+    <div class="field"><label>문장 정리</label><select id="vrewSentence"><option value="natural" selected>자연스러운 호흡</option><option value="short">짧은 문장 위주</option><option value="original">원문 유지</option></select></div>
+   </div>
+   <div class="row">
+    <div class="field"><label>문단 사이</label><select id="vrewSpacing"><option value="blank" selected>빈 줄 1개</option><option value="double">빈 줄 2개</option><option value="none">붙여서 출력</option></select></div>
+    <div class="field"><label>글자 수 표시</label><select id="vrewCount"><option value="hide" selected>제거</option><option value="show">유지</option></select></div>
+   </div>
+   <button class="btn primary" style="width:100%" type="button" onclick="makeVrew()">Vrew용 원고 만들기</button>
+   <div class="tiny" style="margin-top:7px">AI를 다시 호출하지 않고 현재 롱폼 원고를 Vrew에 붙여넣기 좋은 형태로 즉시 정리합니다. 문단 내용과 순서는 바꾸지 않습니다.</div>
+  </div>
+<div class="actions">
   <button class="btn secondary" onclick="generateBlueprint()">🧭 설계도 AI 생성</button>
   <button class="btn primary" onclick="buildLongformPrompt()">📋 GPT 롱폼 프롬프트</button>
   <button class="btn ghost wide" onclick="validatePastedStory()">✅ 붙여넣은 롱폼 확인</button>
@@ -170,6 +184,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
   <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
+   <button class="btn secondary" onclick="makeVrew()">🎬 Vrew용</button>
   <button class="btn secondary" onclick="checkConsistency()">🔍 설정 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
@@ -213,6 +228,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="japanese">일본어</button>
   <button class="tab" data-tab="srt">SRT</button>
   <button class="tab" data-tab="voice">음성용</button>
+   <button class="tab" data-tab="vrew">Vrew용</button>
   <button class="tab" data-tab="consistency">설정 검사</button>
  </nav>
  <div class="toolbar"><span id="meta" class="meta">0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
@@ -226,6 +242,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="japanese" class="output hidden"></textarea>
  <textarea id="srt" class="output hidden"></textarea>
  <textarea id="voice" class="output hidden"></textarea>
+  <textarea id="vrew" class="output hidden" placeholder="Vrew에 바로 붙여넣을 수 있는 원고가 표시됩니다."></textarea>
  <textarea id="consistency" class="output hidden"></textarea>
 </section>
 </div>
@@ -235,7 +252,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script>
+<script>\nfunction makeVrew(){\n const source=String($('story')?.value||'').trim();\n if(!source){setStatus('먼저 롱폼 원고를 붙여넣으세요.','bad');return}\n const mode=$('vrewMode')?.value||'clean';\n const sentenceMode=$('vrewSentence')?.value||'natural';\n const spacing=$('vrewSpacing')?.value||'blank';\n const countMode=$('vrewCount')?.value||'hide';\n const paragraphRegex=/(?:^|\\n)\\s*(\\d+)\\s*문단\\s*\\n([\\s\\S]*?)(?=(?:\\n\\s*\\d+\\s*문단\\s*\\n)|$)/g;\n const parsed=[]; let match;\n while((match=paragraphRegex.exec(source))!==null){parsed.push({number:Number(match[1]),text:String(match[2]||'').trim()});}\n let blocks=parsed.length?parsed:[{number:1,text:source}];\n blocks=blocks.map(item=>{\n   let text=item.text;\n   if(countMode==='hide') text=text.replace(/\\s*\\[문단\\s*글자\\s*수\\s*:\\s*\\d+\\s*자\\]\\s*/gi,'').trim();\n   if(sentenceMode==='short') text=text.replace(/([.!?。！？])\\s+/g,'$1\\n').replace(/,\\s+/g,',\\n').replace(/\\n{3,}/g,'\\n\\n');\n   else if(sentenceMode==='natural') text=text.replace(/([.!?。！？])\\s+/g,'$1\\n').replace(/\\n{3,}/g,'\\n\\n');\n   if(mode==='paragraph') return `${item.number}문단\\n\\n${text}`;\n   if(mode==='scene') return `[장면 ${item.number}]\\n${text}`;\n   return text;\n });\n const separator=spacing==='double'?'\\n\\n\\n':spacing==='none'?'\\n':'\\n\\n';\n $('vrew').value=blocks.join(separator).trim();\n switchTab('vrew'); updateMeta();\n setStatus(`Vrew용 원고를 만들었습니다. 총 ${blocks.length}개 문단입니다.`,'ok');\n saveLocal(true);\n}\n
 
 function unifiedSituationImageRules(target='longform'){
  const targetGuide = target==='shorts'
@@ -253,7 +270,7 @@ function unifiedSituationImageRules(target='longform'){
 - 대화·대치·가족 갈등·폭로 장면은 필요한 핵심 인물 2~4명을 자연스럽게 함께 배치하세요.
 - 독백, 결심, 새 출발처럼 혼자 있어야 의미가 살아나는 장면만 1명을 사용하세요.`;
 
- return `[Unified Situation Image Engine v18.0]
+ return `[Vrew Restored Stable v18.0]
 - 먼저 원고나 문단에서 실제로 벌어지는 핵심 사건을 찾으세요.
 - 등장인물 수를 무조건 늘리지 말고, 그 장면 이해에 필요한 핵심 인물만 1~4명 자동 선택하세요.
 - 대화는 기본 2명, 갈등과 배신은 2~3명, 가족 집단 갈등은 최대 4명, 독백과 결심은 1명을 권장합니다.
@@ -279,7 +296,7 @@ function setStatus(message,type=''){
  el.className='status'+(type?' '+type:'');
 }
 let active='story',busy=false;
-const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
+const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency',vrew:'vrew'};
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
  {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},

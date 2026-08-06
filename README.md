@@ -1,3 +1,9 @@
+# 썰쟁 Studio v18.1 Vrew Restored Stable
+
+- Vrew용 탭과 출력 기능 복원
+- AI 재호출 없이 현재 롱폼을 Vrew용 텍스트로 변환
+- 기존 상황형 썸네일·롱폼 이미지·쇼츠 이미지 엔진 유지
+
 # 썰쟁 Studio v18.0 Unified Situation Image Engine
 
 ## 주요 변경
