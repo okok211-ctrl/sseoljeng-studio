@@ -1,6 +1,6 @@
 {
-  "name": "sseoljeng-studio-production-edition",
-  "version": "15.0.0",
+  "name": "sseoljeng-studio-longform-vrew-edition",
+  "version": "16.6.0",
   "private": true,
   "engines": {
     "node": "22.x"
