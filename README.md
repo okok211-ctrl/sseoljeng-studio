@@ -1,3 +1,12 @@
+# 썰쟁 Studio v17.4 CTA Stack Fix
+
+- v17.3 기준 수정
+- Maximum call stack size exceeded 원인이 된 CTA 재귀/공통 주입 제거
+- 시작 CTA는 openingPrompt에만 적용
+- 엔딩 CTA는 endingPrompt에만 적용
+- 설계도/이미지/쇼츠/썸네일/유튜브 정보 생성과 완전 분리
+- 기존 v17.3 기능 유지
+
 # 썰쟁 Studio v17.2 YouTube CTR Info Engine
 
 - 감정 → 상황 → 궁금증 제목 규칙
