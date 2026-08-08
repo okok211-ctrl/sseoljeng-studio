@@ -70,6 +70,15 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .bench-analysis{margin-top:9px;white-space:pre-wrap;border:1px solid #263a52;border-radius:11px;padding:12px 14px;background:#07121f;color:#eaf2fb;min-height:100px;max-height:300px;overflow:auto;line-height:1.65;font-size:12px;scrollbar-width:thin}
 .bench-analysis::selection{background:#ff7917;color:#fff}
 @media(max-width:800px){.bench-toolbar{grid-template-columns:1fr 1fr}.bench-toolbar .wide{grid-column:1/-1}.bench-card{flex-basis:180px;min-width:180px}.bench-analysis{max-height:260px}}
+.bench-modal-backdrop{position:fixed;inset:0;z-index:99999;background:rgba(2,8,16,.78);display:none;align-items:center;justify-content:center;padding:20px}
+.bench-modal-backdrop.active{display:flex}
+.bench-modal{width:min(720px,96vw);max-height:88vh;overflow:auto;background:#0a1726;border:1px solid #314761;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.5);padding:20px;color:#eef5ff}
+.bench-modal h2{margin:0 0 6px;font-size:20px;color:#fff}
+.bench-modal .bench-preview-label{font-size:12px;font-weight:800;color:#ffb15e;margin:14px 0 6px}
+.bench-modal input,.bench-modal textarea{width:100%;box-sizing:border-box;background:#07121f;color:#eef5ff;border:1px solid #314761;border-radius:10px;padding:11px 12px;font:inherit}
+.bench-modal textarea{min-height:150px;resize:vertical;line-height:1.55}
+.bench-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.bench-modal-note{font-size:12px;color:#9eb0c5;line-height:1.5;margin-top:8px}
 </style></head>
 <body>
 <div class="app">
@@ -289,7 +298,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
-let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='';
+let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='',YT_BENCH_LAST_TITLE_V179='';
 function toggleBenchmarkPanel(){const p=$('benchmarkPanel');if(!p){alert('벤치마킹 화면을 찾지 못했습니다.');return;}p.classList.toggle('active');if(p.classList.contains('active')){setTimeout(()=>{p.scrollIntoView({behavior:'smooth',block:'start'});const q=$('benchQuery');if(q)q.focus();},30)}}
 function formatCompactNumberV179(n){const x=Number(n||0);if(x>=1e8)return(x/1e8).toFixed(x>=1e9?1:0)+'억';if(x>=1e4)return(x/1e4).toFixed(x>=1e5?0:1)+'만';if(x>=1e3)return(x/1e3).toFixed(1)+'천';return String(x)}
 function daysSinceV179(d){const t=new Date(d).getTime();return Number.isFinite(t)?Math.max(1,Math.floor((Date.now()-t)/86400000)):99999}
@@ -303,13 +312,38 @@ async function searchYouTubeBenchmarks(){
 function sortBenchmarkCards(mode){const a=[...YT_BENCH_RESULTS_V179];if(mode==='views')a.sort((x,y)=>y.viewCount-x.viewCount);else if(mode==='recent')a.sort((x,y)=>new Date(y.publishedAt)-new Date(x.publishedAt));else a.sort((x,y)=>y.benchmarkScore-x.benchmarkScore);renderBenchmarkCardsV179(a)}
 function renderBenchmarkCardsV179(items){const root=$('benchmarkResults');root.innerHTML='';for(const i of items){const c=document.createElement('div');c.className='bench-card';c.innerHTML=`<img class="bench-thumb" src="${i.thumbnail||''}"><div class="bench-title">${escapeHtml(i.title||'')}</div><div class="bench-meta">${escapeHtml(i.channelTitle||'')}<br>조회수 ${formatCompactNumberV179(i.viewCount)} · ${daysSinceV179(i.publishedAt)}일 전 · ${escapeHtml(i.durationText||'')}</div><div style="margin-top:8px"><span class="bench-score">${i.benchmarkScore}점 · ${benchmarkLabelV179(i.benchmarkScore)}</span></div>`;c.onclick=()=>selectBenchmarkV179(i.videoId);root.appendChild(c)}}
 function selectBenchmarkV179(id){const i=YT_BENCH_RESULTS_V179.find(x=>x.videoId===id);if(!i)return;YT_BENCH_SELECTED_V179=i;$('benchmarkSelected').style.display='block';$('benchSelectedMeta').textContent=`${i.title} · ${i.channelTitle} · 조회수 ${formatCompactNumberV179(i.viewCount)} · ${i.benchmarkScore}점`;$('benchAnalysis').textContent='AI 벤치마킹 분석을 눌러 주세요.'}
-async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
+async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
 원본 대본이나 스토리를 복제·추정하지 말고 공개 메타데이터에서 확인 가능한 제목 구조, 감정, 클릭 포인트, 성과 신호만 분석하세요.
 [영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
 [현재 프로젝트 주제] ${$('topic')?.value||'없음'}
-출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 완전히 다른 신규 사연 주제 3개 7) 추천 제목 3개 8) 마지막에 [추천 주제]...[/추천 주제] 형식으로 프로젝트용 주제 1개.`;
- try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const m=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_IDEA_V179=m?m[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
-function applyBenchmarkIdea(){if(!YT_BENCH_LAST_IDEA_V179){setStatus('먼저 AI 분석을 실행하세요.','bad');return}if($('topic')){$('topic').value=YT_BENCH_LAST_IDEA_V179;$('topic').dispatchEvent(new Event('input',{bubbles:true}));saveLocal(true);setStatus('추천 주제를 프로젝트에 넣었습니다.','ok')}}
+출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 완전히 다른 신규 사연 주제 3개 7) 추천 제목 3개.
+마지막에는 반드시 아래 두 블록을 정확히 추가하세요. 기존 영상의 문구를 복사하지 말고 완전히 새 사연으로 변형하세요.
+[추천 제목]프로젝트에 바로 사용할 최종 제목 1개[/추천 제목]
+[추천 주제]프로젝트에 바로 사용할 구체적인 신규 사연 주제 1개[/추천 주제]`;
+ try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/);const mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
+function applyBenchmarkIdea(){
+ if(!YT_BENCH_SELECTED_V179){alert('먼저 벤치마킹 영상을 선택해 주세요.');return}
+ if(!YT_BENCH_LAST_IDEA_V179){alert('먼저 AI 벤치마킹 분석을 실행해 주세요.\n분석이 끝난 뒤 다시 눌러 주세요.');return}
+ const title=YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제'));
+ $('benchPreviewTitle').value=title;
+ $('benchPreviewTopic').value=YT_BENCH_LAST_IDEA_V179;
+ $('benchApplyModal').classList.add('active');
+ setTimeout(()=>$('benchPreviewTitle')?.focus(),30);
+}
+function closeBenchmarkApplyModal(){const m=$('benchApplyModal');if(m)m.classList.remove('active')}
+function confirmBenchmarkProject(){
+ const title=$('benchPreviewTitle')?.value.trim()||'';
+ const topic=$('benchPreviewTopic')?.value.trim()||'';
+ if(!topic){alert('프로젝트 주제가 비어 있습니다.');return}
+ if($('name')&&title){$('name').value=title;$('name').dispatchEvent(new Event('input',{bubbles:true}))}
+ if($('topic')){$('topic').value=topic;$('topic').dispatchEvent(new Event('input',{bubbles:true}))}
+ saveLocal(true);
+ closeBenchmarkApplyModal();
+ setStatus('벤치마킹 추천 제목과 주제를 프로젝트에 넣었습니다.','ok');
+ const panel=$('benchmarkPanel');if(panel)panel.classList.remove('active');
+ const nameEl=$('name');if(nameEl){nameEl.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>nameEl.focus(),350)}
+}
+function benchmarkModalBackdropClick(e){if(e.target?.id==='benchApplyModal')closeBenchmarkApplyModal()}
 
 
 
@@ -1860,5 +1894,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 <button class="btn primary" type="button" onclick="analyzeSelectedBenchmark()">AI 벤치마킹 분석</button>
 <button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">💡 추천 주제를 프로젝트에 넣기</button>
 </div><div id="benchAnalysis" class="bench-analysis">영상을 선택해 주세요.</div></div>
-</div></body>
+</div>
+<div id="benchApplyModal" class="bench-modal-backdrop" onclick="benchmarkModalBackdropClick(event)">
+ <div class="bench-modal" role="dialog" aria-modal="true" aria-labelledby="benchApplyTitle">
+  <h2 id="benchApplyTitle">💡 벤치마킹 기반 새 프로젝트</h2>
+  <div class="bench-modal-note">선택 영상은 구조와 감정만 참고하고, 아래 내용은 새 사연으로 생성된 프로젝트용 제목·주제입니다. 넣기 전에 직접 수정해도 됩니다.</div>
+  <div class="bench-preview-label">추천 제목</div>
+  <input id="benchPreviewTitle" type="text" placeholder="추천 제목">
+  <div class="bench-preview-label">추천 주제</div>
+  <textarea id="benchPreviewTopic" placeholder="추천 주제"></textarea>
+  <div class="bench-modal-actions">
+   <button class="btn ghost" type="button" onclick="closeBenchmarkApplyModal()">취소</button>
+   <button class="btn primary" type="button" onclick="confirmBenchmarkProject()">이 내용으로 프로젝트 만들기</button>
+  </div>
+ </div>
+</div>
+</body>
 </html>
