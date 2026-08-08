@@ -312,14 +312,22 @@ async function searchYouTubeBenchmarks(){
 function sortBenchmarkCards(mode){const a=[...YT_BENCH_RESULTS_V179];if(mode==='views')a.sort((x,y)=>y.viewCount-x.viewCount);else if(mode==='recent')a.sort((x,y)=>new Date(y.publishedAt)-new Date(x.publishedAt));else a.sort((x,y)=>y.benchmarkScore-x.benchmarkScore);renderBenchmarkCardsV179(a)}
 function renderBenchmarkCardsV179(items){const root=$('benchmarkResults');root.innerHTML='';for(const i of items){const c=document.createElement('div');c.className='bench-card';c.innerHTML=`<img class="bench-thumb" src="${i.thumbnail||''}"><div class="bench-title">${escapeHtml(i.title||'')}</div><div class="bench-meta">${escapeHtml(i.channelTitle||'')}<br>조회수 ${formatCompactNumberV179(i.viewCount)} · ${daysSinceV179(i.publishedAt)}일 전 · ${escapeHtml(i.durationText||'')}</div><div style="margin-top:8px"><span class="bench-score">${i.benchmarkScore}점 · ${benchmarkLabelV179(i.benchmarkScore)}</span></div>`;c.onclick=()=>selectBenchmarkV179(i.videoId);root.appendChild(c)}}
 function selectBenchmarkV179(id){const i=YT_BENCH_RESULTS_V179.find(x=>x.videoId===id);if(!i)return;YT_BENCH_SELECTED_V179=i;$('benchmarkSelected').style.display='block';$('benchSelectedMeta').textContent=`${i.title} · ${i.channelTitle} · 조회수 ${formatCompactNumberV179(i.viewCount)} · ${i.benchmarkScore}점`;$('benchAnalysis').textContent='AI 벤치마킹 분석을 눌러 주세요.'}
-async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
+async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';const searchKeyword=$('benchQuery')?.value?.trim()||'';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
+이번 분석은 오직 아래의 '선택한 벤치마킹 영상'과 '검색 키워드'만 참고하세요. 현재 스튜디오 프로젝트의 제목·주제·기존 원고·이전에 만든 사연은 절대로 참고하거나 이어 쓰지 마세요.
 원본 대본이나 스토리를 복제·추정하지 말고 공개 메타데이터에서 확인 가능한 제목 구조, 감정, 클릭 포인트, 성과 신호만 분석하세요.
-[영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
-[현재 프로젝트 주제] ${$('topic')?.value||'없음'}
-출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 완전히 다른 신규 사연 주제 3개 7) 추천 제목 3개.
-마지막에는 반드시 아래 두 블록을 정확히 추가하세요. 기존 영상의 문구를 복사하지 말고 완전히 새 사연으로 변형하세요.
-[추천 제목]프로젝트에 바로 사용할 최종 제목 1개[/추천 제목]
-[추천 주제]프로젝트에 바로 사용할 구체적인 신규 사연 주제 1개[/추천 주제]`;
+[검색 키워드] ${searchKeyword||'없음'}
+[선택한 벤치마킹 영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
+
+신규 사연을 만들 때 지켜야 할 규칙:
+- 선택 영상의 핵심 갈등 유형과 클릭을 부르는 구조는 참고하되 등장인물, 사건, 장소, 증거, 결말은 새롭게 구성하세요.
+- 이전 프로젝트에서 자주 썼을 법한 소재를 자동으로 끌어오지 마세요. 특히 휴대폰 발견, 녹음파일, GPS, 코인, 간 이식, 장례식, 정치인, 유산·재산 음모 같은 소재는 선택 영상 제목에서 직접 연상되는 경우가 아니면 임의로 넣지 마세요.
+- 추천 주제는 선택 영상과 '왜 비슷한 시청자가 클릭할지'가 한눈에 보여야 하지만, 내용 자체는 별개의 새 이야기여야 합니다.
+- 억지 반전보다 선택 영상이 가진 관계 갈등과 감정 포인트를 우선하세요.
+
+출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 선택 영상에서 파생한 신규 사연 주제 3개 7) 추천 제목 3개.
+마지막에는 반드시 아래 두 블록을 정확히 추가하세요.
+[추천 제목]선택한 영상의 클릭 구조를 참고하되 내용은 완전히 새로운 최종 제목 1개[/추천 제목]
+[추천 주제]선택한 영상의 핵심 관계·갈등을 바탕으로 새롭게 만든 구체적인 사연 주제 1개[/추천 주제]`;
  try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/);const mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
 function applyBenchmarkIdea(){
  if(!YT_BENCH_SELECTED_V179){alert('먼저 벤치마킹 영상을 선택해 주세요.');return}
