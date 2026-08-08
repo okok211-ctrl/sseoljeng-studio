@@ -56,7 +56,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 
 </style>
 <style>
-#benchmarkPanel{display:none;margin-top:12px;padding:14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+#benchmarkPanel{display:none;max-width:1320px;margin:18px auto 40px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text)}
+.benchmark-top-btn{cursor:pointer;font:inherit}.benchmark-top-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 #benchmarkPanel.active{display:block}.bench-toolbar{display:grid;grid-template-columns:1.5fr .8fr .7fr auto;gap:8px;align-items:end}
 .bench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:12px}
 .bench-card{border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fafafa;cursor:pointer}.bench-card:hover{background:white}
@@ -69,7 +70,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <div class="app">
 <header class="top">
  <div><h1>🎬 썰쟁 Studio v17.9</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">YouTube Benchmarking</span>
+ <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -284,7 +285,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script>
 
 let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='';
-function toggleBenchmarkPanel(){const p=$('benchmarkPanel');p.classList.toggle('active');if(p.classList.contains('active'))p.scrollIntoView({behavior:'smooth',block:'start'})}
+function toggleBenchmarkPanel(){const p=$('benchmarkPanel');if(!p){alert('벤치마킹 화면을 찾지 못했습니다.');return;}p.classList.toggle('active');if(p.classList.contains('active')){setTimeout(()=>{p.scrollIntoView({behavior:'smooth',block:'start'});const q=$('benchQuery');if(q)q.focus();},30)}}
 function formatCompactNumberV179(n){const x=Number(n||0);if(x>=1e8)return(x/1e8).toFixed(x>=1e9?1:0)+'억';if(x>=1e4)return(x/1e4).toFixed(x>=1e5?0:1)+'만';if(x>=1e3)return(x/1e3).toFixed(1)+'천';return String(x)}
 function daysSinceV179(d){const t=new Date(d).getTime();return Number.isFinite(t)?Math.max(1,Math.floor((Date.now()-t)/86400000)):99999}
 function benchmarkScoreV179(i){const v=Number(i.viewCount||0),d=daysSinceV179(i.publishedAt),vel=v/Math.max(1,d);return Math.max(0,Math.min(100,Math.round(Math.min(45,Math.log10(Math.max(10,v))*7.2)+Math.min(40,Math.log10(Math.max(1,vel))*8.2)+(d<=30?15:d<=90?10:d<=365?5:2))))}
@@ -1814,6 +1815,8 @@ async function checkConsistency(){
  }catch(e){setStatus('설정 충돌 검사 실패: '+(e?.message||e),'bad')}
  finally{busy=false;$('allBtn').disabled=false;if(btn)btn.disabled=false}
 }
+
+document.addEventListener('DOMContentLoaded',()=>{const q=$('benchQuery');if(q)q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchYouTubeBenchmarks();}})});
 
 renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderPromptWizard();
 </script>
