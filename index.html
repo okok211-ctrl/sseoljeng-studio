@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.4 CTA Stack Fix</title>
+<title>썰쟁 Studio v17.5 Character Photo Persistence Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -59,8 +59,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.4</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">CTA Stack Fix</span>
+ <div><h1>🎬 썰쟁 Studio v17.5</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Character Photo Persistence Fix</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -272,6 +272,45 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+
+const CHARACTER_SLOT_COUNT_V175 = 6;
+
+function normalizeCharacterSlotsV175(list){
+  const src = Array.isArray(list) ? list : [];
+  const out = [];
+  for(let i=0;i<CHARACTER_SLOT_COUNT_V175;i++){
+    const item = (src[i] && typeof src[i]==='object') ? {...src[i]} : {};
+    // Preserve every known image field, even when empty/null in partial saves.
+    if(item.photo === undefined && item.image !== undefined) item.photo = item.image;
+    if(item.image === undefined && item.photo !== undefined) item.image = item.photo;
+    if(item.avatar === undefined && item.photo !== undefined) item.avatar = item.photo;
+    out.push(item);
+  }
+  // Do not discard extra future slots if they already exist.
+  for(let i=CHARACTER_SLOT_COUNT_V175;i<src.length;i++){
+    out.push({...src[i]});
+  }
+  return out;
+}
+
+function preserveCharacterPhotosV175(nextList, previousList){
+  const next = normalizeCharacterSlotsV175(nextList);
+  const prev = normalizeCharacterSlotsV175(previousList);
+  for(let i=0;i<Math.max(next.length, prev.length);i++){
+    if(!next[i]) next[i] = {};
+    const p = prev[i] || {};
+    const currentPhoto = next[i].photo || next[i].image || next[i].avatar || '';
+    const previousPhoto = p.photo || p.image || p.avatar || '';
+    if(!currentPhoto && previousPhoto){
+      next[i].photo = previousPhoto;
+      next[i].image = previousPhoto;
+      next[i].avatar = previousPhoto;
+    }
+  }
+  return next;
+}
+
+
 
 const STORY_OPENING_CTA_V174 = `- 첫 생성 구간의 0문단 또는 1문단에는 다음 문구를 정확히 한 번 자연스럽게 포함하세요:
 "시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다."
@@ -541,8 +580,8 @@ function normalizeOpening(text,enabled=true){
  return `1문단\n\n${hook}\n\n${cta}${rest?`\n\n${rest}`:''}`;
 }
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
-function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:getCharacters()},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
-function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=Array.isArray(data)?data:data.characters;if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
+function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
+function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
 const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='16.6.1-longform-vrew-consistency-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
@@ -570,7 +609,7 @@ function cfg(){
   thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value,longformMode
  };
 }
-function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:getCharacters(),outputs:outputsNow()}}
+function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:normalizeCharacterSlotsV175(getCharacters()),outputs:outputsNow()}}
 function legacyVersion(raw){return String(raw?.createdWith||raw?.version||raw?.appVersion||'5.x')}
 function normalizeProject(raw){
  if(!raw||typeof raw!=='object')throw new Error('프로젝트 데이터가 비어 있습니다.');
@@ -580,7 +619,7 @@ function normalizeProject(raw){
  const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2'),longformMode:Number(config.longformMode||30)};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
  const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[]};for(const k in cleanOut){cleanOut[k]=k==='vrewParts'?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
- return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:cleanChars,outputs:cleanOut};
+ return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:normalizeCharacterSlotsV175(cleanChars),outputs:cleanOut};
 }
 function applyProject(raw){
  const p=normalizeProject(raw),c=p.project.config,o=p.outputs;
