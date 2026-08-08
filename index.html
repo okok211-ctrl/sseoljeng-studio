@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.2 YouTube CTR Info Engine</title>
+<title>썰쟁 Studio v17.3 CTA Restored</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -59,7 +59,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v17.3</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <span class="badge">YouTube CTR Info Engine</span>
 </header>
 <div class="layout">
@@ -273,6 +273,19 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
+function storyFixedCtaRules(){
+ return `${storyFixedCtaRules()}\n\n[썰쟁 고정 오프닝·엔딩 규칙]
+- 롱폼 원고 시작부의 0문단 또는 1문단에는 다음 문구를 정확히 한 번 반드시 포함하세요:
+"시청 전 구독과 좋아요, 알림은 큰 힘이 됩니다."
+- 위 문구는 생략하거나 다른 표현으로 바꾸지 마세요.
+- 마지막 문단에서는 이미 해결된 결말을 반복 설명하지 말고 짧은 에필로그 후 시청자 참여 문구로 끝내세요.
+- 마지막 문단에는 반드시 "오늘 이야기는 어떠셨나요?"를 넣으세요.
+- 이어서 시청자의 생각과 공감을 댓글로 남겨 달라고 자연스럽게 유도하세요.
+- 마지막에는 "이야기에 공감하셨다면 구독과 좋아요 부탁드립니다."와 같은 구독·좋아요 요청을 넣으세요.
+- 엔딩 참여 문구는 마지막 문단에서만 한 번 사용하세요.`;
+}
+
+
 function thumbPeoplePromptRule(value){
   const v=String(value||'auto');
   if(v==='1')return '등장인물은 최대 1명만 사용하세요.';
@@ -301,7 +314,7 @@ function shortsSituationPromptRules(){
 
 
 function stableSituationImageRules(target='longform'){
-  const common = `[Stable Situation Image Engine v17.0]
+  const common = `${storyFixedCtaRules()}\n\n[Stable Situation Image Engine v17.0]
 - 원고·문단·쇼츠 컷·제목을 먼저 읽고, 그 장면에서 실제로 벌어지는 사건을 한 장면으로 연출하세요.
 - 등장인물은 무조건 한 명으로 고정하지 말고, 장면 이해에 필요한 핵심 인물만 1~4명 자동 선택하세요.
 - 독백·결심·새 출발은 1명, 대화는 2명, 배신·폭로·대치는 2~3명, 가족 집단 갈등은 최대 4명을 권장합니다.
@@ -458,7 +471,7 @@ function visualLeakTerms(){
  return [...new Set([...generic,...fromChars])];
 }
 function findVisualLeaks(text){const value=String(text||'');return visualLeakTerms().filter(term=>value.includes(term)).slice(0,30)}
-function storyEngineRules(){return `[Story Engine v16.2 Quality Repair]
+function storyEngineRules(){return `${storyFixedCtaRules()}\n\n[Story Engine v16.2 Quality Repair]
 - 실제 사람이 말하는 것처럼 자연스러운 구어체로 작성하세요.
 - 본문 문단은 약 400자 내외를 목표로 자연스럽게 작성하세요. 권장 범위는 380~450자이며, 글자 수 때문에 내용을 억지로 늘리거나 줄이지 마세요.
 - 모든 문단에서 반드시 새로운 사건이나 행동이 하나 이상 진행되어야 합니다. 같은 내용을 표현만 바꿔 반복하지 마세요.
@@ -1305,6 +1318,13 @@ async function generateAndNormalizeStoryChunk(prompt,start,end,subscribe){
  throw new Error(`AI가 ${start}~${end}문단 형식을 완성하지 못했습니다. 누락 문단: ${finalCheck.missing.join(', ')}. 다시 생성해 주세요.`);
 }
 async function callGeneratePrompt(prompt,task){
+  // STORY_CTA_RESTORED_V173
+  if(['story','paragraph','paragraphs','longform','write','nextparagraph','prompt','draft'].includes(task)){
+    prompt = `${storyFixedCtaRules()}
+
+${prompt}`;
+  }
+
   // STABLE_SITUATION_ENGINE_INJECTED
   if(task==='images' || task==='imageprompts'){
     prompt = `${stableSituationImageRules('longform')}
