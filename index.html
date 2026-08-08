@@ -240,8 +240,12 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn ghost" onclick="$('projectFileInput').click()">📂 프로젝트 불러오기</button>
   <button class="btn ghost" onclick="exportEmergencyBackup()">🛟 긴급 백업</button>
   <button class="btn ghost" onclick="restoreImportBackup()">↩️ 불러오기 전 복구</button>
+  <button class="btn ghost" onclick="exportStudioBackup()" title="프로젝트·캐릭터·작업 결과 등 이 브라우저의 썰쟁 Studio 데이터를 한 파일로 백업합니다.">💾 전체 백업</button>
+  <button class="btn ghost" onclick="$('studioBackupFileInput').click()" title="전체 백업 파일에서 Studio 데이터를 복원합니다. 복원 전 현재 상태는 자동 백업됩니다.">♻️ 전체 복원</button>
+  <button class="btn ghost" onclick="openRecentBackups()" title="최근 자동 저장 스냅샷에서 원하는 시점으로 되돌립니다.">🕘 최근 백업</button>
  </div>
  <input id="projectFileInput" class="file-input" type="file" accept=".json,application/json" onchange="importProject(event)">
+ <input id="studioBackupFileInput" class="file-input" type="file" accept=".json,application/json" onchange="importStudioBackup(event)">
  <div class="progress"><div id="bar" class="bar"></div></div>
  <div id="status" class="status">설계도와 캐릭터를 준비한 뒤 GPT 롱폼 프롬프트를 복사하세요.</div>
  <div class="note">작업 순서: 설계도 생성 또는 작성 → GPT 롱폼 프롬프트 복사 → ChatGPT에서 번호가 포함된 원고 작성 → 롱폼 탭에 그대로 붙여넣기 → 제작 자료 생성.</div>
@@ -978,6 +982,95 @@ function loadLocal(){
 function downloadJson(data,name){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportProject(){const p=project();downloadJson(p,`${safeFileName(cfg().name||'썰쟁-프로젝트')}.sseoljeng.project.json`);setStatus('프로젝트 파일을 저장했습니다. PC·폰·다른 PC에서 그대로 불러올 수 있습니다.','ok')}
 function exportEmergencyBackup(){const p=project();pushBackup(p,'수동 긴급 백업');downloadJson(p,`${safeFileName(cfg().name||'썰쟁-프로젝트')}_긴급백업_${new Date().toISOString().replace(/[:.]/g,'-')}.json`);setStatus('긴급 백업 파일을 저장했습니다.','ok')}
+
+// ===== Studio 전체 안전 백업 / 복원 (v17.9 safety add-on) =====
+// 기존 프로젝트 저장 구조나 생성 로직은 변경하지 않고, 현재 브라우저의 썰쟁 Studio 데이터만 별도 파일로 보관합니다.
+const STUDIO_FULL_BACKUP_VERSION='17.9-full-backup-v1';
+const STUDIO_PRE_RESTORE_KEY='sseoljeng-full-restore-prebackup-v1';
+function isSecretStorageKeyV179(k){return /(?:api[-_]?key|token|secret|credential|authorization|oauth|password)/i.test(String(k||''))}
+function collectStudioStorageV179(){
+ const data={};
+ for(let i=0;i<localStorage.length;i++){
+  const k=localStorage.key(i);
+  if(!k||!k.startsWith('sseoljeng-')||isSecretStorageKeyV179(k)||k===STUDIO_PRE_RESTORE_KEY)continue;
+  try{data[k]=localStorage.getItem(k)}catch(e){console.warn('백업 제외:',k,e)}
+ }
+ return data;
+}
+function makeStudioBackupPayloadV179(reason='수동 전체 백업'){
+ return{
+  app:APP_ID,
+  backupType:'sseoljeng-studio-full-backup',
+  backupVersion:STUDIO_FULL_BACKUP_VERSION,
+  createdAt:new Date().toISOString(),
+  reason,
+  appVersion:APP_VERSION,
+  note:'API 키·토큰·비밀번호 등 민감한 저장값은 포함하지 않습니다.',
+  currentProject:project(),
+  storage:collectStudioStorageV179()
+ };
+}
+function exportStudioBackup(){
+ try{
+  saveLocal(true);
+  const payload=makeStudioBackupPayloadV179('수동 전체 백업');
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+  downloadJson(payload,`썰쟁-Studio-전체백업_${stamp}.json`);
+  setStatus(`전체 백업 완료 · ${Object.keys(payload.storage).length}개 Studio 저장 항목 + 현재 프로젝트를 보관했습니다.`,'ok');
+ }catch(e){setStatus('전체 백업 실패: '+e.message,'bad')}
+}
+function importStudioBackup(event){
+ const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const raw=JSON.parse(reader.result);
+   if(raw?.backupType!=='sseoljeng-studio-full-backup'||!raw?.storage||typeof raw.storage!=='object')throw new Error('썰쟁 Studio 전체 백업 파일이 아닙니다.');
+   const when=raw.createdAt?new Date(raw.createdAt).toLocaleString('ko-KR'):'날짜 정보 없음';
+   const count=Object.keys(raw.storage).length;
+   if(!confirm(`전체 복원을 진행할까요?\n\n백업 시각: ${when}\n저장 항목: ${count}개\n\n현재 작업은 복원 직전에 자동 백업됩니다.`))return;
+   // 복원 실패/실수에 대비해 현재 상태를 별도 슬롯과 최근 백업 링에 먼저 남김
+   const before=makeStudioBackupPayloadV179('전체 복원 직전 자동 백업');
+   try{localStorage.setItem(STUDIO_PRE_RESTORE_KEY,JSON.stringify(before))}catch(e){console.warn('복원 전 전체 스냅샷 저장 실패',e)}
+   try{pushBackup(project(),'전체 복원 직전')}catch(e){}
+   // Studio 네임스페이스만 복원. 다른 사이트/앱 localStorage는 절대 건드리지 않음.
+   Object.entries(raw.storage).forEach(([k,v])=>{
+    if(!String(k).startsWith('sseoljeng-')||isSecretStorageKeyV179(k)||k===STUDIO_PRE_RESTORE_KEY)return;
+    try{localStorage.setItem(k,String(v))}catch(e){console.warn('복원 실패 항목:',k,e)}
+   });
+   const p=raw.currentProject||(()=>{try{return JSON.parse(raw.storage[LOCAL_KEY]||'null')}catch{return null}})();
+   if(p)applyProject(p); else loadLocal();
+   saveLocal(true);
+   setStatus(`전체 복원 완료 · ${when} 백업으로 복원했습니다.`,'ok');
+   alert('전체 복원이 완료되었습니다. 화면에 복원된 내용을 확인해 주세요.');
+  }catch(e){setStatus('전체 복원 실패: '+e.message,'bad')}
+ };
+ reader.onerror=()=>setStatus('전체 백업 파일을 읽지 못했습니다.','bad');
+ reader.readAsText(file,'utf-8');
+}
+function restorePreFullBackupV179(){
+ try{
+  const raw=JSON.parse(localStorage.getItem(STUDIO_PRE_RESTORE_KEY)||'null');
+  if(!raw?.storage){setStatus('전체 복원 직전 백업이 없습니다.','bad');return}
+  if(!confirm('마지막 전체 복원 직전 상태로 되돌릴까요?'))return;
+  Object.entries(raw.storage).forEach(([k,v])=>{if(String(k).startsWith('sseoljeng-')&&!isSecretStorageKeyV179(k)&&k!==STUDIO_PRE_RESTORE_KEY)localStorage.setItem(k,String(v))});
+  if(raw.currentProject)applyProject(raw.currentProject);else loadLocal();
+  saveLocal(true);setStatus('전체 복원 직전 상태로 되돌렸습니다.','ok');
+ }catch(e){setStatus('복원 전 상태 되돌리기 실패: '+e.message,'bad')}
+}
+function openRecentBackups(){
+ let ring=[];try{ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]')}catch{}
+ if(!Array.isArray(ring)||!ring.length){alert('최근 자동 백업이 없습니다.');return}
+ const rows=ring.slice(0,5).map((b,i)=>`${i+1}. ${new Date(b.at).toLocaleString('ko-KR')} · ${b.reason||'자동 백업'}`).join('\n');
+ const input=prompt(`최근 백업에서 복원할 번호를 입력하세요.\n\n${rows}\n\n0 = 마지막 전체 복원 직전 상태`,'1');
+ if(input===null)return;
+ const n=Number(input);
+ if(n===0){restorePreFullBackupV179();return}
+ const item=ring[n-1];if(!item?.data){alert('올바른 번호를 입력해 주세요.');return}
+ if(!confirm(`${n}번 백업으로 되돌릴까요?\n현재 상태도 먼저 자동 백업됩니다.`))return;
+ try{pushBackup(project(),'최근 백업 복원 직전');applyProject(item.data);safeLocalSetV176(LOCAL_KEY,JSON.stringify(project()));setStatus(`${n}번 최근 백업으로 복원했습니다.`,'ok')}catch(e){setStatus('최근 백업 복원 실패: '+e.message,'bad')}
+}
+
 function importProject(event){
  const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;
  const reader=new FileReader();reader.onload=()=>{try{const current=project();localStorage.setItem(IMPORT_BACKUP_KEY,JSON.stringify(current));pushBackup(current,'프로젝트 불러오기 전');const raw=JSON.parse(reader.result);const p=applyProject(raw);localStorage.setItem(LOCAL_KEY,JSON.stringify(p));const from=legacyVersion(raw);setStatus(`불러오기 완료 · ${file.name} · ${from===APP_VERSION?'호환 확인':from+' → v16.6 변환'}`,'ok')}catch(e){setStatus('프로젝트 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.onerror=()=>setStatus('파일 읽기에 실패했습니다.','bad');reader.readAsText(file,'utf-8');
