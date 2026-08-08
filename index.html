@@ -55,6 +55,10 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
 
 .yt-ab-box{margin-top:10px;padding:12px;border:1px solid rgba(255,121,23,.38);border-radius:13px;background:rgba(255,121,23,.06)}
+.yt-ab-page{min-height:650px;height:auto;padding:18px;background:#07111f;color:#f5f8fc;border:1px solid #263b55;border-radius:12px;overflow:auto}
+.yt-ab-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.yt-ab-page-title{font-size:20px;font-weight:950}.yt-ab-page-help{font-size:12px;color:var(--muted);margin-top:5px}
+.yt-ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
+
 .yt-ab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.yt-ab-title{font-weight:950;font-size:14px}.yt-ab-help{font-size:10px;color:var(--muted);margin-top:4px}.yt-ab-output{width:100%;min-height:280px;max-height:420px;margin-top:10px;background:#06101d;color:#f5f8fc;border:1px solid #30465f;border-radius:11px;padding:13px;line-height:1.65;resize:vertical}
 </style>
 <style>
@@ -262,6 +266,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="images">이미지 프롬프트</button>
   <button class="tab" data-tab="shorts">쇼츠 4컷</button>
   <button class="tab" data-tab="youtube">유튜브 정보</button>
+  <button class="tab" data-tab="youtubeab">🧪 A/B 테스트</button>
   <button class="tab" data-tab="thumbnail">썸네일</button>
   <button class="tab" data-tab="japanese">일본어</button>
   <button class="tab" data-tab="srt">SRT</button>
@@ -286,9 +291,17 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="shorts" class="output hidden"></textarea>
  <textarea id="youtube" class="output hidden"></textarea>
 <div id="ytCtrGuide" class="tiny hidden" style="margin-top:8px">제목 5안 · 썸네일 문구 3안 · 설명 · 해시태그 · 100점 평가를 함께 생성합니다.</div>
-<div id="ytAbPanel" class="yt-ab-box hidden">
- <div class="yt-ab-head"><div><div class="yt-ab-title">🧪 제목·썸네일 A/B 후보</div><div class="yt-ab-help">A는 직접 충격형 · B는 궁금증/반전형으로 서로 다른 방향을 만듭니다. 기존 유튜브 정보는 그대로 유지됩니다.</div></div><button id="ytAbBtn" class="btn primary" type="button" onclick="generateYoutubeAB()">A/B 후보 생성</button></div>
- <textarea id="youtubeAB" class="yt-ab-output" readonly placeholder="A/B 후보 생성 버튼을 누르면 제목 A/B와 썸네일 문구 A/B가 여기에 표시됩니다."></textarea>
+<div id="youtubeABPanel" class="yt-ab-page hidden">
+ <div class="yt-ab-page-head">
+  <div><div class="yt-ab-page-title">🧪 제목·썸네일 A/B 테스트 후보</div><div class="yt-ab-page-help">같은 원고로 클릭 전략이 다른 2세트를 만듭니다. A는 직접 충격형, B는 궁금증·반전형입니다.</div></div>
+  <button id="ytAbBtn" class="btn primary" type="button" onclick="generateYoutubeAB()">✨ A/B 후보 생성</button>
+ </div>
+ <div class="yt-ab-grid">
+  <section class="yt-ab-card a"><h3>🅰 A안 · 직접 충격형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbATitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbAThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbAReason" class="yt-ab-value">-</div></div><div id="ytAbAScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card b"><h3>🅱 B안 · 궁금증·반전형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbBTitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbBThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbBReason" class="yt-ab-value">-</div></div><div id="ytAbBScore" class="yt-ab-score">--/100</div></section>
+ </div>
+ <div class="yt-ab-recommend"><b>🎯 AI 추천</b><div id="ytAbRecommend" class="yt-ab-value" style="margin-top:7px">A/B 후보를 생성하면 추천안이 표시됩니다.</div></div>
+ <textarea id="youtubeAB" class="yt-ab-raw" readonly></textarea>
 </div>
  <textarea id="thumbnail" class="output hidden"></textarea>
  <textarea id="japanese" class="output hidden"></textarea>
@@ -301,8 +314,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 </section>
 </div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">renderLongformMode();renderVrewParts();renderPromptWizard();loadYoutubeABV179();
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -739,7 +751,7 @@ function setStatus(message,type=''){
 }
 let active='story',busy=false;
 const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
-const panelFields={memory:'memory',vrew:'vrew'};
+const panelFields={memory:'memory',vrew:'vrew',youtubeab:'youtubeABPanel'};
 let longformMode=30,vrewParts=[],vrewCurrentIndex=0;
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
@@ -1641,6 +1653,23 @@ function validatePastedStory(){
  }
  setStatus(`${total}개 문단이 순서대로 모두 확인되었습니다. 제작 자료 생성을 시작합니다.`,'ok');saveLocal(true);setTimeout(()=>autoStartProductionAssetsV176(),150);return true;
 }
+function parseYoutubeAB(text){
+ const t=String(text||'');
+ const pick=(block,label)=>{const m=block.match(new RegExp(label+'\\s*:\\s*([^\\n]+)','i'));return m?m[1].trim():''};
+ const aMatch=t.match(/(?:🅰|A안)[\s\S]*?(?=(?:🅱|B안)|🎯|$)/i);
+ const bMatch=t.match(/(?:🅱|B안)[\s\S]*?(?=🎯|$)/i);
+ const a=aMatch?aMatch[0]:'',b=bMatch?bMatch[0]:'';
+ const rec=t.match(/🎯[\s\S]*$/);
+ return {a:{title:pick(a,'제목'),thumb:pick(a,'썸네일 문구'),reason:pick(a,'선택 이유'),score:pick(a,'자체 점수')},b:{title:pick(b,'제목'),thumb:pick(b,'썸네일 문구'),reason:pick(b,'선택 이유'),score:pick(b,'자체 점수')},recommend:rec?rec[0].replace(/^🎯\s*추천\s*/,'').trim():''};
+}
+function renderYoutubeAB(text){
+ if(!$('youtubeAB'))return; $('youtubeAB').value=String(text||'');
+ const d=parseYoutubeAB(text);
+ const set=(id,v,f='-')=>{if($(id))$(id).textContent=v||f};
+ set('ytAbATitle',d.a.title,'아직 생성되지 않았습니다.');set('ytAbAThumb',d.a.thumb);set('ytAbAReason',d.a.reason);set('ytAbAScore',d.a.score,'--/100');
+ set('ytAbBTitle',d.b.title,'아직 생성되지 않았습니다.');set('ytAbBThumb',d.b.thumb);set('ytAbBReason',d.b.reason);set('ytAbBScore',d.b.score,'--/100');
+ set('ytAbRecommend',d.recommend,'A/B 후보를 생성하면 추천안이 표시됩니다.');
+}
 async function generateYoutubeAB(){
  if(busy)return;
  const c=cfg();
@@ -1649,12 +1678,12 @@ async function generateYoutubeAB(){
  busy=true;const btn=$('ytAbBtn');if(btn)btn.disabled=true;setStatus('제목·썸네일 A/B 후보 생성 중...');
  try{
   const text=(await callGenerate('youtubeAB')).trim();
-  $('youtubeAB').value=text;
+  renderYoutubeAB(text);
   try{localStorage.setItem('sseoljeng-youtube-ab-v179',text)}catch{}
   setStatus('A/B 후보 생성 완료 · A는 직접 충격형, B는 궁금증·반전형입니다.','ok');
  }catch(e){setStatus('A/B 후보 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;if(btn)btn.disabled=false}
 }
-function loadYoutubeABV179(){try{const v=localStorage.getItem('sseoljeng-youtube-ab-v179');if(v&&$('youtubeAB'))$('youtubeAB').value=v}catch{}}
+function loadYoutubeABV179(){try{const v=localStorage.getItem('sseoljeng-youtube-ab-v179');if(v)renderYoutubeAB(v)}catch{}}
 
 async function generateProductionAssets(skipValidation=false){
  if(busy)return;
@@ -1790,7 +1819,7 @@ async function downloadZip(){
 }
 
 
-function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('ytAbPanel'))$('ytAbPanel').classList.toggle('hidden',key!=='youtube');if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','memory','consistency','vrew'][i]===key)));updateMeta()}
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','memory','consistency','vrew'][i]===key)));updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
 function paragraphCharCount(text){
