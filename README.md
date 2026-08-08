@@ -1,3 +1,13 @@
+# 썰쟁 Studio v17.6 Auto Generate + Storage Quota Fix
+
+- 60문단 검사 통과 후 제작 자료 전체 생성 자동 시작
+- 자동 시작 시 재검사 재귀 방지
+- 캐릭터 얼굴 Base64를 프로젝트 sseoljeng-v8 저장본에서 제외
+- 얼굴은 별도 저장소 sseoljeng-character-photos-v1에 보존
+- 프로젝트 불러오기 시 얼굴 자동 재결합
+- localStorage 용량 초과가 나도 생성 자체는 실패 처리하지 않음
+- v17.5의 캐릭터 5·6 얼굴 유지, CTA, CTR, 쇼츠/썸네일/이미지 기능 유지
+
 # 썰쟁 Studio v17.5 Character Photo Persistence Fix
 
 - v17.4 기준 수정
