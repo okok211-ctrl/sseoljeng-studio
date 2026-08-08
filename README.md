@@ -1,3 +1,13 @@
+# 썰쟁 Studio v17.7 IndexedDB Face Fix
+
+- 캐릭터 1~6 얼굴 사진을 localStorage 프로젝트 데이터와 완전 분리
+- 얼굴 사진은 IndexedDB에 저장하고 런타임 캐시로 즉시 복원
+- v17.6의 기존 얼굴맵(sseoljeng-character-photos-v1) 자동 이전
+- 기존 캐릭터 메타데이터 안의 얼굴도 자동 이전
+- 새로고침/프로젝트 불러오기 후 5·6번 얼굴 포함 전체 캐릭터 얼굴 복원
+- 프로젝트/클라우드 자동저장에는 Base64 얼굴 미포함
+- v17.6 자동 생성 및 저장용량 초과 방지 기능 유지
+
 # 썰쟁 Studio v17.6 Auto Generate + Storage Quota Fix
 
 - 60문단 검사 통과 후 제작 자료 전체 생성 자동 시작

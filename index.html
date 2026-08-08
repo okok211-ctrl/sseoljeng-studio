@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.6 Auto Generate + Storage Quota Fix</title>
+<title>썰쟁 Studio v17.7 IndexedDB Face Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -59,8 +59,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.6</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Auto Generate + Storage Quota Fix</span>
+ <div><h1>🎬 썰쟁 Studio v17.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">IndexedDB Face Fix</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -273,68 +273,144 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
-const CHARACTER_PHOTO_STORAGE_KEY_V176 = 'sseoljeng-character-photos-v1';
+const FACE_DB_NAME_V177='sseoljeng-face-db';
+const FACE_DB_STORE_V177='faces';
+const FACE_DB_VERSION_V177=1;
+const FACE_CACHE_V177={};
+
+function openFaceDbV177(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(FACE_DB_NAME_V177,FACE_DB_VERSION_V177);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(FACE_DB_STORE_V177)){
+        db.createObjectStore(FACE_DB_STORE_V177,{keyPath:'id'});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
+  });
+}
+
+async function loadAllFacesV177(){
+  const db=await openFaceDbV177();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(FACE_DB_STORE_V177,'readonly');
+    const req=tx.objectStore(FACE_DB_STORE_V177).getAll();
+    req.onsuccess=()=>resolve(Array.isArray(req.result)?req.result:[]);
+    req.onerror=()=>reject(req.error||new Error('Face load failed'));
+    tx.oncomplete=()=>db.close();
+  });
+}
+
+async function saveFaceV177(id,image){
+  if(!id)return false;
+  if(image) FACE_CACHE_V177[id]=image;
+  else delete FACE_CACHE_V177[id];
+  const db=await openFaceDbV177();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(FACE_DB_STORE_V177,'readwrite');
+    const store=tx.objectStore(FACE_DB_STORE_V177);
+    if(image) store.put({id,image,updatedAt:Date.now()});
+    else store.delete(id);
+    tx.oncomplete=()=>{db.close();resolve(true)};
+    tx.onerror=()=>{db.close();reject(tx.error||new Error('Face save failed'))};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Face save aborted'))};
+  });
+}
+
+function stripFacesV177(list){
+  return (Array.isArray(list)?list:[]).map(c=>{
+    const x={...c};
+    delete x.image;delete x.photo;delete x.avatar;
+    return x;
+  });
+}
+
+function attachFaceCacheV177(list){
+  return (Array.isArray(list)?list:[]).map(c=>{
+    const x={...c};
+    const img=x.image||x.photo||x.avatar||FACE_CACHE_V177[x.id]||'';
+    if(img)x.image=img;
+    return x;
+  });
+}
+
+function getCharactersRawV177(){
+  try{
+    const saved=JSON.parse(
+      localStorage.getItem('sseoljeng-characters-v3')||
+      localStorage.getItem('sseoljeng-characters-v2')||
+      localStorage.getItem('sseoljeng-characters')||
+      'null'
+    );
+    return migrateCharacterList(Array.isArray(saved)&&saved.length?saved:DEFAULT_CHARACTERS);
+  }catch{
+    return migrateCharacterList(DEFAULT_CHARACTERS);
+  }
+}
+
+function storeCharactersMetadataOnlyV177(list){
+  const normalized=(Array.isArray(list)?list:[]).map(normalizeCharacter);
+  return safeLocalSetV176('sseoljeng-characters-v3',JSON.stringify(stripFacesV177(normalized)));
+}
+
+async function initializeFaceStorageV177(){
+  // 1) IndexedDB faces
+  try{
+    const rows=await loadAllFacesV177();
+    for(const row of rows){
+      if(row?.id&&row?.image)FACE_CACHE_V177[row.id]=row.image;
+    }
+  }catch(e){console.warn('IndexedDB 얼굴 읽기 실패',e)}
+
+  // 2) Migrate legacy v17.6 localStorage face map
+  try{
+    const legacy=JSON.parse(localStorage.getItem('sseoljeng-character-photos-v1')||'{}');
+    if(legacy&&typeof legacy==='object'){
+      for(const [id,img] of Object.entries(legacy)){
+        if(id&&img&&!FACE_CACHE_V177[id]){
+          FACE_CACHE_V177[id]=img;
+          try{await saveFaceV177(id,img)}catch(e){console.warn(e)}
+        }
+      }
+    }
+  }catch(e){console.warn('기존 얼굴맵 이전 실패',e)}
+
+  // 3) Migrate any inline images that still exist in character metadata
+  const raw=getCharactersRawV177();
+  for(const c of raw){
+    const img=c?.image||c?.photo||c?.avatar||'';
+    if(c?.id&&img&&!FACE_CACHE_V177[c.id]){
+      FACE_CACHE_V177[c.id]=img;
+      try{await saveFaceV177(c.id,img)}catch(e){console.warn(e)}
+    }
+  }
+
+  // 4) Store only lightweight metadata; faces remain in IndexedDB/cache
+  storeCharactersMetadataOnlyV177(raw);
+  renderCharacters();
+  renderHeroineFacePanel();
+}
+
+
+
 let AUTO_ASSET_GENERATION_RUNNING_V176 = false;
 
-function getCharacterPhotoMapV176(){
-  try{
-    const raw = localStorage.getItem(CHARACTER_PHOTO_STORAGE_KEY_V176);
-    const data = raw ? JSON.parse(raw) : {};
-    return data && typeof data === 'object' ? data : {};
-  }catch(e){
-    console.warn('캐릭터 얼굴 저장소 읽기 실패', e);
-    return {};
-  }
-}
 
-function saveCharacterPhotoMapV176(map){
-  try{
-    localStorage.setItem(CHARACTER_PHOTO_STORAGE_KEY_V176, JSON.stringify(map || {}));
-    return true;
-  }catch(e){
-    console.warn('캐릭터 얼굴 별도 저장 실패', e);
-    return false;
-  }
-}
 
-function syncCharacterPhotosToSeparateStorageV176(list){
-  const map = getCharacterPhotoMapV176();
-  let changed = false;
-  for(const c of (Array.isArray(list) ? list : [])){
-    if(!c || !c.id) continue;
-    const img = c.image || c.photo || c.avatar || '';
-    if(img && map[c.id] !== img){
-      map[c.id] = img;
-      changed = true;
-    }
-  }
-  if(changed) saveCharacterPhotoMapV176(map);
-}
 
-function attachCharacterPhotosV176(list){
-  const map = getCharacterPhotoMapV176();
-  return (Array.isArray(list) ? list : []).map(c=>{
-    const item = {...c};
-    const img = item.image || item.photo || item.avatar || map[item.id] || '';
-    if(img){
-      item.image = img;
-      item.photo = img;
-      item.avatar = img;
-    }
-    return item;
-  });
-}
 
-function stripCharacterPhotosForProjectV176(list){
-  syncCharacterPhotosToSeparateStorageV176(list);
-  return (Array.isArray(list) ? list : []).map(c=>{
-    const item = {...c};
-    delete item.image;
-    delete item.photo;
-    delete item.avatar;
-    return item;
-  });
-}
+
+
+
+
+
+
+
+
+
+
 
 function safeLocalSetV176(key, value){
   try{
@@ -526,24 +602,19 @@ function migrateCharacterList(rawList){
  return list;
 }
 function getCharacters(){
-  try{
-    const saved=JSON.parse(localStorage.getItem('sseoljeng-characters-v3')||localStorage.getItem('sseoljeng-characters-v2')||localStorage.getItem('sseoljeng-characters')||'null');
-    const list=migrateCharacterList(Array.isArray(saved)&&saved.length?saved:DEFAULT_CHARACTERS);
-    return attachCharacterPhotosV176(list);
-  }catch{
-    return attachCharacterPhotosV176(migrateCharacterList(DEFAULT_CHARACTERS));
-  }
+  return attachFaceCacheV177(getCharactersRawV177());
 }
 let selectedCharacterId=localStorage.getItem('sseoljeng-selected-character-id')||'',pendingCharacterId='';
 function storeCharacters(list){
-  const normalized = list.map(normalizeCharacter);
-  syncCharacterPhotosToSeparateStorageV176(normalized);
-  const ok = safeLocalSetV176('sseoljeng-characters-v3', JSON.stringify(normalized));
-  if(!ok){
-    // Fallback: keep metadata without heavy images so character definitions still persist.
-    const light = normalized.map(c=>{const x={...c};delete x.image;delete x.photo;delete x.avatar;return x});
-    safeLocalSetV176('sseoljeng-characters-v3', JSON.stringify(light));
+  const normalized=(Array.isArray(list)?list:[]).map(normalizeCharacter);
+  for(const c of normalized){
+    const img=c?.image||c?.photo||c?.avatar||'';
+    if(c?.id&&img){
+      FACE_CACHE_V177[c.id]=img;
+      saveFaceV177(c.id,img).catch(e=>console.warn('얼굴 저장 실패',c.id,e));
+    }
   }
+  storeCharactersMetadataOnlyV177(normalized);
 }
 function characterText(c){return[c.age,c.appearance,c.personality&&`성격과 분위기: ${c.personality}`,c.outfit&&`기본 의상: ${c.outfit}`,c.prompt].filter(Boolean).join(', ')}
 function roleEmoji(role){return({여주:'👩',남편:'👨',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
@@ -576,7 +647,7 @@ function uploadHeroineFace(){
  const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 여주 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
 }
 function clearHeroineFace(){
- const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
+ const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';delete FACE_CACHE_V177[list[i].id];saveFaceV177(list[i].id,'').catch(console.warn);storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
 }
 function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;$('charProtagonist').checked=!!c.isProtagonist;if(c.role==='여주')$('heroine').value=characterText(c)}
 function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
@@ -586,8 +657,8 @@ function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>
 function duplicateCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(!c)return;const copy=normalizeCharacter({...c,id:uid(),name:c.name+' 복사본',isDefault:false});list.push(copy);storeCharacters(list);selectedCharacterId=copy.id;renderCharacters();setStatus('캐릭터를 복제했습니다.','ok');saveLocal(true)}
 function deleteCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(list.length<=1){setStatus('캐릭터는 최소 1개가 필요합니다.','bad');return}if(!confirm(`${c.name}을 삭제할까요?`))return;const next=list.filter(x=>x.id!==c.id);storeCharacters(next);selectedCharacterId=next[0].id;renderCharacters();setStatus('캐릭터를 삭제했습니다.','ok');saveLocal(true)}
 function setDefaultCharacter(){const list=getCharacters(),c=readCharacterEditor(selectedCharacter());list.forEach(x=>{if(x.role===c.role)x.isDefault=x.id===c.id});const i=list.findIndex(x=>x.id===c.id);list[i]=c;list[i].isDefault=true;storeCharacters(list);renderCharacters();setStatus(`${c.role} 역할의 기본 캐릭터로 지정했습니다.`,'ok');saveLocal(true)}
-function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){if(id===selectedCharacterId)list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
-function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
+function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){if(id===selectedCharacterId)list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);FACE_CACHE_V177[list[i].id]=list[i].image;saveFaceV177(list[i].id,list[i].image).catch(console.warn);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
+function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';delete FACE_CACHE_V177[list[i].id];saveFaceV177(list[i].id,'').catch(console.warn);storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
 const KOREAN_SURNAMES=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황','안','송','류','홍'];
 const NAME_POOLS={
  youngFemale:['서윤','지안','하린','채원','서아','예린','다은','유나','민서','수아','지우','아린','소희','유진','나연','은채','가은','세아','혜원','시은'],
@@ -712,7 +783,7 @@ function cfg(){
   thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value,longformMode
  };
 }
-function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:normalizeCharacterSlotsV175(stripCharacterPhotosForProjectV176(getCharacters())),outputs:outputsNow()}}
+function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:normalizeCharacterSlotsV175(stripFacesV177(getCharacters())),outputs:outputsNow()}}
 function legacyVersion(raw){return String(raw?.createdWith||raw?.version||raw?.appVersion||'5.x')}
 function normalizeProject(raw){
  if(!raw||typeof raw!=='object')throw new Error('프로젝트 데이터가 비어 있습니다.');
@@ -731,8 +802,8 @@ function applyProject(raw){
  for(const k of Object.keys(fields))if(o[k]!==undefined)$(fields[k]).value=o[k]||'';
  $('memoryFacts').value=o.memoryFacts||'';$('memoryConflicts').value=o.memoryConflicts||'';$('memoryClues').value=o.memoryClues||'';$('memoryTimeline').value=o.memoryTimeline||'';
  vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;
- if(p.characters.length){storeCharacters(attachCharacterPhotosV176(p.characters));selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
- renderCharacters();renderLongformMode();renderVrewParts();updateMeta();return p;
+ if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
+ renderCharacters();setTimeout(()=>initializeFaceStorageV177().catch(console.warn),50);renderLongformMode();renderVrewParts();updateMeta();return p;
 }
 function pushBackup(snapshot,reason='자동 백업'){
  try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
@@ -1643,6 +1714,12 @@ async function checkConsistency(){
 
 renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderPromptWizard();
 </script>
-<script src="js/firebase-cloud.js"></script>
+<script src="js/firebase-cloud.js">
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>initializeFaceStorageV177().catch(console.warn),250);
+});
+
+</script>
 </body>
 </html>
