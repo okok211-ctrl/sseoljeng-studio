@@ -1,3 +1,12 @@
+# 썰쟁 Studio v17.8 Global Character Face Library
+
+- 캐릭터 얼굴을 프로젝트가 아니라 캐릭터 라이브러리 소속으로 변경
+- internalId(예: CHAR-001)를 최우선 영구 키로 사용
+- 다른 이야기/클라우드 프로젝트를 불러와도 같은 캐릭터면 얼굴 자동 복원
+- 캐릭터 가져오기(import) 후에도 기존 얼굴 자동 연결
+- 이름이 바뀌어도 internalId가 같으면 얼굴 유지
+- 기존 v17.7 IndexedDB 저장 방식과 v17.6 자동 생성/저장용량 수정 유지
+
 # 썰쟁 Studio v17.7 IndexedDB Face Fix
 
 - 캐릭터 1~6 얼굴 사진을 localStorage 프로젝트 데이터와 완전 분리

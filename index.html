@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.7 IndexedDB Face Fix</title>
+<title>썰쟁 Studio v17.8 Global Character Face Library</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -59,8 +59,8 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">IndexedDB Face Fix</span>
+ <div><h1>🎬 썰쟁 Studio v17.8</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">Global Character Face Library</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -273,6 +273,75 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
+function characterFaceLibraryKeyV178(c){
+  if(!c)return '';
+  // Prefer internalId because it remains stable across stories/projects.
+  const internal=String(c.internalId||'').trim();
+  if(internal)return `internal:${internal}`;
+  const role=String(c.role||'').trim();
+  const name=String(c.name||'').trim();
+  if(role||name)return `role-name:${role}|${name}`;
+  return c.id ? `id:${c.id}` : '';
+}
+
+async function saveCharacterFaceGlobalV178(c,image){
+  if(!c)return false;
+  const keys=[characterFaceLibraryKeyV178(c), c.id?`id:${c.id}`:''].filter(Boolean);
+  for(const key of [...new Set(keys)]){
+    FACE_CACHE_V177[key]=image||'';
+    try{await saveFaceV177(key,image||'')}catch(e){console.warn('글로벌 얼굴 저장 실패',key,e)}
+  }
+  return true;
+}
+
+function faceFromGlobalCacheV178(c){
+  if(!c)return '';
+  const keys=[characterFaceLibraryKeyV178(c), c.id?`id:${c.id}`:''].filter(Boolean);
+  for(const key of keys){
+    if(FACE_CACHE_V177[key])return FACE_CACHE_V177[key];
+  }
+  return c.image||c.photo||c.avatar||'';
+}
+
+async function migrateFacesToGlobalKeysV178(){
+  const list=getCharactersRawV177();
+  for(const c of list){
+    const img=c?.image||c?.photo||c?.avatar||FACE_CACHE_V177[c.id]||FACE_CACHE_V177[`id:${c.id}`]||'';
+    if(c&&img){
+      await saveCharacterFaceGlobalV178(c,img);
+    }
+  }
+}
+
+async function refreshGlobalFacesV178(){
+  try{
+    const rows=await loadAllFacesV177();
+    for(const row of rows){
+      if(row?.id&&row?.image)FACE_CACHE_V177[row.id]=row.image;
+    }
+  }catch(e){console.warn('글로벌 얼굴 캐시 읽기 실패',e)}
+
+  await migrateFacesToGlobalKeysV178();
+
+  const list=getCharactersRawV177();
+  let changed=false;
+  for(const c of list){
+    const img=faceFromGlobalCacheV178(c);
+    if(img && c.image!==img){
+      c.image=img;
+      changed=true;
+    }
+  }
+  if(changed){
+    storeCharactersMetadataOnlyV177(list);
+  }
+  renderCharacters();
+  renderHeroineFacePanel();
+  return list;
+}
+
+
+
 const FACE_DB_NAME_V177='sseoljeng-face-db';
 const FACE_DB_STORE_V177='faces';
 const FACE_DB_VERSION_V177=1;
@@ -330,7 +399,7 @@ function stripFacesV177(list){
 function attachFaceCacheV177(list){
   return (Array.isArray(list)?list:[]).map(c=>{
     const x={...c};
-    const img=x.image||x.photo||x.avatar||FACE_CACHE_V177[x.id]||'';
+    const img=faceFromGlobalCacheV178(x);
     if(img)x.image=img;
     return x;
   });
@@ -389,6 +458,7 @@ async function initializeFaceStorageV177(){
 
   // 4) Store only lightweight metadata; faces remain in IndexedDB/cache
   storeCharactersMetadataOnlyV177(raw);
+  await migrateFacesToGlobalKeysV178();
   renderCharacters();
   renderHeroineFacePanel();
 }
@@ -609,9 +679,8 @@ function storeCharacters(list){
   const normalized=(Array.isArray(list)?list:[]).map(normalizeCharacter);
   for(const c of normalized){
     const img=c?.image||c?.photo||c?.avatar||'';
-    if(c?.id&&img){
-      FACE_CACHE_V177[c.id]=img;
-      saveFaceV177(c.id,img).catch(e=>console.warn('얼굴 저장 실패',c.id,e));
+    if(c && img){
+      saveCharacterFaceGlobalV178(c,img).catch(e=>console.warn('얼굴 저장 실패',c.internalId||c.id,e));
     }
   }
   storeCharactersMetadataOnlyV177(normalized);
@@ -647,7 +716,7 @@ function uploadHeroineFace(){
  const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 여주 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
 }
 function clearHeroineFace(){
- const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';delete FACE_CACHE_V177[list[i].id];saveFaceV177(list[i].id,'').catch(console.warn);storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
+ const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';saveCharacterFaceGlobalV178(list[i],'').catch(console.warn);storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
 }
 function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;$('charProtagonist').checked=!!c.isProtagonist;if(c.role==='여주')$('heroine').value=characterText(c)}
 function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
@@ -657,8 +726,8 @@ function updateCharacterPreset(){const list=getCharacters(),i=list.findIndex(c=>
 function duplicateCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(!c)return;const copy=normalizeCharacter({...c,id:uid(),name:c.name+' 복사본',isDefault:false});list.push(copy);storeCharacters(list);selectedCharacterId=copy.id;renderCharacters();setStatus('캐릭터를 복제했습니다.','ok');saveLocal(true)}
 function deleteCharacterPreset(){const list=getCharacters(),c=selectedCharacter();if(list.length<=1){setStatus('캐릭터는 최소 1개가 필요합니다.','bad');return}if(!confirm(`${c.name}을 삭제할까요?`))return;const next=list.filter(x=>x.id!==c.id);storeCharacters(next);selectedCharacterId=next[0].id;renderCharacters();setStatus('캐릭터를 삭제했습니다.','ok');saveLocal(true)}
 function setDefaultCharacter(){const list=getCharacters(),c=readCharacterEditor(selectedCharacter());list.forEach(x=>{if(x.role===c.role)x.isDefault=x.id===c.id});const i=list.findIndex(x=>x.id===c.id);list[i]=c;list[i].isDefault=true;storeCharacters(list);renderCharacters();setStatus(`${c.role} 역할의 기본 캐릭터로 지정했습니다.`,'ok');saveLocal(true)}
-function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){if(id===selectedCharacterId)list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);FACE_CACHE_V177[list[i].id]=list[i].image;saveFaceV177(list[i].id,list[i].image).catch(console.warn);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
-function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';delete FACE_CACHE_V177[list[i].id];saveFaceV177(list[i].id,'').catch(console.warn);storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
+function finishCharacterImage(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const size=420,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d'),scale=Math.max(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);const list=getCharacters(),id=pendingCharacterId||selectedCharacterId,i=list.findIndex(c=>c.id===id);if(i>=0){if(id===selectedCharacterId)list[i]=readCharacterEditor(list[i]);list[i].image=canvas.toDataURL('image/jpeg',.8);saveCharacterFaceGlobalV178(list[i],list[i].image).catch(console.warn);storeCharacters(list);selectedCharacterId=id;renderCharacters();setStatus('기준 얼굴 사진을 저장했습니다.','ok');saveLocal(true)}pendingCharacterId=''};img.src=reader.result};reader.readAsDataURL(file)}
+function removeCharacterImage(){const list=getCharacters(),i=list.findIndex(c=>c.id===selectedCharacterId);if(i<0||!list[i].image)return;list[i].image='';saveCharacterFaceGlobalV178(list[i],'').catch(console.warn);storeCharacters(list);renderCharacters();setStatus('기준 얼굴 사진을 삭제했습니다.','ok');saveLocal(true)}
 const KOREAN_SURNAMES=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황','안','송','류','홍'];
 const NAME_POOLS={
  youngFemale:['서윤','지안','하린','채원','서아','예린','다은','유나','민서','수아','지우','아린','소희','유진','나연','은채','가은','세아','혜원','시은'],
@@ -755,7 +824,7 @@ function normalizeOpening(text,enabled=true){
 }
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
-function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
+function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
 const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='16.6.1-longform-vrew-consistency-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
@@ -803,7 +872,7 @@ function applyProject(raw){
  $('memoryFacts').value=o.memoryFacts||'';$('memoryConflicts').value=o.memoryConflicts||'';$('memoryClues').value=o.memoryClues||'';$('memoryTimeline').value=o.memoryTimeline||'';
  vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
- renderCharacters();setTimeout(()=>initializeFaceStorageV177().catch(console.warn),50);renderLongformMode();renderVrewParts();updateMeta();return p;
+ renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();updateMeta();return p;
 }
 function pushBackup(snapshot,reason='자동 백업'){
  try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
@@ -1718,6 +1787,12 @@ renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderPro
 
 document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>initializeFaceStorageV177().catch(console.warn),250);
+});
+
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),700);
 });
 
 </script>
