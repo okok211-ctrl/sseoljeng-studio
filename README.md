@@ -1,3 +1,18 @@
+# 썰쟁 Studio v17.9 YouTube Benchmarking
+
+- 🔎 유튜브 벤치마킹 메뉴
+- 검색어/기간/결과 수
+- 제목, 채널, 조회수, 업로드일, 영상 길이
+- 조회수와 업로드 경과일 기반 떡상 점수
+- 점수순/조회수순/최신순 정렬
+- 선택 영상 AI 분석
+- 원본 복제가 아닌 감정·제목 구조·포장 방식 분석
+- 완전히 다른 신규 사연 주제와 추천 제목 생성
+- 추천 주제를 프로젝트에 바로 적용
+
+설정: Vercel 환경변수에 `YOUTUBE_API_KEY`를 추가하세요.
+Google Cloud에서 YouTube Data API v3를 활성화하고 API Key를 발급하면 됩니다.
+
 # 썰쟁 Studio v17.8 Global Character Face Library
 
 - 캐릭터 얼굴을 프로젝트가 아니라 캐릭터 라이브러리 소속으로 변경

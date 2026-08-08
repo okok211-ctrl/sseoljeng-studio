@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.8 Global Character Face Library</title>
+<title>썰쟁 Studio v17.9 YouTube Benchmarking</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -55,12 +55,21 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 @media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static}.top{align-items:flex-start;flex-direction:column}.output{min-height:480px}.character-grid{grid-template-columns:repeat(4,1fr)}}
 
 </style>
-</head>
+<style>
+#benchmarkPanel{display:none;margin-top:12px;padding:14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+#benchmarkPanel.active{display:block}.bench-toolbar{display:grid;grid-template-columns:1.5fr .8fr .7fr auto;gap:8px;align-items:end}
+.bench-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:12px}
+.bench-card{border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fafafa;cursor:pointer}.bench-card:hover{background:white}
+.bench-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:9px}.bench-title{font-weight:800;font-size:14px;line-height:1.35;margin:7px 0}
+.bench-meta{font-size:12px;color:#6b7280;line-height:1.5}.bench-score{display:inline-block;background:#111827;color:#fff;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:800}
+.bench-analysis{margin-top:10px;white-space:pre-wrap;border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fcfcfc;min-height:120px}
+@media(max-width:800px){.bench-toolbar{grid-template-columns:1fr 1fr}.bench-toolbar .wide{grid-column:1/-1}}
+</style></head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.8</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
- <span class="badge">Global Character Face Library</span>
+ <div><h1>🎬 썰쟁 Studio v17.9</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <span class="badge">YouTube Benchmarking</span>
 </header>
 <div class="layout">
 <aside class="panel side">
@@ -181,6 +190,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="tiny" style="margin-top:7px">AI가 장면에 맞춰 1~4명을 자동 선택합니다. 한 장면만 사용하며 콜라주·분할 화면·억지 빈 공간을 금지합니다. 기존 롱폼과 다른 자료는 유지됩니다.</div>
  </div>
  <div class="actions">
+<button class="btn secondary" type="button" onclick="toggleBenchmarkPanel()">🔎 유튜브 벤치마킹</button>
   <button class="btn secondary" onclick="generateBlueprint()">🧭 설계도 AI 생성</button>
   <button class="btn primary" onclick="buildLongformPrompt()">📋 GPT 롱폼 프롬프트</button>
   <button class="btn ghost wide" onclick="validatePastedStory()">✅ 붙여넣은 롱폼 확인</button>
@@ -272,6 +282,30 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+
+let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='';
+function toggleBenchmarkPanel(){const p=$('benchmarkPanel');p.classList.toggle('active');if(p.classList.contains('active'))p.scrollIntoView({behavior:'smooth',block:'start'})}
+function formatCompactNumberV179(n){const x=Number(n||0);if(x>=1e8)return(x/1e8).toFixed(x>=1e9?1:0)+'억';if(x>=1e4)return(x/1e4).toFixed(x>=1e5?0:1)+'만';if(x>=1e3)return(x/1e3).toFixed(1)+'천';return String(x)}
+function daysSinceV179(d){const t=new Date(d).getTime();return Number.isFinite(t)?Math.max(1,Math.floor((Date.now()-t)/86400000)):99999}
+function benchmarkScoreV179(i){const v=Number(i.viewCount||0),d=daysSinceV179(i.publishedAt),vel=v/Math.max(1,d);return Math.max(0,Math.min(100,Math.round(Math.min(45,Math.log10(Math.max(10,v))*7.2)+Math.min(40,Math.log10(Math.max(1,vel))*8.2)+(d<=30?15:d<=90?10:d<=365?5:2))))}
+function benchmarkLabelV179(s){return s>=85?'강력 추천':s>=70?'참고 추천':s>=55?'보통':'약함'}
+async function searchYouTubeBenchmarks(){
+ const q=$('benchQuery').value.trim();if(!q){$('benchStatus').textContent='검색어를 입력하세요.';return}
+ $('benchStatus').textContent='YouTube 검색 중...';$('benchmarkResults').innerHTML='';
+ try{const p=new URLSearchParams({q,limit:$('benchLimit').value,period:$('benchPeriod').value});const r=await fetch('/api/youtube-benchmark?'+p);const d=await r.json();if(!r.ok)throw new Error(d.error||'검색 실패');
+ YT_BENCH_RESULTS_V179=(d.items||[]).map(x=>({...x,benchmarkScore:benchmarkScoreV179(x)}));sortBenchmarkCards('score');$('benchStatus').textContent=`${YT_BENCH_RESULTS_V179.length}개 검색 완료 · 점수는 조회수와 업로드 경과일 기반 참고용입니다.`}catch(e){$('benchStatus').textContent='검색 실패: '+e.message}}
+function sortBenchmarkCards(mode){const a=[...YT_BENCH_RESULTS_V179];if(mode==='views')a.sort((x,y)=>y.viewCount-x.viewCount);else if(mode==='recent')a.sort((x,y)=>new Date(y.publishedAt)-new Date(x.publishedAt));else a.sort((x,y)=>y.benchmarkScore-x.benchmarkScore);renderBenchmarkCardsV179(a)}
+function renderBenchmarkCardsV179(items){const root=$('benchmarkResults');root.innerHTML='';for(const i of items){const c=document.createElement('div');c.className='bench-card';c.innerHTML=`<img class="bench-thumb" src="${i.thumbnail||''}"><div class="bench-title">${escapeHtml(i.title||'')}</div><div class="bench-meta">${escapeHtml(i.channelTitle||'')}<br>조회수 ${formatCompactNumberV179(i.viewCount)} · ${daysSinceV179(i.publishedAt)}일 전 · ${escapeHtml(i.durationText||'')}</div><div style="margin-top:8px"><span class="bench-score">${i.benchmarkScore}점 · ${benchmarkLabelV179(i.benchmarkScore)}</span></div>`;c.onclick=()=>selectBenchmarkV179(i.videoId);root.appendChild(c)}}
+function selectBenchmarkV179(id){const i=YT_BENCH_RESULTS_V179.find(x=>x.videoId===id);if(!i)return;YT_BENCH_SELECTED_V179=i;$('benchmarkSelected').style.display='block';$('benchSelectedMeta').textContent=`${i.title} · ${i.channelTitle} · 조회수 ${formatCompactNumberV179(i.viewCount)} · ${i.benchmarkScore}점`;$('benchAnalysis').textContent='AI 벤치마킹 분석을 눌러 주세요.'}
+async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
+원본 대본이나 스토리를 복제·추정하지 말고 공개 메타데이터에서 확인 가능한 제목 구조, 감정, 클릭 포인트, 성과 신호만 분석하세요.
+[영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
+[현재 프로젝트 주제] ${$('topic')?.value||'없음'}
+출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 완전히 다른 신규 사연 주제 3개 7) 추천 제목 3개 8) 마지막에 [추천 주제]...[/추천 주제] 형식으로 프로젝트용 주제 1개.`;
+ try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const m=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_IDEA_V179=m?m[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
+function applyBenchmarkIdea(){if(!YT_BENCH_LAST_IDEA_V179){setStatus('먼저 AI 분석을 실행하세요.','bad');return}if($('topic')){$('topic').value=YT_BENCH_LAST_IDEA_V179;$('topic').dispatchEvent(new Event('input',{bubbles:true}));saveLocal(true);setStatus('추천 주제를 프로젝트에 넣었습니다.','ok')}}
+
+
 
 function characterFaceLibraryKeyV178(c){
   if(!c)return '';
@@ -1796,5 +1830,27 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 </script>
-</body>
+<div id="benchmarkPanel">
+<h3 style="margin:0 0 10px">🔎 유튜브 벤치마킹</h3>
+<div class="tiny">공개 YouTube 메타데이터로 제목·감정·포장 방식을 분석합니다. 원본 스토리 복제용 기능이 아닙니다.</div>
+<div class="bench-toolbar" style="margin-top:10px">
+<div class="field wide"><label>검색어</label><input id="benchQuery" placeholder="예: 시어머니 사연, 남편 외도"></div>
+<div class="field"><label>기간</label><select id="benchPeriod"><option value="30">최근 30일</option><option value="90" selected>최근 3개월</option><option value="365">최근 1년</option><option value="0">전체</option></select></div>
+<div class="field"><label>결과 수</label><select id="benchLimit"><option value="10">10개</option><option value="20" selected>20개</option><option value="30">30개</option></select></div>
+<button class="btn primary" type="button" onclick="searchYouTubeBenchmarks()">검색</button>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+<button class="btn secondary" type="button" onclick="sortBenchmarkCards('score')">🔥 떡상 점수순</button>
+<button class="btn secondary" type="button" onclick="sortBenchmarkCards('views')">👀 조회수순</button>
+<button class="btn secondary" type="button" onclick="sortBenchmarkCards('recent')">🕒 최신순</button>
+</div>
+<div id="benchStatus" class="tiny" style="margin-top:10px"></div>
+<div id="benchmarkResults" class="bench-grid"></div>
+<div id="benchmarkSelected" style="display:none;margin-top:14px">
+<h3>🎯 선택 영상 분석</h3><div id="benchSelectedMeta" class="tiny"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+<button class="btn primary" type="button" onclick="analyzeSelectedBenchmark()">AI 벤치마킹 분석</button>
+<button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">💡 추천 주제를 프로젝트에 넣기</button>
+</div><div id="benchAnalysis" class="bench-analysis">영상을 선택해 주세요.</div></div>
+</div></body>
 </html>
