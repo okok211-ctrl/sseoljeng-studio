@@ -360,14 +360,14 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="vrew-box">
    <div>
     <h2>🎙 음성 만들기 · CapCut용</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 9,700자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
-    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘9,700자 이하 자동 분할’을 눌러주세요.</div></div>
+    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 5,000자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
+    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘5,000자 이하 자동 분할’을 눌러주세요.</div></div>
     <div class="clean-actions">
-     <button class="btn primary wide" type="button" onclick="makeVoice()">9,700자 이하 자동 분할</button>
+     <button class="btn primary wide" type="button" onclick="makeVoice()">5,000자 이하 자동 분할</button>
      <button class="btn ghost" type="button" onclick="copyVoiceCurrent()">현재 파트 복사</button>
      <button class="btn ghost" type="button" onclick="downloadVoiceParts()">TXT 묶음 저장</button>
     </div>
-    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 실제 테스트에서 9,700자 생성 성공 기준으로 분할합니다.</div>
+    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 안정성을 위해 파트당 최대 5,000자로 분할합니다.</div>
    </div>
    <div>
     <h2 id="voiceCurrentTitle">현재 파트</h2>
@@ -998,7 +998,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.4-capcut-voice-srt-full-original-rebuild',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.9-capcut-voice-5000',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -1404,7 +1404,7 @@ function selectVrewPart(i){vrewCurrentIndex=Math.max(0,Math.min(vrewParts.length
 async function copyVrewCurrent(){const t=$('vrewCurrent').value;if(!t)return;await navigator.clipboard.writeText(t);setStatus('현재 Vrew 파트를 복사했습니다.','ok')}
 async function downloadVrewParts(){if(!vrewParts.length)makeVrewParts();if(!vrewParts.length)return;const z=new JSZip(),f=z.folder('vrew-parts');vrewParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text));const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_Vrew파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('Vrew TXT 파트를 ZIP으로 저장했습니다.','ok')}
 
-function splitCapCutVoiceText(text,limit=9700){
+function splitCapCutVoiceText(text,limit=5000){
  const clean=cleanVrewText(text).replace(/\n{3,}/g,'\n\n').trim();
  if(!clean)return [];
  const paragraphs=clean.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
@@ -1440,17 +1440,17 @@ function splitCapCutVoiceText(text,limit=9700){
 function makeVoice(silent=false){
  const text=$('story').value.trim();
  if(!text){if(!silent){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');showTab('story')}return}
- const parts=splitCapCutVoiceText(text,9700);
+ const parts=splitCapCutVoiceText(text,5000);
  voiceParts=parts.map((text,i)=>({title:`음성 ${i+1}`,text,copied:false}));
  voiceCurrentIndex=0;
  $('voice').value=parts.join('\n\n===== 다음 음성 파트 =====\n\n');
  renderVoiceParts();saveLocal(true);
  if(!silent)showTab('voice');
- setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 9,700자입니다.`,'ok');
+ setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 5,000자입니다.`,'ok');
 }
 function renderVoiceParts(){
  const list=$('voicePartList');if(!list)return;
- if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘9,700자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
+ if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘5,000자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
  voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,voiceCurrentIndex));
  list.innerHTML=voiceParts.map((p,i)=>`<button type="button" class="vrew-part-btn ${i===voiceCurrentIndex?'active':''}" onclick="selectVoicePart(${i})"><b>${p.copied?'✓ ':''}${p.title}</b><span>${p.text.length.toLocaleString()}자</span></button>`).join('');
  const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateMeta();
