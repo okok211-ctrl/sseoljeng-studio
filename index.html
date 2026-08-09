@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v17.9 YouTube Benchmarking</title>
+<title>썰쟁 Studio v18.0 CapCut Voice Split</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -89,7 +89,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v17.9</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v18.0</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -221,7 +221,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="generate('thumbnail')">🧲 썸네일</button>
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
-  <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
+  <button class="btn secondary" onclick="makeVoice()">🎙 CapCut 음성용</button>
   <button id="consistencyBtn" class="btn secondary" onclick="checkConsistency()" title="스토리 설계도와 완성 원고를 비교해 인물·시간·관계·사건·결말 충돌을 검사합니다.">🔍 스토리 설정 충돌 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
@@ -270,7 +270,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="thumbnail">썸네일</button>
   <button class="tab" data-tab="japanese">일본어</button>
   <button class="tab" data-tab="srt">SRT</button>
-  <button class="tab" data-tab="voice">음성용</button>
+  <button class="tab" data-tab="voice">🎙 CapCut 음성용</button>
   <button class="tab" data-tab="vrew">Vrew 출력</button>
   <button class="tab" data-tab="consistency">설정 충돌 검사</button>
  </nav>
@@ -306,7 +306,26 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <textarea id="thumbnail" class="output hidden"></textarea>
  <textarea id="japanese" class="output hidden"></textarea>
  <textarea id="srt" class="output hidden"></textarea>
- <textarea id="voice" class="output hidden"></textarea>
+ <div id="voicePanel" class="output hidden" style="min-height:650px;height:auto">
+  <textarea id="voice" class="hidden" aria-hidden="true"></textarea>
+  <div class="vrew-box">
+   <div>
+    <h2>🎙 CapCut 음성용 자동 분할</h2>
+    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 4,800자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
+    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘4,800자 이하 자동 분할’을 눌러주세요.</div></div>
+    <div class="clean-actions">
+     <button class="btn primary wide" type="button" onclick="makeVoice()">4,800자 이하 자동 분할</button>
+     <button class="btn ghost" type="button" onclick="copyVoiceCurrent()">현재 파트 복사</button>
+     <button class="btn ghost" type="button" onclick="downloadVoiceParts()">TXT 묶음 저장</button>
+    </div>
+    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 5,000자를 꽉 채우지 않아 생성 실패 여유를 둡니다.</div>
+   </div>
+   <div>
+    <h2 id="voiceCurrentTitle">현재 파트</h2>
+    <textarea id="voiceCurrent" style="min-height:560px" placeholder="CapCut에 붙여넣을 음성용 원고가 표시됩니다."></textarea>
+   </div>
+  </div>
+ </div>
  <textarea id="consistency" class="output hidden" placeholder="스토리 설계도와 완성 원고를 AI가 비교해 인물 이름·나이·관계·시간 순서·사건 반복·미회수 복선·결말 충돌을 찾아줍니다. 왼쪽의 ‘스토리 설정 충돌 검사’ 버튼을 누르세요."></textarea>
  <div id="vrew" class="output hidden" style="min-height:650px;height:auto">
   <div class="vrew-box"><div><h2>🎙 Vrew 파트</h2><div id="vrewPartList" class="vrew-list"><div class="meta">원고를 붙여넣고 자동 분할을 눌러주세요.</div></div><div class="clean-actions"><button class="btn primary wide" type="button" onclick="makeVrewParts()">9,500자 이하 자동 분할</button><button class="btn ghost" type="button" onclick="downloadVrewParts()">TXT 묶음 저장</button><button class="btn ghost" type="button" onclick="copyVrewCurrent()">현재 파트 복사</button></div></div><div><h2 id="vrewCurrentTitle">현재 파트</h2><textarea id="vrewCurrent" style="min-height:560px" placeholder="Vrew에 바로 넣을 수 있도록 문단 번호와 글자 수 표시를 제거한 원고가 표시됩니다."></textarea></div></div>
@@ -750,9 +769,9 @@ function setStatus(message,type=''){
  el.className='status'+(type?' '+type:'');
 }
 let active='story',busy=false;
-const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
-const panelFields={memory:'memory',vrew:'vrew',youtubeab:'youtubeABPanel'};
-let longformMode=30,vrewParts=[],vrewCurrentIndex=0;
+const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',consistency:'consistency'};
+const panelFields={memory:'memory',voice:'voicePanel',vrew:'vrew',youtubeab:'youtubeABPanel'};
+let longformMode=30,vrewParts=[],vrewCurrentIndex=0,voiceParts=[],voiceCurrentIndex=0;
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
  {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
@@ -930,12 +949,12 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='16.6.1-longform-vrew-consistency-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
-function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.0-capcut-voice-split',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
  const el=$('meta');if(!el)return;
- const field=fields[active]?$(fields[active]):active==='memory'?$('memoryFacts'):active==='vrew'?$('vrewCurrent'):null;
+ const field=fields[active]?$(fields[active]):active==='memory'?$('memoryFacts'):active==='voice'?$('voiceCurrent'):active==='vrew'?$('vrewCurrent'):null;
  el.textContent=field?`${String(field.value||'').length.toLocaleString()}자`:'';
 }
 document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
@@ -966,7 +985,7 @@ function normalizeProject(raw){
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,blueprint:raw.blueprint,gptprompt:raw.gptprompt||raw.gptPrompt,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
  const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2'),longformMode:Number(config.longformMode||30)};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
- const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[]};for(const k in cleanOut){cleanOut[k]=k==='vrewParts'?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
+ const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[],voiceParts:[]};for(const k in cleanOut){cleanOut[k]=(k==='vrewParts'||k==='voiceParts')?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:normalizeCharacterSlotsV175(cleanChars),outputs:cleanOut};
 }
 function applyProject(raw){
@@ -974,10 +993,11 @@ function applyProject(raw){
  for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','endingStyle','endingLength','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])if($(k))$(k).value=c[k]??'';
  for(const k of ['subscribe','strict'])if($(k))$(k).checked=!!c[k];
  for(const k of Object.keys(fields))if(o[k]!==undefined)$(fields[k]).value=o[k]||'';
+ $('voice').value=o.voice||'';
  $('memoryFacts').value=o.memoryFacts||'';$('memoryConflicts').value=o.memoryConflicts||'';$('memoryClues').value=o.memoryClues||'';$('memoryTimeline').value=o.memoryTimeline||'';
- vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;
+ vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];voiceParts=Array.isArray(o.voiceParts)?o.voiceParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;voiceCurrentIndex=0;
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
- renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();updateMeta();return p;
+ renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();renderVoiceParts();updateMeta();return p;
 }
 function pushBackup(snapshot,reason='자동 백업'){
  try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
@@ -1335,6 +1355,69 @@ function renderVrewParts(){const list=$('vrewPartList');if(!list)return;if(!vrew
 function selectVrewPart(i){vrewCurrentIndex=Math.max(0,Math.min(vrewParts.length-1,Number(i)||0));renderVrewParts()}
 async function copyVrewCurrent(){const t=$('vrewCurrent').value;if(!t)return;await navigator.clipboard.writeText(t);setStatus('현재 Vrew 파트를 복사했습니다.','ok')}
 async function downloadVrewParts(){if(!vrewParts.length)makeVrewParts();if(!vrewParts.length)return;const z=new JSZip(),f=z.folder('vrew-parts');vrewParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text));const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_Vrew파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('Vrew TXT 파트를 ZIP으로 저장했습니다.','ok')}
+
+function splitCapCutVoiceText(text,limit=4800){
+ const clean=cleanVrewText(text).replace(/\n{3,}/g,'\n\n').trim();
+ if(!clean)return [];
+ const paragraphs=clean.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+ const units=[];
+ for(const para of paragraphs){
+  if(para.length<=limit){units.push(para);continue}
+  const sentences=(para.match(/[^.!?。！？\n]+[.!?。！？]?/g)||[para]).map(x=>x.trim()).filter(Boolean);
+  let buf='';
+  for(const sentence of sentences){
+   if(sentence.length>limit){
+    if(buf){units.push(buf);buf=''}
+    let rest=sentence;
+    while(rest.length>limit){
+     let cut=rest.lastIndexOf(' ',limit);
+     if(cut<Math.floor(limit*.65))cut=limit;
+     units.push(rest.slice(0,cut).trim());rest=rest.slice(cut).trim();
+    }
+    if(rest)buf=rest;
+   }else if(buf && buf.length+1+sentence.length>limit){units.push(buf);buf=sentence}
+   else buf+=(buf?' ':'')+sentence;
+  }
+  if(buf)units.push(buf);
+ }
+ const parts=[];let current='';
+ for(const unit of units){
+  const sep=current?'\n\n':'';
+  if(current && current.length+sep.length+unit.length>limit){parts.push(current);current=unit}
+  else current+=sep+unit;
+ }
+ if(current)parts.push(current);
+ return parts;
+}
+function makeVoice(silent=false){
+ const text=$('story').value.trim();
+ if(!text){if(!silent){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');showTab('story')}return}
+ const parts=splitCapCutVoiceText(text,4800);
+ voiceParts=parts.map((text,i)=>({title:`음성 ${i+1}`,text,copied:false}));
+ voiceCurrentIndex=0;
+ $('voice').value=parts.join('\n\n===== 다음 음성 파트 =====\n\n');
+ renderVoiceParts();saveLocal(true);
+ if(!silent)showTab('voice');
+ setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 4,800자입니다.`,'ok');
+}
+function renderVoiceParts(){
+ const list=$('voicePartList');if(!list)return;
+ if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘4,800자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
+ voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,voiceCurrentIndex));
+ list.innerHTML=voiceParts.map((p,i)=>`<button type="button" class="vrew-part-btn ${i===voiceCurrentIndex?'active':''}" onclick="selectVoicePart(${i})"><b>${p.copied?'✓ ':''}${p.title}</b><span>${p.text.length.toLocaleString()}자</span></button>`).join('');
+ const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateMeta();
+}
+function selectVoicePart(i){voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,Number(i)||0));renderVoiceParts()}
+async function copyVoiceCurrent(){
+ if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
+ const p=voiceParts[voiceCurrentIndex];await navigator.clipboard.writeText(p.text);p.copied=true;renderVoiceParts();saveLocal(true);setStatus(`${p.title}을 복사했습니다. CapCut ‘텍스트에서 음성으로’에 붙여넣으세요.`,'ok')
+}
+async function downloadVoiceParts(){
+ if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
+ const z=new JSZip(),f=z.folder('capcut-voice-parts');voiceParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text));
+ const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_CapCut음성파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('CapCut 음성용 TXT 파트를 ZIP으로 저장했습니다.','ok')
+}
+
 function memoryText(){return `[확정 사건]
 ${$('memoryFacts').value.trim()||'- 없음'}
 
@@ -1806,12 +1889,12 @@ function makeSrt(silent=false){
  const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
  parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('문단 번호와 글자 수를 제거한 SRT 자막을 만들었습니다.','ok')}}
 
-async function copyCurrent(){await navigator.clipboard.writeText($(fields[active]).value);setStatus('현재 내용을 복사했습니다.','ok')}
+async function copyCurrent(){if(active==='voice'){return copyVoiceCurrent()}if(active==='vrew'){return copyVrewCurrent()}const target=fields[active]?$(fields[active]):null;if(!target){setStatus('복사할 내용을 찾지 못했습니다.','bad');return}await navigator.clipboard.writeText(target.value);setStatus('현재 내용을 복사했습니다.','ok')}
 async function downloadZip(){
  if(!$('story').value.trim()){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}
  const z=new JSZip(),f=z.folder('sseoljeng-project');
  f.file('00_스토리설계도.txt',$('blueprint').value);f.file('00-0_사건기억장.txt',memoryText());f.file('00-1_GPT롱폼프롬프트.txt',$('gptPrompt').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
- f.file('03-1_음성AI용.txt',$('voice').value);f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
+ f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
  if(vrewParts.length){const vf=f.folder('Vrew파트');vrewParts.forEach((p,i)=>vf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text))}
  f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
  const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
@@ -2056,7 +2139,7 @@ async function checkConsistency(){
 
 document.addEventListener('DOMContentLoaded',()=>{const q=$('benchQuery');if(q)q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchYouTubeBenchmarks();}})});
 
-renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderPromptWizard();loadYoutubeABV179();
+renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderVoiceParts();renderPromptWizard();loadYoutubeABV179();
 </script>
 <script src="js/firebase-cloud.js">
 
