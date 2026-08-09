@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.3 CapCut Voice + SRT Sync Corrector</title>
+<title>썰쟁 Studio v18.4 CapCut Voice + SRT Full Original Rebuild</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -310,10 +310,10 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="vrew-box">
    <div>
     <h2>🧹 SRT 자동 정리</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션 SRT의 실제 시간값은 그대로 두고, 원본 대본과 자막을 순서대로 근접 정렬해 오타만 교정한 뒤 2~3줄로 병합합니다. 전체 글자수 비율로 나누지 않아 중간부터 자막이 밀리는 현상을 줄였습니다.</div>
+    <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션은 시간 기준점으로만 사용하고, 최종 자막 글자는 원본 대본 전체에서 다시 만듭니다. 자동캡션에서 빠진 단어도 원문에서 복원하며, 완료 후 원문 누락 검사를 표시합니다.</div>
     <textarea id="srtImport" style="min-height:240px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
     <div style="margin-top:12px">
-     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 기준 오타 자동 교정 · 추천</label>
+     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 100% 재구성 · 누락 방지 · 추천</label>
      <div class="tiny" style="margin:6px 0 8px">자동캡션의 <b>시간값은 그대로 활용</b>하고, 화면에 표시할 글자는 아래 원본 대본에서 다시 가져옵니다. 따라서 ‘제사→재사’ 같은 음성인식 오타를 원문으로 복원합니다.</div>
      <textarea id="srtReference" style="min-height:180px" placeholder="롱폼 원문을 넣으세요. ‘롱폼 원문 가져오기’를 누르면 현재 롱폼 탭의 원고를 자동으로 가져옵니다."></textarea>
      <div class="clean-actions" style="margin-top:8px"><button class="btn ghost" type="button" onclick="loadStoryAsSrtReference()">📄 롱폼 원문 가져오기</button><span id="srtReferenceStats" class="tiny">원문 미등록</span></div>
@@ -976,7 +976,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.3-capcut-voice-srt-sync-corrector',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.4-capcut-voice-srt-full-original-rebuild',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -2003,24 +2003,59 @@ function findBestCueMatch(refNorm,captionNorm,cursor){
  }
  return best;
 }
-function replaceCuesWithReference(cues,reference){
- const R=buildNormalizedReference(reference);if(!R.raw||!cues.length)return {cues,ok:false,reason:'원문 없음'};
- if(R.norm.length<10)return {cues,ok:false,reason:'원문이 너무 짧음'};
- let cursor=0,matched=0,uncertain=0;const out=[];
- for(let i=0;i<cues.length;i++){
-  const cap=normalizeSrtMatchText(cues[i].text);if(!cap){out.push({...cues[i],exactSource:false});continue}
+function buildSrtTimeAnchors(cues,reference){
+ const R=buildNormalizedReference(reference);if(!R.raw||!R.norm||!cues.length)return {ok:false,reason:'원문 또는 SRT 없음'};
+ let cursor=0,matched=0;const anchors=[{pos:0,time:cues[0].start}];
+ for(const cue of cues){
+  const cap=normalizeSrtMatchText(cue.text);if(!cap)continue;
   const hit=findBestCueMatch(R.norm,cap,cursor);
-  if(!hit||hit.score>.52){out.push({...cues[i],exactSource:false,uncertain:true});uncertain++;continue}
-  const rawStart=R.rawPos[hit.start]??0;
-  let rawEnd;
-  if(hit.end>=R.rawPos.length)rawEnd=R.raw.length;else rawEnd=(R.rawPos[hit.end]??R.raw.length);
-  // 다음 단어/문장부호 직전까지 포함해 자연스러운 원문 조각을 만든다.
-  while(rawEnd<R.raw.length&&/\s/.test(R.raw[rawEnd]))rawEnd++;
-  const piece=R.raw.slice(rawStart,rawEnd).trim();
-  out.push({...cues[i],text:piece||cues[i].text,exactSource:true,matchScore:hit.score});
-  cursor=Math.max(cursor,hit.end);matched++;
+  if(!hit||hit.score>.52)continue;
+  const midPos=(hit.start+hit.end)/2,midTime=(cue.start+cue.end)/2;
+  if(midPos>=(anchors[anchors.length-1]?.pos||0)){anchors.push({pos:midPos,time:midTime});cursor=Math.max(cursor,hit.end);matched++}
  }
- return {cues:out,ok:true,referenceChars:R.norm.length,captionChars:cues.reduce((n,c)=>n+srtSpokenChars(c.text),0),matched,uncertain};
+ anchors.push({pos:R.norm.length,time:cues[cues.length-1].end});
+ // 같은 위치/역전 시간 제거
+ const clean=[];for(const a of anchors){const last=clean[clean.length-1];if(!last||a.pos>last.pos&&a.time>=last.time)clean.push(a)}
+ if(clean.length<2)return {ok:false,reason:'시간 기준점을 충분히 찾지 못함'};
+ return {ok:true,R,anchors:clean,matched};
+}
+function interpolateSrtTime(anchors,pos){
+ if(pos<=anchors[0].pos)return anchors[0].time;
+ for(let i=1;i<anchors.length;i++){
+  const a=anchors[i-1],b=anchors[i];if(pos<=b.pos){const span=Math.max(1,b.pos-a.pos),r=(pos-a.pos)/span;return Math.round(a.time+(b.time-a.time)*r)}
+ }
+ return anchors[anchors.length-1].time;
+}
+function rawIndexToNormPos(R,rawIndex){
+ let lo=0,hi=R.rawPos.length;while(lo<hi){const mid=(lo+hi)>>1;if(R.rawPos[mid]<rawIndex)lo=mid+1;else hi=mid}return lo;
+}
+function splitOriginalForCaptions(raw,maxChars){
+ const out=[];let start=0;raw=String(raw||'').trim();
+ while(start<raw.length){
+  while(start<raw.length&&/\s/.test(raw[start]))start++;if(start>=raw.length)break;
+  let hard=Math.min(raw.length,start+Math.max(12,maxChars));let cut=hard;
+  if(hard<raw.length){
+   const window=raw.slice(start,hard+1);let best=-1;
+   for(const re of [/[.!?。！？…][\"'”’)]?\s/g,/[,，;；:]\s/g,/\s/g]){let m,last=-1;while((m=re.exec(window))!==null){if(m.index>=Math.floor(maxChars*.48))last=m.index+m[0].length}if(last>0){best=last;break}}
+   if(best>0)cut=start+best;
+  }
+  let piece=raw.slice(start,cut).trim();if(piece)out.push({rawStart:start,rawEnd:cut,text:piece});start=cut;
+ }
+ return out;
+}
+function rebuildSrtFromFullOriginal(cues,reference,{maxLines=2,lineLen=20,maxDuration=6500}={}){
+ const A=buildSrtTimeAnchors(cues,reference);if(!A.ok)return A;
+ const {R,anchors}=A,maxChars=Math.max(18,maxLines*lineLen),pieces=splitOriginalForCaptions(R.raw,maxChars),out=[];
+ for(const p of pieces){
+  const ns=rawIndexToNormPos(R,p.rawStart),ne=Math.max(ns+1,rawIndexToNormPos(R,p.rawEnd));
+  let st=interpolateSrtTime(anchors,ns),en=interpolateSrtTime(anchors,ne);
+  if(out.length&&st<out[out.length-1].end)st=out[out.length-1].end;
+  if(en<=st)en=st+900;
+  // 너무 긴 구간은 원문을 더 잘게 나눴기 때문에 여기서는 타임라인을 유지한다.
+  out.push({start:st,end:en,text:wrapKoreanCaption(p.text,lineLen,maxLines),sourceText:p.text});
+ }
+ const sourceNorm=normalizeSrtMatchText(R.raw),resultNorm=normalizeSrtMatchText(out.map(x=>x.sourceText).join(''));
+ return {ok:true,cues:out,matched:A.matched,referenceChars:sourceNorm.length,resultChars:resultNorm.length,missingChars:Math.max(0,sourceNorm.length-resultNorm.length),anchors:anchors.length};
 }
 function loadStoryAsSrtReference(){
  const story=$('story')?.value||'';if(!story.trim()){setStatus('롱폼 탭에 원고가 없습니다. 먼저 원고를 붙여넣으세요.','bad');return}
@@ -2045,24 +2080,26 @@ async function loadSrtFile(event){
 }
 function cleanImportedSrt(){
  const raw=$('srtImport')?.value?.trim();if(!raw){setStatus('정리할 SRT를 붙여넣거나 파일을 불러오세요.','bad');return}
- let cues=parseSrtText(raw);if(!cues.length){setStatus('SRT 시간 형식을 읽지 못했습니다. CapCut에서 내보낸 .srt 파일인지 확인하세요.','bad');return}
- const originalCount=cues.length,useRef=!!$('srtUseReference')?.checked;let correction='오타 교정 안 함',refInfo=null;
+ const cues=parseSrtText(raw);if(!cues.length){setStatus('SRT 시간 형식을 읽지 못했습니다. CapCut에서 내보낸 .srt 파일인지 확인하세요.','bad');return}
+ const useRef=!!$('srtUseReference')?.checked,maxLines=Number($('srtMaxLines')?.value||2),lineLen=Number($('srtCharsPerLine')?.value||20),maxDuration=Math.round(Number($('srtMaxDuration')?.value||6.5)*1000);
  if(useRef){
   let ref=$('srtReference')?.value?.trim();if(!ref&&$('story')?.value?.trim()){ref=prepareSrtReference($('story').value);$('srtReference').value=ref}
-  if(!ref){setStatus('원본 대본 기준 교정이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
-  refInfo=replaceCuesWithReference(cues,ref);
-  if(!refInfo.ok){setStatus('원본 대본 교정 실패: '+refInfo.reason,'bad');return}
-  cues=refInfo.cues;correction=`싱크 우선 원문 교정 ${refInfo.matched||0}개`+(refInfo.uncertain?` · 확인필요 ${refInfo.uncertain}개`:'');if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${refInfo.referenceChars.toLocaleString()}자 · 자동캡션 비교 ${refInfo.captionChars.toLocaleString()}자 · 정렬 ${refInfo.matched||0}/${cues.length}`;
+  if(!ref){setStatus('원본 대본 100% 재구성이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
+  const rebuilt=rebuildSrtFromFullOriginal(cues,ref,{maxLines,lineLen,maxDuration});if(!rebuilt.ok){setStatus('원문 자막 재구성 실패: '+rebuilt.reason,'bad');return}
+  $('srt').value=formatSrtCues(rebuilt.cues);saveLocal(true);updateMeta();
+  const verdict=rebuilt.missingChars===0?'누락 0자 ✅':'누락 '+rebuilt.missingChars.toLocaleString()+'자 ⚠️';
+  if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${rebuilt.referenceChars.toLocaleString()}자 → 최종 ${rebuilt.resultChars.toLocaleString()}자 · ${verdict}`;
+  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · 시간 기준점 ${rebuilt.anchors}개(자동 매칭 ${rebuilt.matched}개) · 자동캡션 ${cues.length}개 → 최종 ${rebuilt.cues.length}개 · 최대 ${maxLines}줄`;
+  setStatus(`SRT 완료: 원본 전체 재구성 · ${verdict}`,'ok');return;
  }
- const maxLines=Number($('srtMaxLines')?.value||2),lineLen=Number($('srtCharsPerLine')?.value||20),maxDuration=Math.round(Number($('srtMaxDuration')?.value||6.5)*1000);
  const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration});$('srt').value=formatSrtCues(cleaned);saveLocal(true);updateMeta();
- if($('srtCleanStats'))$('srtCleanStats').textContent=`${correction} · 원본 자막 ${originalCount}개 → 정리 후 ${cleaned.length}개 · 최대 ${maxLines}줄 · 줄당 약 ${lineLen}자 · 최대 ${maxDuration/1000}초`;
- setStatus(`SRT 완료: ${correction} + ${originalCount}개 → ${cleaned.length}개 자막`,'ok');
+ if($('srtCleanStats'))$('srtCleanStats').textContent=`원문 재구성 안 함 · 자동캡션 ${cues.length}개 → 정리 후 ${cleaned.length}개`;
+ setStatus(`SRT 완료: ${cues.length}개 → ${cleaned.length}개 자막`,'ok');
 }
 
 function downloadCleanSrt(){
  const text=$('srt')?.value?.trim();if(!text){setStatus('먼저 SRT 자동 정리를 실행하세요.','bad');return}
- const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_오타교정_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
+ const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_원문100퍼_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
 }
 
 async function copyCurrent(){if(active==='voice'){return copyVoiceCurrent()}if(active==='vrew'){return copyVrewCurrent()}const target=fields[active]?$(fields[active]):null;if(!target){setStatus('복사할 내용을 찾지 못했습니다.','bad');return}await navigator.clipboard.writeText(target.value);setStatus('현재 내용을 복사했습니다.','ok')}
