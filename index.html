@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.6 Simple Media Workflow</title>
+<title>썰쟁 Studio v17.9 YouTube Benchmarking</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -57,7 +57,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .yt-ab-box{margin-top:10px;padding:12px;border:1px solid rgba(255,121,23,.38);border-radius:13px;background:rgba(255,121,23,.06)}
 .yt-ab-page{min-height:650px;height:auto;padding:18px;background:#07111f;color:#f5f8fc;border:1px solid #263b55;border-radius:12px;overflow:auto}
 .yt-ab-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.yt-ab-page-title{font-size:20px;font-weight:950}.yt-ab-page-help{font-size:12px;color:var(--muted);margin-top:5px}
-.yt-ab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card.c{border-color:#b986ff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
+.yt-ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
 
 .yt-ab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.yt-ab-title{font-weight:950;font-size:14px}.yt-ab-help{font-size:10px;color:var(--muted);margin-top:4px}.yt-ab-output{width:100%;min-height:280px;max-height:420px;margin-top:10px;background:#06101d;color:#f5f8fc;border:1px solid #30465f;border-radius:11px;padding:13px;line-height:1.65;resize:vertical}
 </style>
@@ -89,7 +89,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v18.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v17.9</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -221,7 +221,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="generate('thumbnail')">🧲 썸네일</button>
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
-  <button class="btn secondary" onclick="makeVoice()">🎙 CapCut 음성용</button>
+  <button class="btn secondary" onclick="makeVoice()">🎙 음성용</button>
   <button id="consistencyBtn" class="btn secondary" onclick="checkConsistency()" title="스토리 설계도와 완성 원고를 비교해 인물·시간·관계·사건·결말 충돌을 검사합니다.">🔍 스토리 설정 충돌 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
@@ -266,12 +266,11 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="images">이미지 프롬프트</button>
   <button class="tab" data-tab="shorts">쇼츠 4컷</button>
   <button class="tab" data-tab="youtube">유튜브 정보</button>
-  <button class="tab" data-tab="youtubeab">🧪 A/B/C 비교</button>
+  <button class="tab" data-tab="youtubeab">🧪 A/B 테스트</button>
   <button class="tab" data-tab="thumbnail">썸네일</button>
   <button class="tab" data-tab="japanese">일본어</button>
-  <button class="tab" data-tab="voice">🎙 음성 만들기</button>
-  <button class="tab" data-tab="srt">📝 자막 정리</button>
-  <button class="tab" data-tab="imagetimeline">🖼️ 이미지 넣기</button>
+  <button class="tab" data-tab="srt">SRT</button>
+  <button class="tab" data-tab="voice">음성용</button>
   <button class="tab" data-tab="vrew">Vrew 출력</button>
   <button class="tab" data-tab="consistency">설정 충돌 검사</button>
  </nav>
@@ -294,87 +293,20 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <div id="ytCtrGuide" class="tiny hidden" style="margin-top:8px">제목 5안 · 썸네일 문구 3안 · 설명 · 해시태그 · 100점 평가를 함께 생성합니다.</div>
 <div id="youtubeABPanel" class="yt-ab-page hidden">
  <div class="yt-ab-page-head">
-  <div><div class="yt-ab-page-title">🧪 썸네일 A/B/C 비교</div><div class="yt-ab-page-help">썸네일 탭에서 이미 생성된 A안·B안·C안을 그대로 불러와 비교합니다. 새 후보를 만들지 않습니다.</div></div>
-  <button id="ytAbBtn" class="btn primary" type="button" onclick="compareThumbnailABC()">✨ 썸네일 A/B/C 불러와 비교</button>
+  <div><div class="yt-ab-page-title">🧪 제목·썸네일 A/B 테스트 후보</div><div class="yt-ab-page-help">같은 원고로 클릭 전략이 다른 2세트를 만듭니다. A는 직접 충격형, B는 궁금증·반전형입니다.</div></div>
+  <button id="ytAbBtn" class="btn primary" type="button" onclick="generateYoutubeAB()">✨ A/B 후보 생성</button>
  </div>
  <div class="yt-ab-grid">
-  <section class="yt-ab-card a"><h3>🅰 A안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbATitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbAThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbAReason" class="yt-ab-value">-</div></div><div id="ytAbAScore" class="yt-ab-score">--/100</div></section>
-  <section class="yt-ab-card b"><h3>🅱 B안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbBTitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbBThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbBReason" class="yt-ab-value">-</div></div><div id="ytAbBScore" class="yt-ab-score">--/100</div></section>
-  <section class="yt-ab-card c"><h3>🅲 C안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbCTitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbCThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbCReason" class="yt-ab-value">-</div></div><div id="ytAbCScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card a"><h3>🅰 A안 · 직접 충격형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbATitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbAThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbAReason" class="yt-ab-value">-</div></div><div id="ytAbAScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card b"><h3>🅱 B안 · 궁금증·반전형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbBTitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbBThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbBReason" class="yt-ab-value">-</div></div><div id="ytAbBScore" class="yt-ab-score">--/100</div></section>
  </div>
- <div class="yt-ab-recommend"><b>🎯 AI 추천</b><div id="ytAbRecommend" class="yt-ab-value" style="margin-top:7px">썸네일 A/B/C를 불러오면 추천안이 표시됩니다.</div></div>
+ <div class="yt-ab-recommend"><b>🎯 AI 추천</b><div id="ytAbRecommend" class="yt-ab-value" style="margin-top:7px">A/B 후보를 생성하면 추천안이 표시됩니다.</div></div>
  <textarea id="youtubeAB" class="yt-ab-raw" readonly></textarea>
 </div>
  <textarea id="thumbnail" class="output hidden"></textarea>
  <textarea id="japanese" class="output hidden"></textarea>
- <textarea id="srt" class="output hidden" placeholder="정리된 SRT 결과가 여기에 표시됩니다."></textarea>
- <div id="srtTools" class="hidden" style="margin-top:10px">
-  <div class="vrew-box">
-   <div>
-    <h2>📝 자막 정리 · 원문 복원</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션은 시간 기준점으로만 사용하고, 최종 자막 글자는 원본 대본 전체에서 다시 만듭니다. 자동캡션에서 빠진 단어도 원문에서 복원하며, 완료 후 원문 누락 검사를 표시합니다.</div>
-    <textarea id="srtImport" style="min-height:240px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
-    <div style="margin-top:12px">
-     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 100% 재구성 · 누락 방지 · 추천</label>
-     <div class="tiny" style="margin:6px 0 8px">자동캡션의 <b>시간값은 그대로 활용</b>하고, 화면에 표시할 글자는 아래 원본 대본에서 다시 가져옵니다. 따라서 ‘제사→재사’ 같은 음성인식 오타를 원문으로 복원합니다.</div>
-     <textarea id="srtReference" style="min-height:180px" placeholder="롱폼 원문을 넣으세요. ‘롱폼 원문 가져오기’를 누르면 현재 롱폼 탭의 원고를 자동으로 가져옵니다."></textarea>
-     <div class="clean-actions" style="margin-top:8px"><button class="btn ghost" type="button" onclick="loadStoryAsSrtReference()">📄 롱폼 원문 가져오기</button><span id="srtReferenceStats" class="tiny">원문 미등록</span></div>
-    </div>
-    <div class="row" style="margin-top:10px">
-     <div class="field"><label>최대 줄 수</label><select id="srtMaxLines"><option value="2" selected>2줄 · 추천</option><option value="3">3줄 · 천천히 보기</option></select></div>
-     <div class="field"><label>한 줄 글자 수</label><select id="srtCharsPerLine"><option value="18">18자</option><option value="20" selected>20자 · 추천</option><option value="22">22자</option><option value="24">24자</option></select></div>
-     <div class="field"><label>최대 표시 시간</label><select id="srtMaxDuration"><option value="5">5초</option><option value="6.5" selected>6.5초 · 추천</option><option value="8">8초</option></select></div>
-    </div>
-    <div class="clean-actions">
-     <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 SRT 파일 불러오기</button>
-     <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 원문 복원 + 2~3줄 정리</button>
-     <button class="btn ghost" type="button" onclick="downloadCleanSrt()">⬇ 정리 SRT 저장</button>
-    </div>
-    <input id="srtFileInput" class="file-input" type="file" accept=".srt,text/plain" onchange="loadSrtFile(event)">
-    <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
-
-   </div>
-  </div>
- </div>
- <div id="imageTimelinePanel" class="output hidden" style="min-height:650px;height:auto">
-  <div class="vrew-box" style="grid-template-columns:1fr">
-   <div>
-    <h2>🖼️ 이미지 넣기 · 타임라인 가이드</h2>
-    <div class="tiny" style="margin:0 0 12px">복잡한 설정 없이 <b>CapCut 자동캡션 SRT</b>와 이미 만들어 둔 <b>이미지 프롬프트의 사용 문단</b>을 연결해 이미지 넣을 시간을 계산합니다.</div>
-    <div class="note" style="margin-bottom:12px"><b>사용 순서</b> ① SRT 파일 불러오기 → ② 이미지 시간 계산 → ③ CapCut 타임라인의 표시된 시간에 이미지 넣기</div>
-    <div class="clean-actions">
-     <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 CapCut SRT 불러오기</button>
-     <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 이미지 시간 계산</button>
-     <button class="btn ghost" type="button" onclick="copyImageTimelineGuide()">📋 가이드 복사</button>
-    </div>
-    <textarea id="imageTimelineGuide" style="min-height:420px;margin-top:12px" readonly placeholder="SRT 파일을 불러온 뒤 ‘이미지 시간 계산’을 누르세요.
-
-예) 이미지 1 · 문단 4 → 03:42
-이미지 2 · 문단 9 → 08:15"></textarea>
-    <div id="imageTimelineStats" class="tiny" style="margin-top:8px">이미지 프롬프트에서 ‘사용 문단: 4문단’ 같은 번호를 자동으로 읽습니다.</div>
-   </div>
-  </div>
- </div>
- <div id="voicePanel" class="output hidden" style="min-height:650px;height:auto">
-  <textarea id="voice" class="hidden" aria-hidden="true"></textarea>
-  <div class="vrew-box">
-   <div>
-    <h2>🎙 음성 만들기 · CapCut용</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 9,700자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
-    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘9,700자 이하 자동 분할’을 눌러주세요.</div></div>
-    <div class="clean-actions">
-     <button class="btn primary wide" type="button" onclick="makeVoice()">9,700자 이하 자동 분할</button>
-     <button class="btn ghost" type="button" onclick="copyVoiceCurrent()">현재 파트 복사</button>
-     <button class="btn ghost" type="button" onclick="downloadVoiceParts()">TXT 묶음 저장</button>
-    </div>
-    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 실제 테스트에서 9,700자 생성 성공 기준으로 분할합니다.</div>
-   </div>
-   <div>
-    <h2 id="voiceCurrentTitle">현재 파트</h2>
-    <textarea id="voiceCurrent" style="min-height:560px" placeholder="CapCut에 붙여넣을 음성용 원고가 표시됩니다."></textarea>
-   </div>
-  </div>
- </div>
+ <textarea id="srt" class="output hidden"></textarea>
+ <textarea id="voice" class="output hidden"></textarea>
  <textarea id="consistency" class="output hidden" placeholder="스토리 설계도와 완성 원고를 AI가 비교해 인물 이름·나이·관계·시간 순서·사건 반복·미회수 복선·결말 충돌을 찾아줍니다. 왼쪽의 ‘스토리 설정 충돌 검사’ 버튼을 누르세요."></textarea>
  <div id="vrew" class="output hidden" style="min-height:650px;height:auto">
   <div class="vrew-box"><div><h2>🎙 Vrew 파트</h2><div id="vrewPartList" class="vrew-list"><div class="meta">원고를 붙여넣고 자동 분할을 눌러주세요.</div></div><div class="clean-actions"><button class="btn primary wide" type="button" onclick="makeVrewParts()">9,500자 이하 자동 분할</button><button class="btn ghost" type="button" onclick="downloadVrewParts()">TXT 묶음 저장</button><button class="btn ghost" type="button" onclick="copyVrewCurrent()">현재 파트 복사</button></div></div><div><h2 id="vrewCurrentTitle">현재 파트</h2><textarea id="vrewCurrent" style="min-height:560px" placeholder="Vrew에 바로 넣을 수 있도록 문단 번호와 글자 수 표시를 제거한 원고가 표시됩니다."></textarea></div></div>
@@ -785,6 +717,10 @@ function stableSituationImageRules(target='longform'){
 - 1초 안에 피해자·가해자·갈등 관계가 읽혀야 합니다.
 - 영화 포스터 같은 강한 구도와 큰 표정을 사용하되 과도한 왜곡은 금지합니다.
 - 헤드라인 공간은 단순한 벽면이나 어두운 배경으로 자연스럽게 확보하세요.
+- [최우선 필수 조건] 각 썸네일 안에 지정된 한국어 헤드라인을 반드시 실제 이미지에 렌더링하도록 프롬프트에 명시하세요.
+- 헤드라인 생략, 무문자 이미지, 텍스트 없는 썸네일은 실패 결과로 간주합니다.
+- 헤드라인을 임의로 줄이거나 바꾸지 말고 [헤드라인]에 출력한 한국어 문구와 이미지 프롬프트 속 실제 삽입 문구를 정확히 동일하게 유지하세요.
+- 각 이미지 프롬프트의 맨 앞과 맨 끝에 해당 한국어 헤드라인을 반드시 넣으라는 지시를 반복하세요.
 - 출력에는 장면, 인물 수와 역할, 위치, 표정, 시선, 행동, 소품, 배경, 조명을 구체적으로 적으세요.`;
   }
 
@@ -818,9 +754,9 @@ function setStatus(message,type=''){
  el.className='status'+(type?' '+type:'');
 }
 let active='story',busy=false;
-const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',consistency:'consistency'};
-const panelFields={memory:'memory',voice:'voicePanel',imagetimeline:'imageTimelinePanel',vrew:'vrew',youtubeab:'youtubeABPanel'};
-let longformMode=30,vrewParts=[],vrewCurrentIndex=0,voiceParts=[],voiceCurrentIndex=0;
+const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',voice:'voice',consistency:'consistency'};
+const panelFields={memory:'memory',vrew:'vrew',youtubeab:'youtubeABPanel'};
+let longformMode=30,vrewParts=[],vrewCurrentIndex=0;
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
  {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
@@ -998,12 +934,12 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='18.4-capcut-voice-srt-full-original-rebuild',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
-function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='16.6.1-longform-vrew-consistency-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
  const el=$('meta');if(!el)return;
- const field=fields[active]?$(fields[active]):active==='memory'?$('memoryFacts'):active==='voice'?$('voiceCurrent'):active==='vrew'?$('vrewCurrent'):null;
+ const field=fields[active]?$(fields[active]):active==='memory'?$('memoryFacts'):active==='vrew'?$('vrewCurrent'):null;
  el.textContent=field?`${String(field.value||'').length.toLocaleString()}자`:'';
 }
 document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
@@ -1034,7 +970,7 @@ function normalizeProject(raw){
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,blueprint:raw.blueprint,gptprompt:raw.gptprompt||raw.gptPrompt,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
  const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:config.strict!==false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2'),longformMode:Number(config.longformMode||30)};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
- const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[],voiceParts:[]};for(const k in cleanOut){cleanOut[k]=(k==='vrewParts'||k==='voiceParts')?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
+ const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[]};for(const k in cleanOut){cleanOut[k]=k==='vrewParts'?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:normalizeCharacterSlotsV175(cleanChars),outputs:cleanOut};
 }
 function applyProject(raw){
@@ -1042,11 +978,10 @@ function applyProject(raw){
  for(const k of ['name','topic','heroine','count','images','pov','tone','density','quality','endingStyle','endingLength','thumbLayout','thumbStyle','thumbTextLength','thumbPeople'])if($(k))$(k).value=c[k]??'';
  for(const k of ['subscribe','strict'])if($(k))$(k).checked=!!c[k];
  for(const k of Object.keys(fields))if(o[k]!==undefined)$(fields[k]).value=o[k]||'';
- $('voice').value=o.voice||'';
  $('memoryFacts').value=o.memoryFacts||'';$('memoryConflicts').value=o.memoryConflicts||'';$('memoryClues').value=o.memoryClues||'';$('memoryTimeline').value=o.memoryTimeline||'';
- vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];voiceParts=Array.isArray(o.voiceParts)?o.voiceParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;voiceCurrentIndex=0;
+ vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
- renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();renderVoiceParts();updateMeta();return p;
+ renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();updateMeta();return p;
 }
 function pushBackup(snapshot,reason='자동 백업'){
  try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
@@ -1309,19 +1244,20 @@ function sseoljengYoutubeStyleRules(){
 5. 예: "친자검사부터 해" / "넌 계산적인 여자야" / "엄마 장례식 안 간다" / "우리 집 애 맞아?"
 
 [설명]
-1. 첫 2줄은 줄거리 설명보다 감정을 먼저 적으세요.
-2. 첫 문장은 주인공의 분노·배신·억울함·공포·슬픔 중 핵심 감정을 바로 느끼게 해야 합니다.
-3. 이후 3~5문장으로 사건을 소개하되 핵심 반전 장치와 결말은 스포일러하지 마세요.
-4. 마지막에는 "오늘 이야기는 어떠셨나요?"처럼 공감을 묻고 댓글 참여를 자연스럽게 유도하세요.
-5. 마지막에 구독과 좋아요를 부담스럽지 않게 부탁하세요.
-6. "충격적인 전말", "흥미진진한 이야기"처럼 내용 없는 홍보문 반복은 금지합니다.
+1. 설명은 짧고 바로 업로드할 수 있게 총 3~4문장 정도로 작성하세요. 장황한 줄거리 요약은 금지합니다.
+2. 첫 1~2문장에서 주인공의 핵심 감정과 사건만 짧게 소개하고, 핵심 반전과 결말은 스포일러하지 마세요.
+3. 마지막 문장에는 반드시 구독과 좋아요 요청을 자연스럽게 넣으세요. 예: "재미있게 보셨다면 구독과 좋아요 부탁드립니다."
+4. 댓글 질문은 필요할 때 한 문장만 짧게 넣으세요.
+5. "충격적인 전말", "흥미진진한 이야기"처럼 내용 없는 홍보문 반복은 금지합니다.
+6. 설명이 끝난 바로 다음 줄에 [해시태그]를 이어서 출력하세요. 설명과 해시태그 사이에 고정댓글이나 다른 항목을 끼우지 마세요.
 
 [해시태그]
-1. 정확히 5~6개만 작성하세요.
-2. 중복되는 의미의 태그를 반복하지 마세요.
-3. #실화사연 #사연 같은 기본 태그와 실제 갈등 주제 태그를 섞으세요.
-4. 필요하면 #시댁 #부부갈등 #사이다 #반전 #장례식 #상속 등 원고에 맞춰 선택하세요.
-5. 마지막에 #썰쟁을 포함하세요.
+1. 설명 바로 아래에 12~18개의 해시태그를 한 묶음으로 작성하세요.
+2. #실화사연 #사연 #사연라디오 #인생사연 #가족갈등 같은 기본 태그와 현재 원고의 실제 갈등 주제 태그를 충분히 섞으세요.
+3. 원고와 관련 없는 인기 키워드를 억지로 넣지 마세요.
+4. 같은 의미의 태그를 과도하게 반복하지 마세요.
+5. #시댁 #부부갈등 #시어머니 #남편 #이혼 #사이다 #반전 등은 실제 내용과 맞을 때만 선택하세요.
+6. 반드시 #썰쟁을 포함하세요.
 
 [고정댓글]
 - 짧고 따뜻하게 작성하세요.
@@ -1363,8 +1299,8 @@ function sseoljengYoutubeStyleRules(){
    - 한 줄 평가
 3. BEST 제목 1개
 4. 썸네일 문구 3개
-5. 설명글
-6. 해시태그 5~6개
+5. 짧은 설명글(3~4문장, 마지막에 구독·좋아요 포함)
+6. 해시태그 12~18개(설명 바로 아래)
 7. 고정댓글
 8. 위험 요소 검사
 9. 최종 조회수 최적화 점수 /100`;
@@ -1404,69 +1340,6 @@ function renderVrewParts(){const list=$('vrewPartList');if(!list)return;if(!vrew
 function selectVrewPart(i){vrewCurrentIndex=Math.max(0,Math.min(vrewParts.length-1,Number(i)||0));renderVrewParts()}
 async function copyVrewCurrent(){const t=$('vrewCurrent').value;if(!t)return;await navigator.clipboard.writeText(t);setStatus('현재 Vrew 파트를 복사했습니다.','ok')}
 async function downloadVrewParts(){if(!vrewParts.length)makeVrewParts();if(!vrewParts.length)return;const z=new JSZip(),f=z.folder('vrew-parts');vrewParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text));const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_Vrew파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('Vrew TXT 파트를 ZIP으로 저장했습니다.','ok')}
-
-function splitCapCutVoiceText(text,limit=9700){
- const clean=cleanVrewText(text).replace(/\n{3,}/g,'\n\n').trim();
- if(!clean)return [];
- const paragraphs=clean.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
- const units=[];
- for(const para of paragraphs){
-  if(para.length<=limit){units.push(para);continue}
-  const sentences=(para.match(/[^.!?。！？\n]+[.!?。！？]?/g)||[para]).map(x=>x.trim()).filter(Boolean);
-  let buf='';
-  for(const sentence of sentences){
-   if(sentence.length>limit){
-    if(buf){units.push(buf);buf=''}
-    let rest=sentence;
-    while(rest.length>limit){
-     let cut=rest.lastIndexOf(' ',limit);
-     if(cut<Math.floor(limit*.65))cut=limit;
-     units.push(rest.slice(0,cut).trim());rest=rest.slice(cut).trim();
-    }
-    if(rest)buf=rest;
-   }else if(buf && buf.length+1+sentence.length>limit){units.push(buf);buf=sentence}
-   else buf+=(buf?' ':'')+sentence;
-  }
-  if(buf)units.push(buf);
- }
- const parts=[];let current='';
- for(const unit of units){
-  const sep=current?'\n\n':'';
-  if(current && current.length+sep.length+unit.length>limit){parts.push(current);current=unit}
-  else current+=sep+unit;
- }
- if(current)parts.push(current);
- return parts;
-}
-function makeVoice(silent=false){
- const text=$('story').value.trim();
- if(!text){if(!silent){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');showTab('story')}return}
- const parts=splitCapCutVoiceText(text,9700);
- voiceParts=parts.map((text,i)=>({title:`음성 ${i+1}`,text,copied:false}));
- voiceCurrentIndex=0;
- $('voice').value=parts.join('\n\n===== 다음 음성 파트 =====\n\n');
- renderVoiceParts();saveLocal(true);
- if(!silent)showTab('voice');
- setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 9,700자입니다.`,'ok');
-}
-function renderVoiceParts(){
- const list=$('voicePartList');if(!list)return;
- if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘9,700자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
- voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,voiceCurrentIndex));
- list.innerHTML=voiceParts.map((p,i)=>`<button type="button" class="vrew-part-btn ${i===voiceCurrentIndex?'active':''}" onclick="selectVoicePart(${i})"><b>${p.copied?'✓ ':''}${p.title}</b><span>${p.text.length.toLocaleString()}자</span></button>`).join('');
- const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateMeta();
-}
-function selectVoicePart(i){voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,Number(i)||0));renderVoiceParts()}
-async function copyVoiceCurrent(){
- if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
- const p=voiceParts[voiceCurrentIndex];await navigator.clipboard.writeText(p.text);p.copied=true;renderVoiceParts();saveLocal(true);setStatus(`${p.title}을 복사했습니다. CapCut ‘텍스트에서 음성으로’에 붙여넣으세요.`,'ok')
-}
-async function downloadVoiceParts(){
- if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
- const z=new JSZip(),f=z.folder('capcut-voice-parts');voiceParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text));
- const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_CapCut음성파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('CapCut 음성용 TXT 파트를 ZIP으로 저장했습니다.','ok')
-}
-
 function memoryText(){return `[확정 사건]
 ${$('memoryFacts').value.trim()||'- 없음'}
 
@@ -1577,44 +1450,6 @@ ${imageParagraphRangeGuide(c.count,c.images)}
 ${sseoljengYoutubeStyleRules()}
 [썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. ${thumbPeoplePromptRule(c.thumbPeople)} 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
 
- if(task==='thumbnailCompare')return `${imageCommon}
-
-현재 롱폼 원고:
-${story}
-
-[비교 대상 썸네일 A/B/C]
-${$('thumbnail').value.trim()}
-
-[썰쟁 Studio · 썸네일 A/B/C 비교 전용]
-위 A안·B안·C안은 이미 생성된 최종 후보입니다. 절대로 새 썸네일 후보, 새 헤드라인, 새 장면을 만들거나 기존 문구를 수정하지 마세요. 세 후보를 그대로 비교 평가만 하세요.
-
-평가 기준:
-- 첫 1초 이해도와 즉시 분노·충격 유발력
-- 모바일에서 헤드라인이 짧고 선명하게 읽히는지
-- 장면만 봐도 갈등 구조가 이해되는지
-- 원고의 핵심 갈등과 직접 연결되는지
-- 결말 스포일러 없이 클릭 궁금증을 만드는지
-- 현재 사연 채널용 썸네일로 과하게 복잡하지 않은지
-
-[출력 형식]
-[A안 평가]
-이유: 한두 문장
-비교 점수: 00/100
-
-[B안 평가]
-이유: 한두 문장
-비교 점수: 00/100
-
-[C안 평가]
-이유: 한두 문장
-비교 점수: 00/100
-
-[최종 추천]
-추천안: A안 또는 B안 또는 C안
-이유: 가장 강한 이유를 1~2문장으로 설명
-
-점수는 실제 CTR 예측값이 아니라 세 후보를 서로 비교하기 위한 내부 평가입니다.`;
-
  if(task==='youtubeAB')return `${imageCommon}
 
 현재 롱폼 원고:
@@ -1682,12 +1517,15 @@ ${stableSituationImageRules('thumbnail')}
 4. 문구를 넣기 위해 빈 배경을 억지로 만들거나 인물을 화면 구석으로 밀지 마세요.
 5. 문구 위치를 상단으로 고정하지 말고 장면에 맞춰 자연스럽게 선택하세요.
 6. 레이아웃 ${c.thumbLayout}, 문구 스타일 ${c.thumbStyle}, 문구 길이 ${c.thumbTextLength}를 적용하세요.
-7. 반드시 이미지 안에 강렬한 헤드라인 문구를 삽입하세요.
-8. 헤드라인은 8~20자의 짧고 강렬한 문구로 작성하고, 결말은 절대 스포일러하지 마세요.
-9. 모바일에서도 잘 보이도록 크고 굵은 글씨로 배치하세요.
-10. 헤드라인은 최대 3줄이며 가장 먼저 눈에 띄도록 디자인하세요.
-11. 각 안마다 [헤드라인], [단일 장면 프롬프트], [CTR 자체 점수 / 100], [한 줄 평가]를 출력하세요.
-12. 말풍선, 로고, 워터마크, 유튜브 UI는 금지합니다.`;
+7. [최우선 필수] 반드시 이미지 안에 강렬한 한국어 헤드라인 문구를 실제로 삽입하도록 프롬프트에 명시하세요. 헤드라인이 빠진 무문자 썸네일은 실패입니다.
+8. [헤드라인]에 적은 문구와 [단일 장면 프롬프트] 안의 실제 삽입 문구는 글자 하나까지 동일해야 하며, 임의 생략·축약·의역을 금지합니다.
+9. 각 [단일 장면 프롬프트]의 첫 문장과 마지막 문장에 EXACT KOREAN HEADLINE을 반드시 렌더링하라는 요구를 반복하세요.
+10. 헤드라인은 8~20자의 짧고 강렬한 문구로 작성하고, 결말은 절대 스포일러하지 마세요.
+11. 모바일에서도 잘 보이도록 크고 굵은 글씨로 배치하세요.
+12. 헤드라인은 최대 3줄이며 가장 먼저 눈에 띄도록 디자인하세요.
+13. 각 안마다 [헤드라인], [단일 장면 프롬프트], [CTR 자체 점수 / 100], [한 줄 평가]를 출력하세요.
+14. 말풍선, 로고, 워터마크, 유튜브 UI는 금지합니다.
+15. 각 프롬프트 끝에는 반드시 다음 형식의 지시를 포함하세요: FINAL TEXT REQUIREMENT — MUST render the exact Korean headline shown in [헤드라인]. DO NOT omit, shorten, paraphrase, or replace it.`;
  if(task==='shorts'){
   const count=Number($('shortsCount')?.value||1),source=$('shortsSource')?.value||'story',style=$('shortsStyle')?.value||'mixed';
   const sourceText=source==='story'&&story?`현재 롱폼 원고:\n${story}`:`주제와 등장인물 설정만 사용하세요. 롱폼 원고를 새로 만들지는 마세요.`;
@@ -1823,82 +1661,37 @@ function validatePastedStory(){
  }
  setStatus(`${total}개 문단이 순서대로 모두 확인되었습니다. 제작 자료 생성을 시작합니다.`,'ok');saveLocal(true);setTimeout(()=>autoStartProductionAssetsV176(),150);return true;
 }
-function parseThumbnailABC(text){
- const t=String(text||'').trim();
- const section=(letter,nextLetters)=>{
-  const next=nextLetters.length?`(?=\\n\\s*(?:${nextLetters.map(x=>x+'안').join('|')})|$)`:'$';
-  const re=new RegExp(`(?:^|\\n)\\s*${letter}안\\s*[\\s\\S]*?${next}`,'i');
-  const m=t.match(re); return m?m[0].trim():'';
- };
- const pick=(block,patterns)=>{
-  for(const p of patterns){const m=block.match(p);if(m)return m[1].trim()}
-  return '';
- };
- const make=(block)=>({
-  headline:pick(block,[/\[헤드라인\]\s*\n?\s*([^\n]+)/i,/헤드라인\s*[:：]\s*([^\n]+)/i,/실제 삽입할 한국어 헤드라인\s*[:：]?\s*([^\n]+)/i]),
-  scene:pick(block,[/\[단일 장면 프롬프트\]\s*\n?\s*([\s\S]*?)(?=\n\s*\[(?:CTR|한 줄 평가)|\n\s*(?:CTR|한 줄 평가)\s*[:：]|$)/i,/단일 장면 이미지 프롬프트\s*[:：]?\s*([\s\S]*?)(?=\n\s*(?:CTR|한 줄 평가)|$)/i]),
-  score:pick(block,[/\[CTR 자체 점수\s*\/\s*100\]\s*\n?\s*([^\n]+)/i,/CTR 자체 점수[^\n:：]*[:：]?\s*([^\n]+)/i]),
-  ownReason:pick(block,[/\[한 줄 평가\]\s*\n?\s*([^\n]+)/i,/한 줄 평가\s*[:：]\s*([^\n]+)/i])
- });
- const a=make(section('A',['B','C'])),b=make(section('B',['C'])),c=make(section('C',[]));
- return {a,b,c};
-}
-function shortSceneV187(scene){
- const v=String(scene||'').replace(/\s+/g,' ').trim();
- if(!v)return '-';
- return v.length>150?v.slice(0,150)+'…':v;
-}
-function parseThumbnailCompare(text){
+function parseYoutubeAB(text){
  const t=String(text||'');
- const get=(letter)=>{
-  const m=t.match(new RegExp(`\\[${letter}안 평가\\]([\\s\\S]*?)(?=\\n\\s*\\[(?:A안 평가|B안 평가|C안 평가|최종 추천)\\]|$)`,'i'));
-  const b=m?m[1]:'';
-  const reason=(b.match(/이유\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
-  const score=(b.match(/비교 점수\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
-  return {reason:reason.trim(),score:score.trim()};
- };
- const rec=(t.match(/\[최종 추천\]([\s\S]*)$/i)||[])[1]||'';
- const recName=(rec.match(/추천안\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
- const recReason=(rec.match(/이유\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
- return {a:get('A'),b:get('B'),c:get('C'),recommend:[recName.trim(),recReason.trim()].filter(Boolean).join('\n')};
+ const pick=(block,label)=>{const m=block.match(new RegExp(label+'\\s*:\\s*([^\\n]+)','i'));return m?m[1].trim():''};
+ const aMatch=t.match(/(?:🅰|A안)[\s\S]*?(?=(?:🅱|B안)|🎯|$)/i);
+ const bMatch=t.match(/(?:🅱|B안)[\s\S]*?(?=🎯|$)/i);
+ const a=aMatch?aMatch[0]:'',b=bMatch?bMatch[0]:'';
+ const rec=t.match(/🎯[\s\S]*$/);
+ return {a:{title:pick(a,'제목'),thumb:pick(a,'썸네일 문구'),reason:pick(a,'선택 이유'),score:pick(a,'자체 점수')},b:{title:pick(b,'제목'),thumb:pick(b,'썸네일 문구'),reason:pick(b,'선택 이유'),score:pick(b,'자체 점수')},recommend:rec?rec[0].replace(/^🎯\s*추천\s*/,'').trim():''};
 }
-function renderThumbnailABC(base,compareText=''){
- const cmp=parseThumbnailCompare(compareText);
+function renderYoutubeAB(text){
+ if(!$('youtubeAB'))return; $('youtubeAB').value=String(text||'');
+ const d=parseYoutubeAB(text);
  const set=(id,v,f='-')=>{if($(id))$(id).textContent=v||f};
- for(const [k,K] of [['a','A'],['b','B'],['c','C']]){
-  const d=base[k]||{},e=cmp[k]||{};
-  set(`ytAb${K}Title`,d.headline,'후보를 찾지 못했습니다.');
-  set(`ytAb${K}Thumb`,shortSceneV187(d.scene));
-  set(`ytAb${K}Reason`,e.reason||d.ownReason||'비교 전');
-  set(`ytAb${K}Score`,e.score||d.score,'--/100');
- }
- set('ytAbRecommend',cmp.recommend,'A/B/C 후보를 불러왔습니다. AI 비교 평가를 준비 중입니다.');
- if($('youtubeAB'))$('youtubeAB').value=String(compareText||'');
+ set('ytAbATitle',d.a.title,'아직 생성되지 않았습니다.');set('ytAbAThumb',d.a.thumb);set('ytAbAReason',d.a.reason);set('ytAbAScore',d.a.score,'--/100');
+ set('ytAbBTitle',d.b.title,'아직 생성되지 않았습니다.');set('ytAbBThumb',d.b.thumb);set('ytAbBReason',d.b.reason);set('ytAbBScore',d.b.score,'--/100');
+ set('ytAbRecommend',d.recommend,'A/B 후보를 생성하면 추천안이 표시됩니다.');
 }
-async function compareThumbnailABC(){
+async function generateYoutubeAB(){
  if(busy)return;
- const thumb=$('thumbnail')?.value.trim()||'';
- if(!thumb){setStatus('먼저 썸네일 탭에서 A안·B안·C안을 생성하세요.','bad');showTab('thumbnail');return}
- const base=parseThumbnailABC(thumb);
- if(!base.a.headline||!base.b.headline||!base.c.headline){
-  setStatus('썸네일 A/B/C 형식을 모두 찾지 못했습니다. 썸네일을 다시 생성한 뒤 비교해 주세요.','bad');showTab('thumbnail');return
- }
- renderThumbnailABC(base,'');
- busy=true;const btn=$('ytAbBtn');if(btn)btn.disabled=true;setStatus('썸네일 탭의 A/B/C를 그대로 불러와 비교 중...');
+ const c=cfg();
+ if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
+ if(!$('story').value.trim()){setStatus('A/B 후보는 완성 원고를 기준으로 만듭니다. 먼저 롱폼 원고를 붙여넣으세요.','bad');showTab('story');return}
+ busy=true;const btn=$('ytAbBtn');if(btn)btn.disabled=true;setStatus('제목·썸네일 A/B 후보 생성 중...');
  try{
-  const text=(await callGenerate('thumbnailCompare')).trim();
-  renderThumbnailABC(base,text);
-  try{localStorage.setItem('sseoljeng-thumbnail-abc-compare-v187',text)}catch{}
-  setStatus('썸네일 A/B/C 비교 완료 · 새 후보 생성 없이 기존 3안을 그대로 평가했습니다.','ok');
- }catch(e){setStatus('썸네일 A/B/C 비교 실패: '+e.message,'bad');console.error(e)}finally{busy=false;if(btn)btn.disabled=false}
+  const text=(await callGenerate('youtubeAB')).trim();
+  renderYoutubeAB(text);
+  try{localStorage.setItem('sseoljeng-youtube-ab-v179',text)}catch{}
+  setStatus('A/B 후보 생성 완료 · A는 직접 충격형, B는 궁금증·반전형입니다.','ok');
+ }catch(e){setStatus('A/B 후보 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;if(btn)btn.disabled=false}
 }
-function loadYoutubeABV179(){
- try{
-  const thumb=$('thumbnail')?.value.trim()||'';
-  const cmp=localStorage.getItem('sseoljeng-thumbnail-abc-compare-v187')||'';
-  if(thumb){const base=parseThumbnailABC(thumb);if(base.a.headline||base.b.headline||base.c.headline)renderThumbnailABC(base,cmp)}
- }catch{}
-}
+function loadYoutubeABV179(){try{const v=localStorage.getItem('sseoljeng-youtube-ab-v179');if(v)renderYoutubeAB(v)}catch{}}
 
 async function generateProductionAssets(skipValidation=false){
  if(busy)return;
@@ -2019,279 +1812,22 @@ function makeSrt(silent=false){
  const text=$('story').value.trim();if(!text){if(!silent)setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}
  const parts=text.split(/\n+/).map(cleanSrtSourceLine).filter(Boolean);let t=0,out=[];
  const stamp=n=>{const ms=n%1000,s=Math.floor(n/1000)%60,m=Math.floor(n/60000)%60,h=Math.floor(n/3600000);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`};
- parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));if($('srtTools'))$('srtTools').classList.remove('hidden');updateMeta();setStatus('문단 번호와 글자 수를 제거한 SRT 자막을 만들었습니다.','ok')}}
+ parts.forEach((line,i)=>{const dur=Math.max(2500,Math.min(9000,line.length*115));out.push(`${i+1}\n${stamp(t)} --> ${stamp(t+dur)}\n${line}\n`);t+=dur+180});$('srt').value=out.join('\n');saveLocal(true);if(!silent){active='srt';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='srt'));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!=='srt'));updateMeta();setStatus('문단 번호와 글자 수를 제거한 SRT 자막을 만들었습니다.','ok')}}
 
-function srtTimeToMs(v){
- const m=String(v||'').trim().match(/^(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})$/);if(!m)return null;
- return (+m[1])*3600000+(+m[2])*60000+(+m[3])*1000+(+m[4]);
-}
-function srtMsToTime(ms){
- ms=Math.max(0,Math.round(ms));const h=Math.floor(ms/3600000);ms%=3600000;const m=Math.floor(ms/60000);ms%=60000;const sec=Math.floor(ms/1000),mil=ms%1000;
- return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')},${String(mil).padStart(3,'0')}`;
-}
-function parseSrtText(raw){
- const normalized=String(raw||'').replace(/\r/g,'').trim();if(!normalized)return [];
- const blocks=normalized.split(/\n{2,}/),cues=[];
- for(const block of blocks){
-  const lines=block.split('\n').map(x=>x.trimEnd());let ti=lines.findIndex(x=>x.includes('-->'));if(ti<0)continue;
-  const tm=lines[ti].match(/(\d{1,2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[,.]\d{3})/);if(!tm)continue;
-  const start=srtTimeToMs(tm[1]),end=srtTimeToMs(tm[2]);if(start===null||end===null||end<=start)continue;
-  const text=lines.slice(ti+1).join(' ').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();if(!text)continue;
-  cues.push({start,end,text});
- }
- return cues.sort((a,b)=>a.start-b.start||a.end-b.end);
-}
-function wrapKoreanCaption(text,lineLen,maxLines){
- const clean=String(text||'').replace(/\s+/g,' ').trim();if(!clean)return '';
- const maxChars=lineLen*maxLines;if(clean.length<=lineLen)return clean;
- let words=clean.split(' '),lines=[],cur='';
- for(let word of words){
-  if(!word)continue;
-  if(word.length>lineLen){
-   if(cur){lines.push(cur);cur=''}
-   while(word.length>lineLen&&lines.length<maxLines-1){lines.push(word.slice(0,lineLen));word=word.slice(lineLen)}
-   cur=word;continue;
-  }
-  const next=cur?cur+' '+word:word;
-  if(next.length<=lineLen)cur=next;else{lines.push(cur);cur=word}
-  if(lines.length>=maxLines-1&&cur.length>=lineLen)break;
- }
- if(cur&&lines.length<maxLines)lines.push(cur);
- let joined=lines.join('\n');
- if(joined.replace(/\n/g,'').replace(/ /g,'').length < clean.replace(/ /g,'').length){
-  const flat=clean.slice(0,maxChars);lines=[];for(let i=0;i<flat.length;i+=lineLen)lines.push(flat.slice(i,i+lineLen));joined=lines.slice(0,maxLines).join('\n');
- }
- return joined;
-}
-function srtSpokenChars(text){return String(text||'').replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ一-龥]/g,'').length}
-function prepareSrtReference(text){
- return cleanVrewText(String(text||''))
-  .replace(/^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*\d+\s*문단\s*(?:\*\*|__)?\s*[:：.-]?\s*/gm,'')
-  .replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'')
-  .replace(/\s+/g,' ').trim();
-}
-function buildNormalizedReference(text){
- const raw=prepareSrtReference(text),norm=[],rawPos=[];
- for(let i=0;i<raw.length;i++){
-  const ch=raw[i];if(/[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ一-龥]/.test(ch)){norm.push(ch.toLowerCase());rawPos.push(i)}
- }
- return {raw,norm:norm.join(''),rawPos};
-}
-function normalizeSrtMatchText(text){return String(text||'').toLowerCase().replace(/[^0-9a-z가-힣ㄱ-ㅎㅏ-ㅣ一-龥]/g,'')}
-function levenshteinDistance(a,b,maxCut=999){
- const n=a.length,m=b.length;if(!n)return m;if(!m)return n;if(Math.abs(n-m)>maxCut)return maxCut+1;
- let prev=new Array(m+1),cur=new Array(m+1);for(let j=0;j<=m;j++)prev[j]=j;
- for(let i=1;i<=n;i++){
-  cur[0]=i;let rowMin=cur[0];
-  for(let j=1;j<=m;j++){
-   const cost=a[i-1]===b[j-1]?0:1;cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+cost);if(cur[j]<rowMin)rowMin=cur[j];
-  }
-  if(rowMin>maxCut)return maxCut+1;[prev,cur]=[cur,prev];
- }
- return prev[m];
-}
-function findBestCueMatch(refNorm,captionNorm,cursor){
- const L=captionNorm.length;if(!L)return null;
- // 이전 자막과 약간 겹칠 수 있으므로 cursor 앞 18자부터, 앞으로는 최대 220자만 탐색한다.
- const searchStart=Math.max(0,cursor-18),searchEnd=Math.min(refNorm.length,cursor+Math.max(220,L*5));
- let best=null;
- const minLen=Math.max(1,Math.floor(L*.65)),maxLen=Math.min(Math.ceil(L*1.45)+4,Math.max(1,searchEnd-searchStart));
- for(let st=searchStart;st<searchEnd;st++){
-  // 현재 커서에서 멀어질수록 작은 패널티를 줘 반복 문구 오정렬을 방지한다.
-  const jumpPenalty=Math.abs(st-cursor)*0.012;
-  for(let len=minLen;len<=maxLen&&st+len<=refNorm.length&&st+len<=searchEnd+maxLen;len++){
-   const cand=refNorm.slice(st,st+len),limit=Math.max(3,Math.ceil(Math.max(L,len)*.42));
-   const dist=levenshteinDistance(captionNorm,cand,limit);if(dist>limit)continue;
-   const score=dist/Math.max(L,len)+jumpPenalty;
-   if(!best||score<best.score)best={start:st,end:st+len,score,dist};
-  }
- }
- return best;
-}
-function buildSrtTimeAnchors(cues,reference){
- const R=buildNormalizedReference(reference);if(!R.raw||!R.norm||!cues.length)return {ok:false,reason:'원문 또는 SRT 없음'};
- let cursor=0,matched=0;const anchors=[{pos:0,time:cues[0].start}];
- for(const cue of cues){
-  const cap=normalizeSrtMatchText(cue.text);if(!cap)continue;
-  const hit=findBestCueMatch(R.norm,cap,cursor);
-  if(!hit||hit.score>.52)continue;
-  const midPos=(hit.start+hit.end)/2,midTime=(cue.start+cue.end)/2;
-  if(midPos>=(anchors[anchors.length-1]?.pos||0)){anchors.push({pos:midPos,time:midTime});cursor=Math.max(cursor,hit.end);matched++}
- }
- anchors.push({pos:R.norm.length,time:cues[cues.length-1].end});
- // 같은 위치/역전 시간 제거
- const clean=[];for(const a of anchors){const last=clean[clean.length-1];if(!last||a.pos>last.pos&&a.time>=last.time)clean.push(a)}
- if(clean.length<2)return {ok:false,reason:'시간 기준점을 충분히 찾지 못함'};
- return {ok:true,R,anchors:clean,matched};
-}
-function interpolateSrtTime(anchors,pos){
- if(pos<=anchors[0].pos)return anchors[0].time;
- for(let i=1;i<anchors.length;i++){
-  const a=anchors[i-1],b=anchors[i];if(pos<=b.pos){const span=Math.max(1,b.pos-a.pos),r=(pos-a.pos)/span;return Math.round(a.time+(b.time-a.time)*r)}
- }
- return anchors[anchors.length-1].time;
-}
-function rawIndexToNormPos(R,rawIndex){
- let lo=0,hi=R.rawPos.length;while(lo<hi){const mid=(lo+hi)>>1;if(R.rawPos[mid]<rawIndex)lo=mid+1;else hi=mid}return lo;
-}
-function splitOriginalForCaptions(raw,maxChars){
- const out=[];let start=0;raw=String(raw||'').trim();
- while(start<raw.length){
-  while(start<raw.length&&/\s/.test(raw[start]))start++;if(start>=raw.length)break;
-  let hard=Math.min(raw.length,start+Math.max(12,maxChars));let cut=hard;
-  if(hard<raw.length){
-   const window=raw.slice(start,hard+1);let best=-1;
-   for(const re of [/[.!?。！？…][\"'”’)]?\s/g,/[,，;；:]\s/g,/\s/g]){let m,last=-1;while((m=re.exec(window))!==null){if(m.index>=Math.floor(maxChars*.48))last=m.index+m[0].length}if(last>0){best=last;break}}
-   if(best>0)cut=start+best;
-  }
-  let piece=raw.slice(start,cut).trim();if(piece)out.push({rawStart:start,rawEnd:cut,text:piece});start=cut;
- }
- return out;
-}
-function rebuildSrtFromFullOriginal(cues,reference,{maxLines=2,lineLen=20,maxDuration=6500}={}){
- const A=buildSrtTimeAnchors(cues,reference);if(!A.ok)return A;
- const {R,anchors}=A,maxChars=Math.max(18,maxLines*lineLen),pieces=splitOriginalForCaptions(R.raw,maxChars),out=[];
- for(const p of pieces){
-  const ns=rawIndexToNormPos(R,p.rawStart),ne=Math.max(ns+1,rawIndexToNormPos(R,p.rawEnd));
-  let st=interpolateSrtTime(anchors,ns),en=interpolateSrtTime(anchors,ne);
-  if(out.length&&st<out[out.length-1].end)st=out[out.length-1].end;
-  if(en<=st)en=st+900;
-  // 너무 긴 구간은 원문을 더 잘게 나눴기 때문에 여기서는 타임라인을 유지한다.
-  out.push({start:st,end:en,text:wrapKoreanCaption(p.text,lineLen,maxLines),sourceText:p.text});
- }
- const sourceNorm=normalizeSrtMatchText(R.raw),resultNorm=normalizeSrtMatchText(out.map(x=>x.sourceText).join(''));
- return {ok:true,cues:out,matched:A.matched,referenceChars:sourceNorm.length,resultChars:resultNorm.length,missingChars:Math.max(0,sourceNorm.length-resultNorm.length),anchors:anchors.length};
-}
-function loadStoryAsSrtReference(){
- const story=$('story')?.value||'';if(!story.trim()){setStatus('롱폼 탭에 원고가 없습니다. 먼저 원고를 붙여넣으세요.','bad');return}
- const ref=prepareSrtReference(story);$('srtReference').value=ref;if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${srtSpokenChars(ref).toLocaleString()}자 준비됨`;setStatus('롱폼 원문을 SRT 오타 교정 기준으로 가져왔습니다.','ok');saveLocal(true);
-}
-function cleanSrtCues(cues,{maxLines=2,lineLen=20,maxDuration=6500}={}){
- const maxChars=Math.max(18,Number(maxLines)*Number(lineLen));const out=[];let cur=null;
- const flush=()=>{if(cur){cur.text=wrapKoreanCaption(cur.text,Number(lineLen),Number(maxLines));out.push(cur);cur=null}};
- for(const cue of cues){
-  const gap=cur?Math.max(0,cue.start-cur.end):0;
-  const joined=cur?(cur.exactSource||cue.exactSource?String(cur.text||'')+String(cue.text||''):(cur.text+' '+cue.text).replace(/\s+/g,' ').trim()):cue.text;
-  const duration=cur?cue.end-cur.start:cue.end-cue.start;
-  const hardStop=cur&&/[.!?。！？…]$/.test(cur.text.trim())&&cur.text.replace(/\s/g,'').length>=Math.floor(maxChars*.55);
-  const canMerge=cur && gap<=450 && joined.length<=maxChars && duration<=maxDuration && !hardStop;
-  if(canMerge){cur.text=joined;cur.end=Math.max(cur.end,cue.end)}else{flush();cur={...cue}}
- }
- flush();return out;
-}
-function formatSrtCues(cues){return cues.map((c,i)=>`${i+1}\n${srtMsToTime(c.start)} --> ${srtMsToTime(c.end)}\n${c.text}\n`).join('\n')}
-async function loadSrtFile(event){
- const file=event?.target?.files?.[0];if(!file)return;try{$('srtImport').value=await file.text();setStatus(`SRT 파일을 불러왔습니다: ${file.name}`,'ok');cleanImportedSrt()}catch(e){setStatus('SRT 파일 읽기 실패: '+e.message,'bad')}finally{if(event?.target)event.target.value=''}
-}
-function cleanImportedSrt(){
- const raw=$('srtImport')?.value?.trim();if(!raw){setStatus('정리할 SRT를 붙여넣거나 파일을 불러오세요.','bad');return}
- const cues=parseSrtText(raw);if(!cues.length){setStatus('SRT 시간 형식을 읽지 못했습니다. CapCut에서 내보낸 .srt 파일인지 확인하세요.','bad');return}
- const useRef=!!$('srtUseReference')?.checked,maxLines=Number($('srtMaxLines')?.value||2),lineLen=Number($('srtCharsPerLine')?.value||20),maxDuration=Math.round(Number($('srtMaxDuration')?.value||6.5)*1000);
- if(useRef){
-  let ref=$('srtReference')?.value?.trim();if(!ref&&$('story')?.value?.trim()){ref=prepareSrtReference($('story').value);$('srtReference').value=ref}
-  if(!ref){setStatus('원본 대본 100% 재구성이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
-  const rebuilt=rebuildSrtFromFullOriginal(cues,ref,{maxLines,lineLen,maxDuration});if(!rebuilt.ok){setStatus('원문 자막 재구성 실패: '+rebuilt.reason,'bad');return}
-  $('srt').value=formatSrtCues(rebuilt.cues);saveLocal(true);updateMeta();
-  const verdict=rebuilt.missingChars===0?'누락 0자 ✅':'누락 '+rebuilt.missingChars.toLocaleString()+'자 ⚠️';
-  if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${rebuilt.referenceChars.toLocaleString()}자 → 최종 ${rebuilt.resultChars.toLocaleString()}자 · ${verdict}`;
-  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · 시간 기준점 ${rebuilt.anchors}개(자동 매칭 ${rebuilt.matched}개) · 자동캡션 ${cues.length}개 → 최종 ${rebuilt.cues.length}개 · 최대 ${maxLines}줄`;
-  setStatus(`SRT 완료: 원본 전체 재구성 · ${verdict}`,'ok');return;
- }
- const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration});$('srt').value=formatSrtCues(cleaned);saveLocal(true);updateMeta();
- if($('srtCleanStats'))$('srtCleanStats').textContent=`원문 재구성 안 함 · 자동캡션 ${cues.length}개 → 정리 후 ${cleaned.length}개`;
- setStatus(`SRT 완료: ${cues.length}개 → ${cleaned.length}개 자막`,'ok');
-}
-
-function extractImageParagraphRefs(text){
- const src=String(text||''),refs=[];
- // 각 이미지 블록을 우선 분리한다. "1. [사용 문단] 문단 4", "[이미지 1] ... 사용 문단: 4문단" 등을 지원한다.
- const heads=[...src.matchAll(/(?:^|\n)\s*(?:\[\s*이미지\s*(\d+)\s*\]|(?:이미지\s*)?(\d+)\s*[.)번]\s*)/gim)];
- if(heads.length){
-  for(let i=0;i<heads.length;i++){
-   const no=Number(heads[i][1]||heads[i][2]||i+1),chunk=src.slice(heads[i].index,i+1<heads.length?heads[i+1].index:src.length);
-   const m=chunk.match(/(?:사용\s*문단|문단)\s*[:：]?\s*(?:문단\s*)?(\d+)(?:\s*문단)?/i);
-   if(m)refs.push({image:no,paragraph:Number(m[1])});
-  }
- }
- if(!refs.length){
-  const re=/(?:사용\s*문단)\s*[:：]?\s*(?:문단\s*)?(\d+)(?:\s*문단)?/gi;let m,i=1;
-  while((m=re.exec(src))!==null)refs.push({image:i++,paragraph:Number(m[1])});
- }
- return refs.filter(x=>Number.isFinite(x.paragraph)&&x.paragraph>0).sort((a,b)=>a.image-b.image);
-}
-function paragraphStartNormPositions(story,reference){
- const blocks=paragraphBlocks(story),R=buildNormalizedReference(reference),out=[];let cursor=0;
- for(const b of blocks){
-  const body=normalizeSrtMatchText(cleanVrewText(b.body));if(!body)continue;
-  const probe=body.slice(0,Math.min(36,body.length));let pos=R.norm.indexOf(probe,cursor);
-  if(pos<0){
-   // 짧은 문장/특수문자 차이를 대비해 더 짧은 앞부분으로 재시도
-   const p2=body.slice(0,Math.min(16,body.length));pos=p2?R.norm.indexOf(p2,cursor):-1;
-  }
-  if(pos<0)pos=cursor;
-  out.push({number:b.number,pos,text:cleanVrewText(b.body).replace(/\s+/g,' ').trim()});
-  cursor=Math.max(cursor,pos+Math.max(1,body.length));
- }
- return {R,blocks:out};
-}
-function shortClock(ms){
- ms=Math.max(0,Math.round(ms));const total=Math.floor(ms/1000),h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
- return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-function buildImageTimelineGuide(){
- const story=$('story')?.value||'',images=$('imagesOut')?.value||'',raw=$('srtImport')?.value?.trim()||'';
- if(!story.trim()){setStatus('롱폼 원고가 없습니다. 먼저 롱폼 탭에 원고를 붙여넣으세요.','bad');return}
- if(!images.trim()){setStatus('이미지 프롬프트가 없습니다. 먼저 이미지 프롬프트를 생성하세요.','bad');return}
- if(!raw){setStatus('CapCut 자동캡션 SRT가 없습니다. SRT 파일을 먼저 불러오세요.','bad');return}
- const cues=parseSrtText(raw);if(!cues.length){setStatus('CapCut SRT 시간 정보를 읽지 못했습니다.','bad');return}
- const ref=prepareSrtReference(story),A=buildSrtTimeAnchors(cues,ref);if(!A.ok){setStatus('이미지 시간 계산 실패: '+A.reason,'bad');return}
- let refs=extractImageParagraphRefs(images),usedFallback=false;
- const P=paragraphStartNormPositions(story,ref),byNo=new Map(P.blocks.map(x=>[x.number,x]));
- if(!refs.length){
-  // 이미지 프롬프트 형식이 달라도 작업이 막히지 않게 설정 이미지 수 기준으로 균등 문단을 사용한다.
-  const n=Math.max(1,Number(cfg().images)||1),nums=P.blocks.map(x=>x.number);
-  if(!nums.length){setStatus('롱폼 문단 번호를 읽지 못했습니다.','bad');return}
-  refs=Array.from({length:n},(_,i)=>({image:i+1,paragraph:nums[Math.min(nums.length-1,Math.floor(i*nums.length/n))]}));usedFallback=true;
- }
- const rows=[];
- for(const r of refs){
-  const p=byNo.get(r.paragraph);if(!p)continue;
-  const time=interpolateSrtTime(A.anchors,p.pos);rows.push({...r,time,preview:p.text.slice(0,42)});
- }
- if(!rows.length){setStatus('이미지 프롬프트의 사용 문단과 롱폼 문단을 연결하지 못했습니다.','bad');return}
- let out=`[이미지 타임라인 가이드]\n총 영상 길이: ${shortClock(cues[cues.length-1].end)}\n\n`;
- rows.forEach((r,i)=>{
-  const next=rows[i+1];const end=next?next.time:cues[cues.length-1].end,dur=Math.max(0,end-r.time);
-  out+=`이미지 ${r.image} · 문단 ${r.paragraph}\n삽입: ${shortClock(r.time)}${next?`  → 다음 이미지: ${shortClock(end)}  · 유지 약 ${shortClock(dur)}`:`  → 영상 끝까지 · 유지 약 ${shortClock(dur)}`}\n장면 시작: ${r.preview}${r.preview.length>=42?'…':''}\n\n`;
- });
- $('imageTimelineGuide').value=out.trim();
- if($('imageTimelineStats'))$('imageTimelineStats').textContent=`이미지 ${rows.length}개 위치 계산 완료 · 시간 기준점 ${A.anchors.length}개${usedFallback?' · ⚠️ 사용 문단 표기를 못 찾아 균등 문단으로 임시 계산':''}`;
- setStatus(`이미지 ${rows.length}개 삽입시간을 계산했습니다. 캡컷 타임라인에서 표시된 시간에 이미지를 넣으세요.`,'ok');
-}
-async function copyImageTimelineGuide(){
- const t=$('imageTimelineGuide')?.value||'';if(!t.trim()){setStatus('먼저 이미지 삽입시간을 계산하세요.','bad');return}
- await navigator.clipboard.writeText(t);setStatus('이미지 타임라인 가이드를 복사했습니다.','ok');
-}
-
-function downloadCleanSrt(){
- const text=$('srt')?.value?.trim();if(!text){setStatus('먼저 SRT 자동 정리를 실행하세요.','bad');return}
- const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_원문100퍼_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
-}
-
-async function copyCurrent(){if(active==='voice'){return copyVoiceCurrent()}if(active==='vrew'){return copyVrewCurrent()}const target=fields[active]?$(fields[active]):null;if(!target){setStatus('복사할 내용을 찾지 못했습니다.','bad');return}await navigator.clipboard.writeText(target.value);setStatus('현재 내용을 복사했습니다.','ok')}
+async function copyCurrent(){await navigator.clipboard.writeText($(fields[active]).value);setStatus('현재 내용을 복사했습니다.','ok')}
 async function downloadZip(){
  if(!$('story').value.trim()){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}
  const z=new JSZip(),f=z.folder('sseoljeng-project');
  f.file('00_스토리설계도.txt',$('blueprint').value);f.file('00-0_사건기억장.txt',memoryText());f.file('00-1_GPT롱폼프롬프트.txt',$('gptPrompt').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
- f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
+ f.file('03-1_음성AI용.txt',$('voice').value);f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
  if(vrewParts.length){const vf=f.folder('Vrew파트');vrewParts.forEach((p,i)=>vf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text))}
- f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 같은 탭의 이미지 타임라인 가이드에서 이미지 프롬프트의 사용 문단을 실제 캡컷 삽입시간으로 계산할 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
+ f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
  const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
  setStatus('캡컷용 ZIP 저장 완료','ok')
 }
 
 
-function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('srtTools'))$('srtTools').classList.toggle('hidden',key!=='srt');if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','memory','consistency','vrew'][i]===key)));updateMeta()}
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','memory','consistency','vrew'][i]===key)));updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
 function paragraphCharCount(text){
@@ -2528,7 +2064,7 @@ async function checkConsistency(){
 
 document.addEventListener('DOMContentLoaded',()=>{const q=$('benchQuery');if(q)q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchYouTubeBenchmarks();}})});
 
-renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderVoiceParts();renderPromptWizard();loadYoutubeABV179();
+renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderPromptWizard();loadYoutubeABV179();
 </script>
 <script src="js/firebase-cloud.js">
 
