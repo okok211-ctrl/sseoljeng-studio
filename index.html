@@ -57,7 +57,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .yt-ab-box{margin-top:10px;padding:12px;border:1px solid rgba(255,121,23,.38);border-radius:13px;background:rgba(255,121,23,.06)}
 .yt-ab-page{min-height:650px;height:auto;padding:18px;background:#07111f;color:#f5f8fc;border:1px solid #263b55;border-radius:12px;overflow:auto}
 .yt-ab-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.yt-ab-page-title{font-size:20px;font-weight:950}.yt-ab-page-help{font-size:12px;color:var(--muted);margin-top:5px}
-.yt-ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
+.yt-ab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card.c{border-color:#b986ff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
 
 .yt-ab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.yt-ab-title{font-weight:950;font-size:14px}.yt-ab-help{font-size:10px;color:var(--muted);margin-top:4px}.yt-ab-output{width:100%;min-height:280px;max-height:420px;margin-top:10px;background:#06101d;color:#f5f8fc;border:1px solid #30465f;border-radius:11px;padding:13px;line-height:1.65;resize:vertical}
 </style>
@@ -89,7 +89,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v18.3</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v18.7</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -266,7 +266,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="images">이미지 프롬프트</button>
   <button class="tab" data-tab="shorts">쇼츠 4컷</button>
   <button class="tab" data-tab="youtube">유튜브 정보</button>
-  <button class="tab" data-tab="youtubeab">🧪 A/B 테스트</button>
+  <button class="tab" data-tab="youtubeab">🧪 A/B/C 비교</button>
   <button class="tab" data-tab="thumbnail">썸네일</button>
   <button class="tab" data-tab="japanese">일본어</button>
   <button class="tab" data-tab="voice">🎙 음성 만들기</button>
@@ -294,14 +294,15 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <div id="ytCtrGuide" class="tiny hidden" style="margin-top:8px">제목 5안 · 썸네일 문구 3안 · 설명 · 해시태그 · 100점 평가를 함께 생성합니다.</div>
 <div id="youtubeABPanel" class="yt-ab-page hidden">
  <div class="yt-ab-page-head">
-  <div><div class="yt-ab-page-title">🧪 제목·썸네일 A/B 테스트 후보</div><div class="yt-ab-page-help">같은 원고로 클릭 전략이 다른 2세트를 만듭니다. A는 직접 충격형, B는 궁금증·반전형입니다.</div></div>
-  <button id="ytAbBtn" class="btn primary" type="button" onclick="generateYoutubeAB()">✨ A/B 후보 생성</button>
+  <div><div class="yt-ab-page-title">🧪 썸네일 A/B/C 비교</div><div class="yt-ab-page-help">썸네일 탭에서 이미 생성된 A안·B안·C안을 그대로 불러와 비교합니다. 새 후보를 만들지 않습니다.</div></div>
+  <button id="ytAbBtn" class="btn primary" type="button" onclick="compareThumbnailABC()">✨ 썸네일 A/B/C 불러와 비교</button>
  </div>
  <div class="yt-ab-grid">
-  <section class="yt-ab-card a"><h3>🅰 A안 · 직접 충격형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbATitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbAThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbAReason" class="yt-ab-value">-</div></div><div id="ytAbAScore" class="yt-ab-score">--/100</div></section>
-  <section class="yt-ab-card b"><h3>🅱 B안 · 궁금증·반전형</h3><div class="yt-ab-row"><span class="yt-ab-label">제목</span><div id="ytAbBTitle" class="yt-ab-value">아직 생성되지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">썸네일 문구</span><div id="ytAbBThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">선택 이유</span><div id="ytAbBReason" class="yt-ab-value">-</div></div><div id="ytAbBScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card a"><h3>🅰 A안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbATitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbAThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbAReason" class="yt-ab-value">-</div></div><div id="ytAbAScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card b"><h3>🅱 B안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbBTitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbBThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbBReason" class="yt-ab-value">-</div></div><div id="ytAbBScore" class="yt-ab-score">--/100</div></section>
+  <section class="yt-ab-card c"><h3>🅲 C안</h3><div class="yt-ab-row"><span class="yt-ab-label">헤드라인</span><div id="ytAbCTitle" class="yt-ab-value">아직 불러오지 않았습니다.</div></div><div class="yt-ab-row"><span class="yt-ab-label">장면 요약</span><div id="ytAbCThumb" class="yt-ab-value">-</div></div><div class="yt-ab-row"><span class="yt-ab-label">AI 비교 평가</span><div id="ytAbCReason" class="yt-ab-value">-</div></div><div id="ytAbCScore" class="yt-ab-score">--/100</div></section>
  </div>
- <div class="yt-ab-recommend"><b>🎯 AI 추천</b><div id="ytAbRecommend" class="yt-ab-value" style="margin-top:7px">A/B 후보를 생성하면 추천안이 표시됩니다.</div></div>
+ <div class="yt-ab-recommend"><b>🎯 AI 추천</b><div id="ytAbRecommend" class="yt-ab-value" style="margin-top:7px">썸네일 A/B/C를 불러오면 추천안이 표시됩니다.</div></div>
  <textarea id="youtubeAB" class="yt-ab-raw" readonly></textarea>
 </div>
  <textarea id="thumbnail" class="output hidden"></textarea>
@@ -1576,6 +1577,44 @@ ${imageParagraphRangeGuide(c.count,c.images)}
 ${sseoljengYoutubeStyleRules()}
 [썸네일] 16:9 유튜브 썸네일 A안·B안·C안을 작성하세요. 각 안은 서로 다른 핵심 장면과 헤드라인을 사용하세요. 반드시 하나의 사건만 담은 단일 장면으로 구성하고 콜라주, 분할 화면, 장면 이어붙이기, 동일 인물 중복 등장은 금지하세요. ${thumbPeoplePromptRule(c.thumbPeople)} 주인공 얼굴과 감정이 화면에서 크게 보이게 하세요. 문구를 넣으려고 배경에 억지 빈 공간을 만들거나 인물을 작게 밀어내지 마세요. 문구 위치는 장면 구도에 맞춰 자연스럽게 정하고, '상단 빈 공간에 배치' 같은 고정 문구는 사용하지 마세요. 레이아웃은 ${c.thumbLayout}, 문구 스타일은 ${c.thumbStyle}, 문구 길이는 ${c.thumbTextLength} 기준입니다. 헤드라인은 핵심 단어 위주로 최대 3줄, 한 줄은 짧게 작성하세요. 각 안마다 ① 실제 삽입할 한국어 헤드라인 ② 단일 장면 이미지 프롬프트 ③ CTR 자체 점수(100점)와 한 줄 평가를 출력하세요. 말풍선·로고·워터마크는 금지합니다.`;
 
+ if(task==='thumbnailCompare')return `${imageCommon}
+
+현재 롱폼 원고:
+${story}
+
+[비교 대상 썸네일 A/B/C]
+${$('thumbnail').value.trim()}
+
+[썰쟁 Studio · 썸네일 A/B/C 비교 전용]
+위 A안·B안·C안은 이미 생성된 최종 후보입니다. 절대로 새 썸네일 후보, 새 헤드라인, 새 장면을 만들거나 기존 문구를 수정하지 마세요. 세 후보를 그대로 비교 평가만 하세요.
+
+평가 기준:
+- 첫 1초 이해도와 즉시 분노·충격 유발력
+- 모바일에서 헤드라인이 짧고 선명하게 읽히는지
+- 장면만 봐도 갈등 구조가 이해되는지
+- 원고의 핵심 갈등과 직접 연결되는지
+- 결말 스포일러 없이 클릭 궁금증을 만드는지
+- 현재 사연 채널용 썸네일로 과하게 복잡하지 않은지
+
+[출력 형식]
+[A안 평가]
+이유: 한두 문장
+비교 점수: 00/100
+
+[B안 평가]
+이유: 한두 문장
+비교 점수: 00/100
+
+[C안 평가]
+이유: 한두 문장
+비교 점수: 00/100
+
+[최종 추천]
+추천안: A안 또는 B안 또는 C안
+이유: 가장 강한 이유를 1~2문장으로 설명
+
+점수는 실제 CTR 예측값이 아니라 세 후보를 서로 비교하기 위한 내부 평가입니다.`;
+
  if(task==='youtubeAB')return `${imageCommon}
 
 현재 롱폼 원고:
@@ -1784,37 +1823,82 @@ function validatePastedStory(){
  }
  setStatus(`${total}개 문단이 순서대로 모두 확인되었습니다. 제작 자료 생성을 시작합니다.`,'ok');saveLocal(true);setTimeout(()=>autoStartProductionAssetsV176(),150);return true;
 }
-function parseYoutubeAB(text){
+function parseThumbnailABC(text){
+ const t=String(text||'').trim();
+ const section=(letter,nextLetters)=>{
+  const next=nextLetters.length?`(?=\\n\\s*(?:${nextLetters.map(x=>x+'안').join('|')})|$)`:'$';
+  const re=new RegExp(`(?:^|\\n)\\s*${letter}안\\s*[\\s\\S]*?${next}`,'i');
+  const m=t.match(re); return m?m[0].trim():'';
+ };
+ const pick=(block,patterns)=>{
+  for(const p of patterns){const m=block.match(p);if(m)return m[1].trim()}
+  return '';
+ };
+ const make=(block)=>({
+  headline:pick(block,[/\[헤드라인\]\s*\n?\s*([^\n]+)/i,/헤드라인\s*[:：]\s*([^\n]+)/i,/실제 삽입할 한국어 헤드라인\s*[:：]?\s*([^\n]+)/i]),
+  scene:pick(block,[/\[단일 장면 프롬프트\]\s*\n?\s*([\s\S]*?)(?=\n\s*\[(?:CTR|한 줄 평가)|\n\s*(?:CTR|한 줄 평가)\s*[:：]|$)/i,/단일 장면 이미지 프롬프트\s*[:：]?\s*([\s\S]*?)(?=\n\s*(?:CTR|한 줄 평가)|$)/i]),
+  score:pick(block,[/\[CTR 자체 점수\s*\/\s*100\]\s*\n?\s*([^\n]+)/i,/CTR 자체 점수[^\n:：]*[:：]?\s*([^\n]+)/i]),
+  ownReason:pick(block,[/\[한 줄 평가\]\s*\n?\s*([^\n]+)/i,/한 줄 평가\s*[:：]\s*([^\n]+)/i])
+ });
+ const a=make(section('A',['B','C'])),b=make(section('B',['C'])),c=make(section('C',[]));
+ return {a,b,c};
+}
+function shortSceneV187(scene){
+ const v=String(scene||'').replace(/\s+/g,' ').trim();
+ if(!v)return '-';
+ return v.length>150?v.slice(0,150)+'…':v;
+}
+function parseThumbnailCompare(text){
  const t=String(text||'');
- const pick=(block,label)=>{const m=block.match(new RegExp(label+'\\s*:\\s*([^\\n]+)','i'));return m?m[1].trim():''};
- const aMatch=t.match(/(?:🅰|A안)[\s\S]*?(?=(?:🅱|B안)|🎯|$)/i);
- const bMatch=t.match(/(?:🅱|B안)[\s\S]*?(?=🎯|$)/i);
- const a=aMatch?aMatch[0]:'',b=bMatch?bMatch[0]:'';
- const rec=t.match(/🎯[\s\S]*$/);
- return {a:{title:pick(a,'제목'),thumb:pick(a,'썸네일 문구'),reason:pick(a,'선택 이유'),score:pick(a,'자체 점수')},b:{title:pick(b,'제목'),thumb:pick(b,'썸네일 문구'),reason:pick(b,'선택 이유'),score:pick(b,'자체 점수')},recommend:rec?rec[0].replace(/^🎯\s*추천\s*/,'').trim():''};
+ const get=(letter)=>{
+  const m=t.match(new RegExp(`\\[${letter}안 평가\\]([\\s\\S]*?)(?=\\n\\s*\\[(?:A안 평가|B안 평가|C안 평가|최종 추천)\\]|$)`,'i'));
+  const b=m?m[1]:'';
+  const reason=(b.match(/이유\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
+  const score=(b.match(/비교 점수\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
+  return {reason:reason.trim(),score:score.trim()};
+ };
+ const rec=(t.match(/\[최종 추천\]([\s\S]*)$/i)||[])[1]||'';
+ const recName=(rec.match(/추천안\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
+ const recReason=(rec.match(/이유\s*[:：]\s*([^\n]+)/i)||[])[1]||'';
+ return {a:get('A'),b:get('B'),c:get('C'),recommend:[recName.trim(),recReason.trim()].filter(Boolean).join('\n')};
 }
-function renderYoutubeAB(text){
- if(!$('youtubeAB'))return; $('youtubeAB').value=String(text||'');
- const d=parseYoutubeAB(text);
+function renderThumbnailABC(base,compareText=''){
+ const cmp=parseThumbnailCompare(compareText);
  const set=(id,v,f='-')=>{if($(id))$(id).textContent=v||f};
- set('ytAbATitle',d.a.title,'아직 생성되지 않았습니다.');set('ytAbAThumb',d.a.thumb);set('ytAbAReason',d.a.reason);set('ytAbAScore',d.a.score,'--/100');
- set('ytAbBTitle',d.b.title,'아직 생성되지 않았습니다.');set('ytAbBThumb',d.b.thumb);set('ytAbBReason',d.b.reason);set('ytAbBScore',d.b.score,'--/100');
- set('ytAbRecommend',d.recommend,'A/B 후보를 생성하면 추천안이 표시됩니다.');
+ for(const [k,K] of [['a','A'],['b','B'],['c','C']]){
+  const d=base[k]||{},e=cmp[k]||{};
+  set(`ytAb${K}Title`,d.headline,'후보를 찾지 못했습니다.');
+  set(`ytAb${K}Thumb`,shortSceneV187(d.scene));
+  set(`ytAb${K}Reason`,e.reason||d.ownReason||'비교 전');
+  set(`ytAb${K}Score`,e.score||d.score,'--/100');
+ }
+ set('ytAbRecommend',cmp.recommend,'A/B/C 후보를 불러왔습니다. AI 비교 평가를 준비 중입니다.');
+ if($('youtubeAB'))$('youtubeAB').value=String(compareText||'');
 }
-async function generateYoutubeAB(){
+async function compareThumbnailABC(){
  if(busy)return;
- const c=cfg();
- if(!c.topic){setStatus('먼저 주제를 입력하세요.','bad');return}
- if(!$('story').value.trim()){setStatus('A/B 후보는 완성 원고를 기준으로 만듭니다. 먼저 롱폼 원고를 붙여넣으세요.','bad');showTab('story');return}
- busy=true;const btn=$('ytAbBtn');if(btn)btn.disabled=true;setStatus('제목·썸네일 A/B 후보 생성 중...');
+ const thumb=$('thumbnail')?.value.trim()||'';
+ if(!thumb){setStatus('먼저 썸네일 탭에서 A안·B안·C안을 생성하세요.','bad');showTab('thumbnail');return}
+ const base=parseThumbnailABC(thumb);
+ if(!base.a.headline||!base.b.headline||!base.c.headline){
+  setStatus('썸네일 A/B/C 형식을 모두 찾지 못했습니다. 썸네일을 다시 생성한 뒤 비교해 주세요.','bad');showTab('thumbnail');return
+ }
+ renderThumbnailABC(base,'');
+ busy=true;const btn=$('ytAbBtn');if(btn)btn.disabled=true;setStatus('썸네일 탭의 A/B/C를 그대로 불러와 비교 중...');
  try{
-  const text=(await callGenerate('youtubeAB')).trim();
-  renderYoutubeAB(text);
-  try{localStorage.setItem('sseoljeng-youtube-ab-v179',text)}catch{}
-  setStatus('A/B 후보 생성 완료 · A는 직접 충격형, B는 궁금증·반전형입니다.','ok');
- }catch(e){setStatus('A/B 후보 생성 실패: '+e.message,'bad');console.error(e)}finally{busy=false;if(btn)btn.disabled=false}
+  const text=(await callGenerate('thumbnailCompare')).trim();
+  renderThumbnailABC(base,text);
+  try{localStorage.setItem('sseoljeng-thumbnail-abc-compare-v187',text)}catch{}
+  setStatus('썸네일 A/B/C 비교 완료 · 새 후보 생성 없이 기존 3안을 그대로 평가했습니다.','ok');
+ }catch(e){setStatus('썸네일 A/B/C 비교 실패: '+e.message,'bad');console.error(e)}finally{busy=false;if(btn)btn.disabled=false}
 }
-function loadYoutubeABV179(){try{const v=localStorage.getItem('sseoljeng-youtube-ab-v179');if(v)renderYoutubeAB(v)}catch{}}
+function loadYoutubeABV179(){
+ try{
+  const thumb=$('thumbnail')?.value.trim()||'';
+  const cmp=localStorage.getItem('sseoljeng-thumbnail-abc-compare-v187')||'';
+  if(thumb){const base=parseThumbnailABC(thumb);if(base.a.headline||base.b.headline||base.c.headline)renderThumbnailABC(base,cmp)}
+ }catch{}
+}
 
 async function generateProductionAssets(skipValidation=false){
  if(busy)return;
