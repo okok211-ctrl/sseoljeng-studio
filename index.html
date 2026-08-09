@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.1 CapCut Voice + SRT Cleaner</title>
+<title>썰쟁 Studio v18.2 CapCut Voice + SRT Original Corrector</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -89,7 +89,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v18.1</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
+ <div><h1>🎬 썰쟁 Studio v18.2</h1><div class="sub">롱폼은 ChatGPT에서 작성 · Studio는 설계·이미지·자막·쇼츠·썸네일·유튜브 제작</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -311,7 +311,13 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
    <div>
     <h2>🧹 SRT 자동 정리</h2>
     <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션에서 내보낸 SRT를 넣으면 너무 짧게 잘린 자막을 이어 붙여 2~3줄로 보기 편하게 정리합니다. 기존 시작·종료 시간 범위는 유지해 싱크를 최대한 보존합니다.</div>
-    <textarea id="srtImport" style="min-height:260px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
+    <textarea id="srtImport" style="min-height:240px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
+    <div style="margin-top:12px">
+     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 기준 오타 자동 교정 · 추천</label>
+     <div class="tiny" style="margin:6px 0 8px">자동캡션의 <b>시간값은 그대로 활용</b>하고, 화면에 표시할 글자는 아래 원본 대본에서 다시 가져옵니다. 따라서 ‘제사→재사’ 같은 음성인식 오타를 원문으로 복원합니다.</div>
+     <textarea id="srtReference" style="min-height:180px" placeholder="롱폼 원문을 넣으세요. ‘롱폼 원문 가져오기’를 누르면 현재 롱폼 탭의 원고를 자동으로 가져옵니다."></textarea>
+     <div class="clean-actions" style="margin-top:8px"><button class="btn ghost" type="button" onclick="loadStoryAsSrtReference()">📄 롱폼 원문 가져오기</button><span id="srtReferenceStats" class="tiny">원문 미등록</span></div>
+    </div>
     <div class="row" style="margin-top:10px">
      <div class="field"><label>최대 줄 수</label><select id="srtMaxLines"><option value="2" selected>2줄 · 추천</option><option value="3">3줄 · 천천히 보기</option></select></div>
      <div class="field"><label>한 줄 글자 수</label><select id="srtCharsPerLine"><option value="18">18자</option><option value="20" selected>20자 · 추천</option><option value="22">22자</option><option value="24">24자</option></select></div>
@@ -319,11 +325,11 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     </div>
     <div class="clean-actions">
      <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 SRT 파일 불러오기</button>
-     <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 2~3줄 자동 정리</button>
+     <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 오타 교정 + 2~3줄 정리</button>
      <button class="btn ghost" type="button" onclick="downloadCleanSrt()">⬇ 정리 SRT 저장</button>
     </div>
     <input id="srtFileInput" class="file-input" type="file" accept=".srt,text/plain" onchange="loadSrtFile(event)">
-    <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT를 불러오면 원본 자막 개수와 정리 후 개수를 표시합니다.</div>
+    <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
    </div>
   </div>
  </div>
@@ -1952,12 +1958,50 @@ function wrapKoreanCaption(text,lineLen,maxLines){
  }
  return joined;
 }
+function srtSpokenChars(text){return String(text||'').replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ一-龥]/g,'').length}
+function prepareSrtReference(text){
+ return cleanVrewText(String(text||''))
+  .replace(/^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*\d+\s*문단\s*(?:\*\*|__)?\s*[:：.-]?\s*/gm,'')
+  .replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'')
+  .replace(/\s+/g,' ').trim();
+}
+function referenceBoundaryMap(text){
+ const pos=[];for(let i=0;i<text.length;i++){if(/[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ一-龥]/.test(text[i]))pos.push(i)}return pos;
+}
+function replaceCuesWithReference(cues,reference){
+ const ref=prepareSrtReference(reference);if(!ref||!cues.length)return {cues,ok:false,reason:'원문 없음'};
+ const refPos=referenceBoundaryMap(ref);if(refPos.length<10)return {cues,ok:false,reason:'원문이 너무 짧음'};
+ const weights=cues.map(c=>Math.max(1,srtSpokenChars(c.text)));const total=weights.reduce((a,b)=>a+b,0);if(!total)return {cues,ok:false,reason:'자막 글자 없음'};
+ let acc=0,rawStart=0;const out=[];
+ for(let i=0;i<cues.length;i++){
+  acc+=weights[i];let rawEnd;
+  if(i===cues.length-1)rawEnd=ref.length;
+  else{
+   const target=Math.max(1,Math.min(refPos.length-1,Math.round(acc/total*refPos.length)));
+   rawEnd=refPos[target];
+   // 너무 어색한 중간 절단을 줄이기 위해 가까운 공백/문장부호를 찾음
+   let best=rawEnd,bestDist=999;
+   for(let d=-8;d<=8;d++){
+    const k=rawEnd+d;if(k<=rawStart||k>=ref.length)continue;
+    if(/[\s,.!?。！？…]/.test(ref[k])){const dist=Math.abs(d);if(dist<bestDist){best=k+1;bestDist=dist}}
+   }
+   rawEnd=Math.max(rawStart+1,best);
+  }
+  const piece=ref.slice(rawStart,rawEnd);out.push({...cues[i],text:piece,exactSource:true});rawStart=rawEnd;
+ }
+ if(rawStart<ref.length&&out.length)out[out.length-1].text+=ref.slice(rawStart);
+ return {cues:out,ok:true,referenceChars:refPos.length,captionChars:total};
+}
+function loadStoryAsSrtReference(){
+ const story=$('story')?.value||'';if(!story.trim()){setStatus('롱폼 탭에 원고가 없습니다. 먼저 원고를 붙여넣으세요.','bad');return}
+ const ref=prepareSrtReference(story);$('srtReference').value=ref;if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${srtSpokenChars(ref).toLocaleString()}자 준비됨`;setStatus('롱폼 원문을 SRT 오타 교정 기준으로 가져왔습니다.','ok');saveLocal(true);
+}
 function cleanSrtCues(cues,{maxLines=2,lineLen=20,maxDuration=6500}={}){
  const maxChars=Math.max(18,Number(maxLines)*Number(lineLen));const out=[];let cur=null;
  const flush=()=>{if(cur){cur.text=wrapKoreanCaption(cur.text,Number(lineLen),Number(maxLines));out.push(cur);cur=null}};
  for(const cue of cues){
   const gap=cur?Math.max(0,cue.start-cur.end):0;
-  const joined=cur?(cur.text+' '+cue.text).replace(/\s+/g,' ').trim():cue.text;
+  const joined=cur?(cur.exactSource||cue.exactSource?String(cur.text||'')+String(cue.text||''):(cur.text+' '+cue.text).replace(/\s+/g,' ').trim()):cue.text;
   const duration=cur?cue.end-cur.start:cue.end-cue.start;
   const hardStop=cur&&/[.!?。！？…]$/.test(cur.text.trim())&&cur.text.replace(/\s/g,'').length>=Math.floor(maxChars*.55);
   const canMerge=cur && gap<=450 && joined.length<=maxChars && duration<=maxDuration && !hardStop;
@@ -1971,15 +2015,24 @@ async function loadSrtFile(event){
 }
 function cleanImportedSrt(){
  const raw=$('srtImport')?.value?.trim();if(!raw){setStatus('정리할 SRT를 붙여넣거나 파일을 불러오세요.','bad');return}
- const cues=parseSrtText(raw);if(!cues.length){setStatus('SRT 시간 형식을 읽지 못했습니다. CapCut에서 내보낸 .srt 파일인지 확인하세요.','bad');return}
+ let cues=parseSrtText(raw);if(!cues.length){setStatus('SRT 시간 형식을 읽지 못했습니다. CapCut에서 내보낸 .srt 파일인지 확인하세요.','bad');return}
+ const originalCount=cues.length,useRef=!!$('srtUseReference')?.checked;let correction='오타 교정 안 함',refInfo=null;
+ if(useRef){
+  let ref=$('srtReference')?.value?.trim();if(!ref&&$('story')?.value?.trim()){ref=prepareSrtReference($('story').value);$('srtReference').value=ref}
+  if(!ref){setStatus('원본 대본 기준 교정이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
+  refInfo=replaceCuesWithReference(cues,ref);
+  if(!refInfo.ok){setStatus('원본 대본 교정 실패: '+refInfo.reason,'bad');return}
+  cues=refInfo.cues;correction='원본 대본으로 오타 교정';if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${refInfo.referenceChars.toLocaleString()}자 · 자동캡션 비교 ${refInfo.captionChars.toLocaleString()}자`;
+ }
  const maxLines=Number($('srtMaxLines')?.value||2),lineLen=Number($('srtCharsPerLine')?.value||20),maxDuration=Math.round(Number($('srtMaxDuration')?.value||6.5)*1000);
  const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration});$('srt').value=formatSrtCues(cleaned);saveLocal(true);updateMeta();
- if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 ${cues.length}개 → 정리 후 ${cleaned.length}개 · 최대 ${maxLines}줄 · 줄당 약 ${lineLen}자 · 최대 ${maxDuration/1000}초`;
- setStatus(`SRT 자동 정리 완료: ${cues.length}개 → ${cleaned.length}개 자막`,'ok');
+ if($('srtCleanStats'))$('srtCleanStats').textContent=`${correction} · 원본 자막 ${originalCount}개 → 정리 후 ${cleaned.length}개 · 최대 ${maxLines}줄 · 줄당 약 ${lineLen}자 · 최대 ${maxDuration/1000}초`;
+ setStatus(`SRT 완료: ${correction} + ${originalCount}개 → ${cleaned.length}개 자막`,'ok');
 }
+
 function downloadCleanSrt(){
  const text=$('srt')?.value?.trim();if(!text){setStatus('먼저 SRT 자동 정리를 실행하세요.','bad');return}
- const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
+ const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_오타교정_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
 }
 
 async function copyCurrent(){if(active==='voice'){return copyVoiceCurrent()}if(active==='vrew'){return copyVrewCurrent()}const target=fields[active]?$(fields[active]):null;if(!target){setStatus('복사할 내용을 찾지 못했습니다.','bad');return}await navigator.clipboard.writeText(target.value);setStatus('현재 내용을 복사했습니다.','ok')}
