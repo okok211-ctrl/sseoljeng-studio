@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.4 CapCut Voice + SRT Full Original Rebuild</title>
+<title>썰쟁 Studio v18.5 CapCut Voice + SRT Full Original Rebuild</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -330,6 +330,16 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     </div>
     <input id="srtFileInput" class="file-input" type="file" accept=".srt,text/plain" onchange="loadSrtFile(event)">
     <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
+     <h2>🖼️ 이미지 타임라인 가이드</h2>
+     <div class="tiny" style="margin:0 0 10px">이미지 프롬프트의 <b>사용 문단</b> 번호와 CapCut 자동캡션 SRT의 시간 기준점을 연결해, 각 이미지를 캡컷 타임라인 몇 분 몇 초에 넣을지 계산합니다.</div>
+     <div class="clean-actions">
+      <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 이미지 삽입시간 계산</button>
+      <button class="btn ghost" type="button" onclick="copyImageTimelineGuide()">📋 가이드 복사</button>
+     </div>
+     <textarea id="imageTimelineGuide" style="min-height:240px;margin-top:10px" readonly placeholder="SRT를 불러오고 이미지 프롬프트를 생성한 뒤 ‘이미지 삽입시간 계산’을 누르세요."></textarea>
+     <div id="imageTimelineStats" class="tiny" style="margin-top:8px">이미지 프롬프트에서 ‘사용 문단: 4문단’ 같은 번호를 자동으로 읽습니다.</div>
+    </div>
    </div>
   </div>
  </div>
@@ -2097,6 +2107,77 @@ function cleanImportedSrt(){
  setStatus(`SRT 완료: ${cues.length}개 → ${cleaned.length}개 자막`,'ok');
 }
 
+function extractImageParagraphRefs(text){
+ const src=String(text||''),refs=[];
+ // 각 이미지 블록을 우선 분리한다. "1. [사용 문단] 문단 4", "[이미지 1] ... 사용 문단: 4문단" 등을 지원한다.
+ const heads=[...src.matchAll(/(?:^|\n)\s*(?:\[\s*이미지\s*(\d+)\s*\]|(?:이미지\s*)?(\d+)\s*[.)번]\s*)/gim)];
+ if(heads.length){
+  for(let i=0;i<heads.length;i++){
+   const no=Number(heads[i][1]||heads[i][2]||i+1),chunk=src.slice(heads[i].index,i+1<heads.length?heads[i+1].index:src.length);
+   const m=chunk.match(/(?:사용\s*문단|문단)\s*[:：]?\s*(?:문단\s*)?(\d+)(?:\s*문단)?/i);
+   if(m)refs.push({image:no,paragraph:Number(m[1])});
+  }
+ }
+ if(!refs.length){
+  const re=/(?:사용\s*문단)\s*[:：]?\s*(?:문단\s*)?(\d+)(?:\s*문단)?/gi;let m,i=1;
+  while((m=re.exec(src))!==null)refs.push({image:i++,paragraph:Number(m[1])});
+ }
+ return refs.filter(x=>Number.isFinite(x.paragraph)&&x.paragraph>0).sort((a,b)=>a.image-b.image);
+}
+function paragraphStartNormPositions(story,reference){
+ const blocks=paragraphBlocks(story),R=buildNormalizedReference(reference),out=[];let cursor=0;
+ for(const b of blocks){
+  const body=normalizeSrtMatchText(cleanVrewText(b.body));if(!body)continue;
+  const probe=body.slice(0,Math.min(36,body.length));let pos=R.norm.indexOf(probe,cursor);
+  if(pos<0){
+   // 짧은 문장/특수문자 차이를 대비해 더 짧은 앞부분으로 재시도
+   const p2=body.slice(0,Math.min(16,body.length));pos=p2?R.norm.indexOf(p2,cursor):-1;
+  }
+  if(pos<0)pos=cursor;
+  out.push({number:b.number,pos,text:cleanVrewText(b.body).replace(/\s+/g,' ').trim()});
+  cursor=Math.max(cursor,pos+Math.max(1,body.length));
+ }
+ return {R,blocks:out};
+}
+function shortClock(ms){
+ ms=Math.max(0,Math.round(ms));const total=Math.floor(ms/1000),h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
+ return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function buildImageTimelineGuide(){
+ const story=$('story')?.value||'',images=$('imagesOut')?.value||'',raw=$('srtImport')?.value?.trim()||'';
+ if(!story.trim()){setStatus('롱폼 원고가 없습니다. 먼저 롱폼 탭에 원고를 붙여넣으세요.','bad');return}
+ if(!images.trim()){setStatus('이미지 프롬프트가 없습니다. 먼저 이미지 프롬프트를 생성하세요.','bad');return}
+ if(!raw){setStatus('CapCut 자동캡션 SRT가 없습니다. SRT 파일을 먼저 불러오세요.','bad');return}
+ const cues=parseSrtText(raw);if(!cues.length){setStatus('CapCut SRT 시간 정보를 읽지 못했습니다.','bad');return}
+ const ref=prepareSrtReference(story),A=buildSrtTimeAnchors(cues,ref);if(!A.ok){setStatus('이미지 시간 계산 실패: '+A.reason,'bad');return}
+ let refs=extractImageParagraphRefs(images),usedFallback=false;
+ const P=paragraphStartNormPositions(story,ref),byNo=new Map(P.blocks.map(x=>[x.number,x]));
+ if(!refs.length){
+  // 이미지 프롬프트 형식이 달라도 작업이 막히지 않게 설정 이미지 수 기준으로 균등 문단을 사용한다.
+  const n=Math.max(1,Number(cfg().images)||1),nums=P.blocks.map(x=>x.number);
+  if(!nums.length){setStatus('롱폼 문단 번호를 읽지 못했습니다.','bad');return}
+  refs=Array.from({length:n},(_,i)=>({image:i+1,paragraph:nums[Math.min(nums.length-1,Math.floor(i*nums.length/n))]}));usedFallback=true;
+ }
+ const rows=[];
+ for(const r of refs){
+  const p=byNo.get(r.paragraph);if(!p)continue;
+  const time=interpolateSrtTime(A.anchors,p.pos);rows.push({...r,time,preview:p.text.slice(0,42)});
+ }
+ if(!rows.length){setStatus('이미지 프롬프트의 사용 문단과 롱폼 문단을 연결하지 못했습니다.','bad');return}
+ let out=`[이미지 타임라인 가이드]\n총 영상 길이: ${shortClock(cues[cues.length-1].end)}\n\n`;
+ rows.forEach((r,i)=>{
+  const next=rows[i+1];const end=next?next.time:cues[cues.length-1].end,dur=Math.max(0,end-r.time);
+  out+=`이미지 ${r.image} · 문단 ${r.paragraph}\n삽입: ${shortClock(r.time)}${next?`  → 다음 이미지: ${shortClock(end)}  · 유지 약 ${shortClock(dur)}`:`  → 영상 끝까지 · 유지 약 ${shortClock(dur)}`}\n장면 시작: ${r.preview}${r.preview.length>=42?'…':''}\n\n`;
+ });
+ $('imageTimelineGuide').value=out.trim();
+ if($('imageTimelineStats'))$('imageTimelineStats').textContent=`이미지 ${rows.length}개 위치 계산 완료 · 시간 기준점 ${A.anchors.length}개${usedFallback?' · ⚠️ 사용 문단 표기를 못 찾아 균등 문단으로 임시 계산':''}`;
+ setStatus(`이미지 ${rows.length}개 삽입시간을 계산했습니다. 캡컷 타임라인에서 표시된 시간에 이미지를 넣으세요.`,'ok');
+}
+async function copyImageTimelineGuide(){
+ const t=$('imageTimelineGuide')?.value||'';if(!t.trim()){setStatus('먼저 이미지 삽입시간을 계산하세요.','bad');return}
+ await navigator.clipboard.writeText(t);setStatus('이미지 타임라인 가이드를 복사했습니다.','ok');
+}
+
 function downloadCleanSrt(){
  const text=$('srt')?.value?.trim();if(!text){setStatus('먼저 SRT 자동 정리를 실행하세요.','bad');return}
  const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_원문100퍼_정리자막.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('정리된 SRT를 저장했습니다.','ok');
@@ -2109,7 +2190,7 @@ async function downloadZip(){
  f.file('00_스토리설계도.txt',$('blueprint').value);f.file('00-0_사건기억장.txt',memoryText());f.file('00-1_GPT롱폼프롬프트.txt',$('gptPrompt').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
  f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
  if(vrewParts.length){const vf=f.folder('Vrew파트');vrewParts.forEach((p,i)=>vf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text))}
- f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 2~3줄 자막으로 합칠 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
+ f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 같은 탭의 이미지 타임라인 가이드에서 이미지 프롬프트의 사용 문단을 실제 캡컷 삽입시간으로 계산할 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
  const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
  setStatus('캡컷용 ZIP 저장 완료','ok')
 }
