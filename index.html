@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v18.5 CapCut Voice + SRT Full Original Rebuild</title>
+<title>썰쟁 Studio v18.6 Simple Media Workflow</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -269,8 +269,9 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="youtubeab">🧪 A/B 테스트</button>
   <button class="tab" data-tab="thumbnail">썸네일</button>
   <button class="tab" data-tab="japanese">일본어</button>
-  <button class="tab" data-tab="srt">SRT</button>
-  <button class="tab" data-tab="voice">🎙 CapCut 음성용</button>
+  <button class="tab" data-tab="voice">🎙 음성 만들기</button>
+  <button class="tab" data-tab="srt">📝 자막 정리</button>
+  <button class="tab" data-tab="imagetimeline">🖼️ 이미지 넣기</button>
   <button class="tab" data-tab="vrew">Vrew 출력</button>
   <button class="tab" data-tab="consistency">설정 충돌 검사</button>
  </nav>
@@ -309,7 +310,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div id="srtTools" class="hidden" style="margin-top:10px">
   <div class="vrew-box">
    <div>
-    <h2>🧹 SRT 자동 정리</h2>
+    <h2>📝 자막 정리 · 원문 복원</h2>
     <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션은 시간 기준점으로만 사용하고, 최종 자막 글자는 원본 대본 전체에서 다시 만듭니다. 자동캡션에서 빠진 단어도 원문에서 복원하며, 완료 후 원문 누락 검사를 표시합니다.</div>
     <textarea id="srtImport" style="min-height:240px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
     <div style="margin-top:12px">
@@ -325,21 +326,31 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     </div>
     <div class="clean-actions">
      <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 SRT 파일 불러오기</button>
-     <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 오타 교정 + 2~3줄 정리</button>
+     <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 원문 복원 + 2~3줄 정리</button>
      <button class="btn ghost" type="button" onclick="downloadCleanSrt()">⬇ 정리 SRT 저장</button>
     </div>
     <input id="srtFileInput" class="file-input" type="file" accept=".srt,text/plain" onchange="loadSrtFile(event)">
     <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
-    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
-     <h2>🖼️ 이미지 타임라인 가이드</h2>
-     <div class="tiny" style="margin:0 0 10px">이미지 프롬프트의 <b>사용 문단</b> 번호와 CapCut 자동캡션 SRT의 시간 기준점을 연결해, 각 이미지를 캡컷 타임라인 몇 분 몇 초에 넣을지 계산합니다.</div>
-     <div class="clean-actions">
-      <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 이미지 삽입시간 계산</button>
-      <button class="btn ghost" type="button" onclick="copyImageTimelineGuide()">📋 가이드 복사</button>
-     </div>
-     <textarea id="imageTimelineGuide" style="min-height:240px;margin-top:10px" readonly placeholder="SRT를 불러오고 이미지 프롬프트를 생성한 뒤 ‘이미지 삽입시간 계산’을 누르세요."></textarea>
-     <div id="imageTimelineStats" class="tiny" style="margin-top:8px">이미지 프롬프트에서 ‘사용 문단: 4문단’ 같은 번호를 자동으로 읽습니다.</div>
+
+   </div>
+  </div>
+ </div>
+ <div id="imageTimelinePanel" class="output hidden" style="min-height:650px;height:auto">
+  <div class="vrew-box" style="grid-template-columns:1fr">
+   <div>
+    <h2>🖼️ 이미지 넣기 · 타임라인 가이드</h2>
+    <div class="tiny" style="margin:0 0 12px">복잡한 설정 없이 <b>CapCut 자동캡션 SRT</b>와 이미 만들어 둔 <b>이미지 프롬프트의 사용 문단</b>을 연결해 이미지 넣을 시간을 계산합니다.</div>
+    <div class="note" style="margin-bottom:12px"><b>사용 순서</b> ① SRT 파일 불러오기 → ② 이미지 시간 계산 → ③ CapCut 타임라인의 표시된 시간에 이미지 넣기</div>
+    <div class="clean-actions">
+     <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 CapCut SRT 불러오기</button>
+     <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 이미지 시간 계산</button>
+     <button class="btn ghost" type="button" onclick="copyImageTimelineGuide()">📋 가이드 복사</button>
     </div>
+    <textarea id="imageTimelineGuide" style="min-height:420px;margin-top:12px" readonly placeholder="SRT 파일을 불러온 뒤 ‘이미지 시간 계산’을 누르세요.
+
+예) 이미지 1 · 문단 4 → 03:42
+이미지 2 · 문단 9 → 08:15"></textarea>
+    <div id="imageTimelineStats" class="tiny" style="margin-top:8px">이미지 프롬프트에서 ‘사용 문단: 4문단’ 같은 번호를 자동으로 읽습니다.</div>
    </div>
   </div>
  </div>
@@ -347,7 +358,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <textarea id="voice" class="hidden" aria-hidden="true"></textarea>
   <div class="vrew-box">
    <div>
-    <h2>🎙 CapCut 음성용 자동 분할</h2>
+    <h2>🎙 음성 만들기 · CapCut용</h2>
     <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 9,700자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
     <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘9,700자 이하 자동 분할’을 눌러주세요.</div></div>
     <div class="clean-actions">
@@ -807,7 +818,7 @@ function setStatus(message,type=''){
 }
 let active='story',busy=false;
 const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'imagesOut',shorts:'shorts',youtube:'youtube',thumbnail:'thumbnail',japanese:'japanese',srt:'srt',consistency:'consistency'};
-const panelFields={memory:'memory',voice:'voicePanel',vrew:'vrew',youtubeab:'youtubeABPanel'};
+const panelFields={memory:'memory',voice:'voicePanel',imagetimeline:'imageTimelinePanel',vrew:'vrew',youtubeab:'youtubeABPanel'};
 let longformMode=30,vrewParts=[],vrewCurrentIndex=0,voiceParts=[],voiceCurrentIndex=0;
 const DEFAULT_CHARACTERS=[
  {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
