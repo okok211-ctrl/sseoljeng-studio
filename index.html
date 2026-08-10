@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v20.2 Flexible Paragraph Workflow</title>
+<title>썰쟁 Studio v20.3 Flexible Paragraph Workflow</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -89,7 +89,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v20.2</h1><div class="sub">문단 번호는 유지 · 문단별 글자 수 제한 없이 자연스럽게 작성 · CapCut 제작 최적화</div></div>
+ <div><h1>🎬 썰쟁 Studio v20.3</h1><div class="sub">문단 번호는 유지 · 문단별 글자 수 제한 없이 자연스럽게 작성 · CapCut 제작 최적화</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -361,15 +361,29 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="vrew-box">
    <div>
     <h2>🎙 음성 만들기 · CapCut용</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 3,000자 이하로 나눕니다. 복사할 때 TTS용 문장부호·공백을 자동 정리하고, 문장 끝을 우선해 분할합니다.</div>
-    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘3,000자 이하 자동 분할’을 눌러주세요.</div></div>
+    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 선택한 글자 수 이하로 나눕니다. 복사할 때 TTS용 문장부호·공백을 자동 정리하고, 문장 끝을 우선해 분할합니다.</div>
+    <div class="note" style="margin-bottom:10px">
+     <b>음성 분할 크기</b>
+     <div class="clean-actions" style="margin-top:8px">
+      <button class="duration-pill voice-limit-pill" type="button" data-voice-limit="1300" onclick="setVoiceSplitLimit(1300)">1,300자 · 안정</button>
+      <button class="duration-pill voice-limit-pill" type="button" data-voice-limit="3000" onclick="setVoiceSplitLimit(3000)">3,000자 · 권장</button>
+      <button class="duration-pill voice-limit-pill" type="button" data-voice-limit="5000" onclick="setVoiceSplitLimit(5000)">5,000자</button>
+      <button class="duration-pill voice-limit-pill" type="button" data-voice-limit="8000" onclick="setVoiceSplitLimit(8000)">8,000자 · 빠른 작업</button>
+     </div>
+     <div class="clean-actions" style="margin-top:8px">
+      <input id="voiceSplitCustom" type="number" min="500" max="10000" step="100" placeholder="직접 입력 (500~10000)" style="max-width:210px">
+      <button class="btn ghost" type="button" onclick="applyCustomVoiceSplitLimit()">직접 입력 적용</button>
+      <span id="voiceSplitCurrent" class="tiny">현재: 3,000자</span>
+     </div>
+    </div>
+    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘선택 크기로 자동 분할’을 눌러주세요.</div></div>
     <div class="clean-actions">
-     <button class="btn primary wide" type="button" onclick="makeVoice()">3,000자 이하 자동 분할</button>
+     <button id="voiceSplitBtn" class="btn primary wide" type="button" onclick="makeVoice()">3,000자 이하 자동 분할</button>
      <button class="btn ghost" type="button" onclick="optimizeVoiceCurrent()">✨ 현재 파트 TTS 최적화</button>
      <button class="btn ghost" type="button" onclick="copyVoiceCurrent()">현재 파트 복사</button>
      <button class="btn ghost" type="button" onclick="downloadVoiceParts()">TXT 묶음 저장</button>
     </div>
-    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 파트당 최대 3,000자로 분할하며, 목소리가 조금 늘어지는 구간은 재생성 여부를 직접 판단하면 됩니다.</div>
+    <div class="tiny" style="margin-top:8px">권장 작업: 환경이 안정적이면 8,000자, 실패가 잦으면 3,000자 또는 1,300자를 선택하세요. 마지막 선택값은 프로젝트에 저장됩니다.</div>
    </div>
    <div>
     <h2 id="voiceCurrentTitle">현재 파트</h2>
@@ -1000,7 +1014,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.1-capcut-tts-optimizer',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.3-capcut-selectable-split',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -1024,7 +1038,7 @@ function cfg(){
   pov:$('pov').value,tone:$('tone').value,density:$('density').value,quality:$('quality').value,
   subscribe:$('subscribe').checked,strict:false,
   endingStyle:$('endingStyle').value,endingLength:$('endingLength').value,
-  thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value,longformMode
+  thumbLayout:$('thumbLayout').value,thumbStyle:$('thumbStyle').value,thumbTextLength:$('thumbTextLength').value,thumbPeople:$('thumbPeople').value,longformMode,voiceSplitLimit:getVoiceSplitLimit()
  };
 }
 function project(){return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),project:{config:cfg(),selectedCharacterId},characters:normalizeCharacterSlotsV175(stripFacesV177(getCharacters())),outputs:outputsNow()}}
@@ -1034,7 +1048,7 @@ function normalizeProject(raw){
  let config={},characters=[],outputs={},selected='';
  if(raw.app===APP_ID&&raw.schemaVersion){config=raw.project?.config||raw.config||{};selected=raw.project?.selectedCharacterId||raw.selectedCharacterId||'';characters=raw.characters||raw.project?.characters||[];outputs=raw.outputs||raw.project?.outputs||{}}
  else{config=raw.config||raw.settings||{};selected=raw.selectedCharacterId||'';characters=raw.characters||[];outputs={story:raw.story,blueprint:raw.blueprint,gptprompt:raw.gptprompt||raw.gptPrompt,images:raw.images||raw.imagesOut,shorts:raw.shorts,youtube:raw.youtube,thumbnail:raw.thumbnail,japanese:raw.japanese,srt:raw.srt}}
- const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2'),longformMode:Number(config.longformMode||30)};
+ const cleanCfg={name:config.name||config.title||'',topic:config.topic||'',heroine:config.heroine||'',count:String(config.count||20),images:String(config.images||3),pov:config.pov||'1인칭 회고체',tone:config.tone||'감정 몰입형',density:config.density||'높음',quality:config.quality||'균형',subscribe:config.subscribe!==false,strict:false,endingStyle:config.endingStyle||'auto',endingLength:config.endingLength||'compact',thumbLayout:config.thumbLayout||'auto',thumbStyle:config.thumbStyle||'drama',thumbTextLength:config.thumbTextLength||'short',thumbPeople:String(config.thumbPeople||'2'),longformMode:Number(config.longformMode||30),voiceSplitLimit:normalizedVoiceSplitLimit(config.voiceSplitLimit||3000)};
  const cleanChars=Array.isArray(characters)?characters.filter(Boolean).map(normalizeCharacter):[];
  const cleanOut={story:'',blueprint:'',gptprompt:'',images:'',shorts:'',youtube:'',thumbnail:'',japanese:'',srt:'',voice:'',consistency:'',memoryFacts:'',memoryConflicts:'',memoryClues:'',memoryTimeline:'',vrewParts:[],voiceParts:[]};for(const k in cleanOut){cleanOut[k]=(k==='vrewParts'||k==='voiceParts')?(Array.isArray(outputs?.[k])?outputs[k]:[]):String(outputs?.[k]??'')}
  return{app:APP_ID,schemaVersion:SCHEMA_VERSION,createdWith:APP_VERSION,savedAt:new Date().toISOString(),migratedFrom:legacyVersion(raw),project:{config:cleanCfg,selectedCharacterId:selected},characters:normalizeCharacterSlotsV175(cleanChars),outputs:cleanOut};
@@ -1046,9 +1060,9 @@ function applyProject(raw){
  for(const k of Object.keys(fields))if(o[k]!==undefined)$(fields[k]).value=o[k]||'';
  $('voice').value=o.voice||'';
  $('memoryFacts').value=o.memoryFacts||'';$('memoryConflicts').value=o.memoryConflicts||'';$('memoryClues').value=o.memoryClues||'';$('memoryTimeline').value=o.memoryTimeline||'';
- vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];voiceParts=Array.isArray(o.voiceParts)?o.voiceParts:[];longformMode=Number(c.longformMode||30);vrewCurrentIndex=0;voiceCurrentIndex=0;
+ vrewParts=Array.isArray(o.vrewParts)?o.vrewParts:[];voiceParts=Array.isArray(o.voiceParts)?o.voiceParts:[];longformMode=Number(c.longformMode||30);voiceSplitLimit=normalizedVoiceSplitLimit(c.voiceSplitLimit||3000);vrewCurrentIndex=0;voiceCurrentIndex=0;
  if(p.characters.length){storeCharacters(p.characters);selectedCharacterId=p.project.selectedCharacterId||p.characters[0].id}else if(!getCharacters().length)storeCharacters(DEFAULT_CHARACTERS.map(normalizeCharacter));
- renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVrewParts();renderVoiceParts();updateMeta();return p;
+ renderCharacters();setTimeout(()=>refreshGlobalFacesV178().catch(console.warn),50);renderLongformMode();renderVoiceSplitLimit();renderVrewParts();renderVoiceParts();updateMeta();return p;
 }
 function pushBackup(snapshot,reason='자동 백업'){
  try{const ring=JSON.parse(localStorage.getItem(BACKUP_RING_KEY)||'[]');ring.unshift({reason,at:new Date().toISOString(),data:snapshot});localStorage.setItem(BACKUP_RING_KEY,JSON.stringify(ring.slice(0,5)))}catch{}
@@ -1406,6 +1420,31 @@ function selectVrewPart(i){vrewCurrentIndex=Math.max(0,Math.min(vrewParts.length
 async function copyVrewCurrent(){const t=$('vrewCurrent').value;if(!t)return;await navigator.clipboard.writeText(t);setStatus('현재 Vrew 파트를 복사했습니다.','ok')}
 async function downloadVrewParts(){if(!vrewParts.length)makeVrewParts();if(!vrewParts.length)return;const z=new JSZip(),f=z.folder('vrew-parts');vrewParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text));const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_Vrew파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('Vrew TXT 파트를 ZIP으로 저장했습니다.','ok')}
 
+let voiceSplitLimit=3000;
+function normalizedVoiceSplitLimit(v){
+ const n=Math.round(Number(v)||3000);return Math.max(500,Math.min(10000,n));
+}
+function getVoiceSplitLimit(){return normalizedVoiceSplitLimit(voiceSplitLimit)}
+function renderVoiceSplitLimit(){
+ const limit=getVoiceSplitLimit();
+ document.querySelectorAll('.voice-limit-pill').forEach(b=>b.classList.toggle('active',Number(b.dataset.voiceLimit)===limit));
+ if($('voiceSplitCurrent'))$('voiceSplitCurrent').textContent=`현재: ${limit.toLocaleString()}자`;
+ if($('voiceSplitBtn'))$('voiceSplitBtn').textContent=`${limit.toLocaleString()}자 이하 자동 분할`;
+}
+function setVoiceSplitLimit(v,rerender=true){
+ voiceSplitLimit=normalizedVoiceSplitLimit(v);
+ if($('voiceSplitCustom') && ![1300,3000,5000,8000].includes(voiceSplitLimit))$('voiceSplitCustom').value=voiceSplitLimit;
+ renderVoiceSplitLimit();
+ if(rerender && $('story')?.value.trim())makeVoice(true);
+ saveLocal(true);
+ if(rerender)setStatus(`CapCut 음성 분할 크기를 ${voiceSplitLimit.toLocaleString()}자로 설정했습니다.`,'ok');
+}
+function applyCustomVoiceSplitLimit(){
+ const v=Number($('voiceSplitCustom')?.value||0);
+ if(!v||v<500||v>10000){setStatus('직접 입력은 500~10,000자 사이로 입력하세요.','bad');return}
+ setVoiceSplitLimit(v);
+}
+
 function optimizeCapCutTtsText(text){
  let t=String(text||'').replace(/\r/g,'');
  t=t.replace(/\.{3,}|…+/g,'.');
@@ -1439,7 +1478,7 @@ function optimizeVoiceCurrent(){
  $('voice').value=voiceParts.map(x=>x.text).join('\n\n===== 다음 음성 파트 =====\n\n');
  renderVoiceParts(); saveLocal(true); setStatus(`${p.title} TTS 최적화를 완료했습니다.`,'ok');
 }
-function splitCapCutVoiceText(text,limit=3000){
+function splitCapCutVoiceText(text,limit=getVoiceSplitLimit()){
  const clean=cleanVrewText(text).replace(/\n{3,}/g,'\n\n').trim();
  if(!clean)return [];
  const paragraphs=clean.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
@@ -1475,17 +1514,18 @@ function splitCapCutVoiceText(text,limit=3000){
 function makeVoice(silent=false){
  const text=$('story').value.trim();
  if(!text){if(!silent){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');showTab('story')}return}
- const parts=splitCapCutVoiceText(text,3000);
+ const limit=getVoiceSplitLimit();
+ const parts=splitCapCutVoiceText(text,limit);
  voiceParts=parts.map((text,i)=>({title:`음성 ${i+1}`,text,copied:false}));
  voiceCurrentIndex=0;
  $('voice').value=parts.join('\n\n===== 다음 음성 파트 =====\n\n');
  renderVoiceParts();saveLocal(true);
  if(!silent)showTab('voice');
- setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 3,000자입니다.`,'ok');
+ setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 ${limit.toLocaleString()}자입니다.`,'ok');
 }
 function renderVoiceParts(){
  const list=$('voicePartList');if(!list)return;
- if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘3,000자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
+ if(!voiceParts.length){list.innerHTML=`<div class="meta">롱폼 원고를 붙여넣고 ‘${getVoiceSplitLimit().toLocaleString()}자 이하 자동 분할’을 눌러주세요.</div>`;$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
  voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,voiceCurrentIndex));
  list.innerHTML=voiceParts.map((p,i)=>`<button type="button" class="vrew-part-btn ${i===voiceCurrentIndex?'active':''}" onclick="selectVoicePart(${i})"><b>${p.copied?'✓ ':''}${p.title}</b><span>${p.text.length.toLocaleString()}자</span></button>`).join('');
  const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateVoiceQuality();updateMeta();
@@ -2577,7 +2617,7 @@ async function checkConsistency(){
 
 document.addEventListener('DOMContentLoaded',()=>{const q=$('benchQuery');if(q)q.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchYouTubeBenchmarks();}})});
 
-renderCharacters();updateMeta();renderLongformMode();renderVrewParts();renderVoiceParts();renderPromptWizard();loadYoutubeABV179();
+renderCharacters();updateMeta();renderLongformMode();renderVoiceSplitLimit();renderVrewParts();renderVoiceParts();renderPromptWizard();loadYoutubeABV179();
 </script>
 <script src="js/firebase-cloud.js">
 
