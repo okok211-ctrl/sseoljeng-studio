@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v20.6 Flexible Paragraph Workflow</title>
+<title>썰쟁 Studio v20.8 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v20.3</h1><div class="sub">문단 번호는 유지 · 문단별 글자 수 제한 없이 자연스럽게 작성 · CapCut 제작 최적화</div></div>
+ <div><h1>🎬 썰쟁 Studio v20.8</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -483,14 +483,7 @@ async function analyzeSelectedBenchmark(){
  try{
   const t=await callGeneratePrompt(prompt,'benchmark');
   $('benchAnalysis').textContent=t.trim();
-  const candidates=[];
-  for(let n=1;n<=3;n++){
-   const title=(t.match(new RegExp('\\[후보'+n+' 제목\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 제목\\]'))||[])[1]?.trim()||'';
-   const topic=(t.match(new RegExp('\\[후보'+n+' 주제\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 주제\\]'))||[])[1]?.trim()||'';
-   const scoreRaw=(t.match(new RegExp('\\[후보'+n+' 점수\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 점수\\]'))||[])[1]?.trim()||'';
-   const reason=(t.match(new RegExp('\\[후보'+n+' 이유\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 이유\\]'))||[])[1]?.trim()||'';
-   if(title||topic)candidates.push({title,topic,score:Math.max(0,Math.min(100,parseInt(scoreRaw,10)||0)),reason});
-  }
+  const candidates=extractBenchmarkCandidatesV208(t);
   YT_BENCH_CANDIDATES_V207=candidates;
   if(candidates.length){YT_BENCH_LAST_TITLE_V179=candidates[0].title;YT_BENCH_LAST_IDEA_V179=candidates[0].topic}
   if(!candidates.length){
@@ -500,10 +493,45 @@ async function analyzeSelectedBenchmark(){
   }
  }catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}
 }
+function extractBenchmarkCandidatesV208(text){
+ const t=String(text||'').replace(/\r/g,'');
+ const out=[];
+ const read=(n,label,nextLabels)=>{
+  const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const closes='(?:\\[\\/후보'+n+' '+escaped+'\\])?';
+  const next=nextLabels.map(x=>'\\[후보'+n+' '+x+'\\]').concat(n<3?['\\[후보'+(n+1)+' 제목\\]']:[]).join('|');
+  const re=new RegExp('\\[후보'+n+' '+escaped+'\\]\\s*([\\s\\S]*?)\\s*'+closes+'(?='+ (next||'$') +'|$)','i');
+  const m=t.match(re);return m?m[1].trim():'';
+ };
+ for(let n=1;n<=3;n++){
+  let title=read(n,'제목',['주제','점수','이유']);
+  let topic=read(n,'주제',['점수','이유']);
+  let scoreRaw=read(n,'점수',['이유']);
+  let reason=read(n,'이유',[]);
+  // 일부 모델이 닫는 태그 없이 한 줄 형식으로 출력하는 경우를 추가 지원한다.
+  if(!title){const m=t.match(new RegExp('\\[후보'+n+' 제목\\]\\s*([^\\n\\[]+)','i'));title=m?m[1].trim():''}
+  if(!topic){const m=t.match(new RegExp('\\[후보'+n+' 주제\\]\\s*([^\\n\\[]+)','i'));topic=m?m[1].trim():''}
+  if(!scoreRaw){const m=t.match(new RegExp('\\[후보'+n+' 점수\\]\\s*([^\\n\\[]+)','i'));scoreRaw=m?m[1].trim():''}
+  if(!reason){const m=t.match(new RegExp('\\[후보'+n+' 이유\\]\\s*([^\\n\\[]+)','i'));reason=m?m[1].trim():''}
+  if(title||topic)out.push({title,topic,score:Math.max(0,Math.min(100,parseInt(scoreRaw,10)||0)),reason});
+ }
+ return out;
+}
+function syncBenchmarkCandidatesFromAnalysisV208(){
+ const raw=$('benchAnalysis')?.textContent||'';
+ const parsed=extractBenchmarkCandidatesV208(raw);
+ if(parsed.length){
+  YT_BENCH_CANDIDATES_V207=parsed;
+  YT_BENCH_LAST_TITLE_V179=parsed[0].title||'';
+  YT_BENCH_LAST_IDEA_V179=parsed[0].topic||'';
+  return true;
+ }
+ return false;
+}
 function renderBenchmarkCandidateChoicesV207(){
  const root=$('benchCandidateChoices');if(!root)return;root.innerHTML='';
  const arr=YT_BENCH_CANDIDATES_V207||[];
- if(!arr.length){root.innerHTML='<div class="tiny">생성된 후보가 없습니다. AI 벤치마킹 분석을 다시 실행해 주세요.</div>';return}
+ if(!arr.length){root.innerHTML='<div class="tiny">분석 결과에서 후보 3개를 찾지 못했습니다. AI 벤치마킹 분석을 다시 실행해 주세요.</div>';return}
  arr.forEach((c,idx)=>{
   const b=document.createElement('button');b.type='button';b.className='bench-candidate-card'+(idx===YT_BENCH_SELECTED_CANDIDATE_V207?' selected':'');
   b.innerHTML=`<div class="bench-candidate-top"><b>${String.fromCharCode(65+idx)}안</b><span class="bench-score">${c.score||'-'}점</span></div><div class="bench-candidate-title">${escapeHtml(c.title||'제목 없음')}</div><div class="bench-candidate-topic">${escapeHtml(c.topic||'주제 없음')}</div><div class="bench-candidate-reason">${escapeHtml(c.reason||'')}</div>`;
@@ -516,8 +544,12 @@ function selectBenchmarkCandidateV207(idx){
 }
 function applyBenchmarkIdea(){
  if(!YT_BENCH_SELECTED_V179){alert('먼저 벤치마킹 영상을 선택해 주세요.');return}
- if(!(YT_BENCH_CANDIDATES_V207||[]).length&&!YT_BENCH_LAST_IDEA_V179){alert('먼저 AI 벤치마킹 분석을 실행해 주세요.\n분석이 끝난 뒤 다시 눌러 주세요.');return}
- if(!(YT_BENCH_CANDIDATES_V207||[]).length)YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제')),topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:''}];
+ // 메모리 변수뿐 아니라 화면에 이미 표시된 AI 분석 결과에서도 후보 1·2·3을 즉시 복구한다.
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length)syncBenchmarkCandidatesFromAnalysisV208();
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length&&YT_BENCH_LAST_IDEA_V179){
+  YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제')),topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:''}];
+ }
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length){alert('분석 결과에서 각색 후보를 찾지 못했습니다.\\nAI 벤치마킹 분석을 한 번만 다시 실행해 주세요.');return}
  YT_BENCH_SELECTED_CANDIDATE_V207=0;renderBenchmarkCandidateChoicesV207();selectBenchmarkCandidateV207(0);
  $('benchApplyModal').classList.add('active');setTimeout(()=>$('benchCandidateChoices')?.scrollIntoView({block:'nearest'}),30);
 }
@@ -1089,7 +1121,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled&&x.isDefault)||list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.7-benchmark-channel-adapt-3choice',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.8-benchmark-choice-parser-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
