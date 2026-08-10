@@ -360,18 +360,19 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <div class="vrew-box">
    <div>
     <h2>🎙 음성 만들기 · CapCut용</h2>
-    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 8,000자 이하로 나눕니다. 문장 중간은 자르지 않고 문장 끝을 우선합니다.</div>
-    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘8,000자 이하 자동 분할’을 눌러주세요.</div></div>
+    <div class="tiny" style="margin:0 0 10px">CapCut 홈의 <b>텍스트에서 음성으로</b>에 바로 붙여넣기 좋게 원고를 약 3,000자 이하로 나눕니다. 복사할 때 TTS용 문장부호·공백을 자동 정리하고, 문장 끝을 우선해 분할합니다.</div>
+    <div id="voicePartList" class="vrew-list"><div class="meta">롱폼 원고를 붙여넣고 ‘3,000자 이하 자동 분할’을 눌러주세요.</div></div>
     <div class="clean-actions">
-     <button class="btn primary wide" type="button" onclick="makeVoice()">8,000자 이하 자동 분할</button>
+     <button class="btn primary wide" type="button" onclick="makeVoice()">3,000자 이하 자동 분할</button>
+     <button class="btn ghost" type="button" onclick="optimizeVoiceCurrent()">✨ 현재 파트 TTS 최적화</button>
      <button class="btn ghost" type="button" onclick="copyVoiceCurrent()">현재 파트 복사</button>
      <button class="btn ghost" type="button" onclick="downloadVoiceParts()">TXT 묶음 저장</button>
     </div>
-    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 안정성을 위해 파트당 최대 8,000자로 분할합니다.</div>
+    <div class="tiny" style="margin-top:8px">권장 작업: 파트 복사 → CapCut 텍스트에서 음성으로 → 원하는 성우 선택 → 음성 파일 저장. 파트당 최대 3,000자로 분할하며, 목소리가 조금 늘어지는 구간은 재생성 여부를 직접 판단하면 됩니다.</div>
    </div>
    <div>
     <h2 id="voiceCurrentTitle">현재 파트</h2>
-    <textarea id="voiceCurrent" style="min-height:560px" placeholder="CapCut에 붙여넣을 음성용 원고가 표시됩니다."></textarea>
+    <textarea id="voiceCurrent" style="min-height:500px" placeholder="CapCut에 붙여넣을 음성용 원고가 표시됩니다."></textarea><div id="voiceQuality" class="note" style="margin-top:10px">TTS 품질 검사 결과가 여기에 표시됩니다.</div>
    </div>
   </div>
  </div>
@@ -998,7 +999,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='19.1-capcut-voice-3000',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.1-capcut-tts-optimizer',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -1404,6 +1405,39 @@ function selectVrewPart(i){vrewCurrentIndex=Math.max(0,Math.min(vrewParts.length
 async function copyVrewCurrent(){const t=$('vrewCurrent').value;if(!t)return;await navigator.clipboard.writeText(t);setStatus('현재 Vrew 파트를 복사했습니다.','ok')}
 async function downloadVrewParts(){if(!vrewParts.length)makeVrewParts();if(!vrewParts.length)return;const z=new JSZip(),f=z.folder('vrew-parts');vrewParts.forEach((p,i)=>f.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text));const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_Vrew파트.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('Vrew TXT 파트를 ZIP으로 저장했습니다.','ok')}
 
+function optimizeCapCutTtsText(text){
+ let t=String(text||'').replace(/\r/g,'');
+ t=t.replace(/\.{3,}|…+/g,'.');
+ t=t.replace(/!{2,}/g,'!').replace(/\?{2,}/g,'?');
+ t=t.replace(/[ㅋㅎ]{2,}|\^\^+/g,'');
+ t=t.replace(/[•●◆■▶▷►]+/g,' ');
+ t=t.replace(/[ \t]{2,}/g,' ');
+ t=t.replace(/\s*\n\s*/g,' ');
+ t=t.replace(/\s+([,.!?])/g,'$1').replace(/([,.!?])(?=[가-힣A-Za-z0-9])/g,'$1 ');
+ return t.replace(/\s{2,}/g,' ').trim();
+}
+function voiceQualityInfo(text){
+ const t=String(text||'');
+ const sentences=(t.match(/[^.!?。！？]+[.!?。！？]?/g)||[]).map(x=>x.trim()).filter(Boolean);
+ const long=sentences.filter(x=>x.length>100).length;
+ const ell=(t.match(/\.{3,}|…+/g)||[]).length;
+ const symbols=(t.match(/[^가-힣A-Za-z0-9\s.,!?%~'"():\-]/g)||[]).length;
+ let score=5; if(long)score--; if(long>3)score--; if(ell)score--; if(symbols>10)score--;
+ score=Math.max(1,score);
+ const issues=[]; if(long)issues.push(`100자 초과 문장 ${long}개`); if(ell)issues.push(`긴 점 표현 ${ell}개`); if(symbols>10)issues.push('특수기호 많음');
+ return {score,issues,label:score>=5?'매우 안정':score>=4?'안정':score>=3?'보통':'확인 권장'};
+}
+function updateVoiceQuality(){
+ const box=$('voiceQuality'); if(!box)return;
+ const q=voiceQualityInfo($('voiceCurrent')?.value||'');
+ box.innerHTML=`<b>${'★'.repeat(q.score)}${'☆'.repeat(5-q.score)} · ${q.label}</b>${q.issues.length?'<br>⚠ '+q.issues.join(' · '):'<br>✓ 큰 TTS 위험 요소가 없습니다.'}`;
+}
+function optimizeVoiceCurrent(){
+ if(!voiceParts.length)makeVoice(true); if(!voiceParts.length)return;
+ const p=voiceParts[voiceCurrentIndex]; p.text=optimizeCapCutTtsText(p.text); p.copied=false;
+ $('voice').value=voiceParts.map(x=>x.text).join('\n\n===== 다음 음성 파트 =====\n\n');
+ renderVoiceParts(); saveLocal(true); setStatus(`${p.title} TTS 최적화를 완료했습니다.`,'ok');
+}
 function splitCapCutVoiceText(text,limit=3000){
  const clean=cleanVrewText(text).replace(/\n{3,}/g,'\n\n').trim();
  if(!clean)return [];
@@ -1446,19 +1480,19 @@ function makeVoice(silent=false){
  $('voice').value=parts.join('\n\n===== 다음 음성 파트 =====\n\n');
  renderVoiceParts();saveLocal(true);
  if(!silent)showTab('voice');
- setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 8,000자입니다.`,'ok');
+ setStatus(`CapCut 음성용 ${voiceParts.length}개 파트로 분할했습니다. 파트당 최대 3,000자입니다.`,'ok');
 }
 function renderVoiceParts(){
  const list=$('voicePartList');if(!list)return;
- if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘8,000자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
+ if(!voiceParts.length){list.innerHTML='<div class="meta">롱폼 원고를 붙여넣고 ‘3,000자 이하 자동 분할’을 눌러주세요.</div>';$('voiceCurrent').value='';$('voiceCurrentTitle').textContent='현재 파트';return}
  voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,voiceCurrentIndex));
  list.innerHTML=voiceParts.map((p,i)=>`<button type="button" class="vrew-part-btn ${i===voiceCurrentIndex?'active':''}" onclick="selectVoicePart(${i})"><b>${p.copied?'✓ ':''}${p.title}</b><span>${p.text.length.toLocaleString()}자</span></button>`).join('');
- const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateMeta();
+ const p=voiceParts[voiceCurrentIndex];$('voiceCurrentTitle').textContent=`${p.title} · ${p.text.length.toLocaleString()}자${p.copied?' · 복사 완료':''}`;$('voiceCurrent').value=p.text;updateVoiceQuality();updateMeta();
 }
 function selectVoicePart(i){voiceCurrentIndex=Math.max(0,Math.min(voiceParts.length-1,Number(i)||0));renderVoiceParts()}
 async function copyVoiceCurrent(){
  if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
- const p=voiceParts[voiceCurrentIndex];await navigator.clipboard.writeText(p.text);p.copied=true;renderVoiceParts();saveLocal(true);setStatus(`${p.title}을 복사했습니다. CapCut ‘텍스트에서 음성으로’에 붙여넣으세요.`,'ok')
+ const p=voiceParts[voiceCurrentIndex];p.text=optimizeCapCutTtsText(p.text);await navigator.clipboard.writeText(p.text);p.copied=true;renderVoiceParts();saveLocal(true);setStatus(`${p.title}을 TTS 최적화 후 복사했습니다. CapCut ‘텍스트에서 음성으로’에 붙여넣으세요.`,'ok')
 }
 async function downloadVoiceParts(){
  if(!voiceParts.length)makeVoice(true);if(!voiceParts.length)return;
