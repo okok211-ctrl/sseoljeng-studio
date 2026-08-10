@@ -73,6 +73,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .bench-title{font-weight:850;font-size:12px;line-height:1.35;margin:6px 0 4px;color:#f8fbff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
 .bench-meta{font-size:10px;color:#9fb0c4;line-height:1.4;white-space:normal}.bench-score{display:inline-block;background:#15263b;color:#fff;border:1px solid #2b4059;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:850}
 #benchmarkSelected{border-top:1px solid #22364d;padding-top:10px!important;margin-top:8px!important}#benchmarkSelected h3{margin:0 0 5px;font-size:15px}#benchSelectedMeta{color:#b9c8d8!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bench-candidate-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 14px}.bench-candidate-card{display:block;width:100%;text-align:left;border:1px solid #2b4058;border-radius:12px;background:#101c29;color:#eaf2fb;padding:12px;cursor:pointer;font:inherit}.bench-candidate-card:hover{border-color:#4d79a8;transform:translateY(-1px)}.bench-candidate-card.selected{border:2px solid #42a5f5;background:#12283a}.bench-candidate-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.bench-candidate-title{font-weight:800;line-height:1.35;margin-bottom:7px}.bench-candidate-topic{font-size:13px;line-height:1.45;color:#d1deea}.bench-candidate-reason{font-size:12px;line-height:1.4;color:#9eb2c6;margin-top:8px}@media(max-width:800px){.bench-candidate-choices{grid-template-columns:1fr}}
 .bench-analysis{margin-top:9px;white-space:pre-wrap;border:1px solid #263a52;border-radius:11px;padding:12px 14px;background:#07121f;color:#eaf2fb;min-height:100px;max-height:300px;overflow:auto;line-height:1.65;font-size:12px;scrollbar-width:thin}
 .bench-analysis::selection{background:#ff7917;color:#fff}
 @media(max-width:800px){.bench-toolbar{grid-template-columns:1fr 1fr}.bench-toolbar .wide{grid-column:1/-1}.bench-card{flex-basis:180px;min-width:180px}.bench-analysis{max-height:260px}}
@@ -424,7 +425,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
-let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='',YT_BENCH_LAST_TITLE_V179='';
+let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='',YT_BENCH_LAST_TITLE_V179='',YT_BENCH_CANDIDATES_V207=[],YT_BENCH_SELECTED_CANDIDATE_V207=0;
 function toggleBenchmarkPanel(){const p=$('benchmarkPanel');if(!p){alert('벤치마킹 화면을 찾지 못했습니다.');return;}p.classList.toggle('active');if(p.classList.contains('active')){setTimeout(()=>{p.scrollIntoView({behavior:'smooth',block:'start'});const q=$('benchQuery');if(q)q.focus();},30)}}
 function formatCompactNumberV179(n){const x=Number(n||0);if(x>=1e8)return(x/1e8).toFixed(x>=1e9?1:0)+'억';if(x>=1e4)return(x/1e4).toFixed(x>=1e5?0:1)+'만';if(x>=1e3)return(x/1e3).toFixed(1)+'천';return String(x)}
 function daysSinceV179(d){const t=new Date(d).getTime();return Number.isFinite(t)?Math.max(1,Math.floor((Date.now()-t)/86400000)):99999}
@@ -438,31 +439,87 @@ async function searchYouTubeBenchmarks(){
 function sortBenchmarkCards(mode){const a=[...YT_BENCH_RESULTS_V179];if(mode==='views')a.sort((x,y)=>y.viewCount-x.viewCount);else if(mode==='recent')a.sort((x,y)=>new Date(y.publishedAt)-new Date(x.publishedAt));else a.sort((x,y)=>y.benchmarkScore-x.benchmarkScore);renderBenchmarkCardsV179(a)}
 function renderBenchmarkCardsV179(items){const root=$('benchmarkResults');root.innerHTML='';for(const i of items){const c=document.createElement('div');c.className='bench-card';c.innerHTML=`<img class="bench-thumb" src="${i.thumbnail||''}"><div class="bench-title">${escapeHtml(i.title||'')}</div><div class="bench-meta">${escapeHtml(i.channelTitle||'')}<br>조회수 ${formatCompactNumberV179(i.viewCount)} · ${daysSinceV179(i.publishedAt)}일 전 · ${escapeHtml(i.durationText||'')}</div><div style="margin-top:8px"><span class="bench-score">${i.benchmarkScore}점 · ${benchmarkLabelV179(i.benchmarkScore)}</span></div>`;c.onclick=()=>selectBenchmarkV179(i.videoId);root.appendChild(c)}}
 function selectBenchmarkV179(id){const i=YT_BENCH_RESULTS_V179.find(x=>x.videoId===id);if(!i)return;YT_BENCH_SELECTED_V179=i;$('benchmarkSelected').style.display='block';$('benchSelectedMeta').textContent=`${i.title} · ${i.channelTitle} · 조회수 ${formatCompactNumberV179(i.viewCount)} · ${i.benchmarkScore}점`;$('benchAnalysis').textContent='AI 벤치마킹 분석을 눌러 주세요.'}
-async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';const searchKeyword=$('benchQuery')?.value?.trim()||'';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
-이번 분석은 오직 아래의 '선택한 벤치마킹 영상'과 '검색 키워드'만 참고하세요. 현재 스튜디오 프로젝트의 제목·주제·기존 원고·이전에 만든 사연은 절대로 참고하거나 이어 쓰지 마세요.
+async function analyzeSelectedBenchmark(){
+ const i=YT_BENCH_SELECTED_V179;if(!i)return;
+ $('benchAnalysis').textContent='AI 분석 중...';
+ YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';YT_BENCH_CANDIDATES_V207=[];YT_BENCH_SELECTED_CANDIDATE_V207=0;
+ const searchKeyword=$('benchQuery')?.value?.trim()||'';
+ const prompt=`당신은 한국 유튜브 사연 채널 '썰쟁'의 벤치마킹 각색 기획자입니다.
+이번 분석은 오직 아래의 '선택한 벤치마킹 영상'과 '검색 키워드'를 출발점으로 사용하세요. 현재 스튜디오 프로젝트의 제목·주제·기존 원고·이전 사연은 절대로 참고하거나 이어 쓰지 마세요.
 원본 대본이나 스토리를 복제·추정하지 말고 공개 메타데이터에서 확인 가능한 제목 구조, 감정, 클릭 포인트, 성과 신호만 분석하세요.
+
 [검색 키워드] ${searchKeyword||'없음'}
 [선택한 벤치마킹 영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
 
-신규 사연을 만들 때 지켜야 할 규칙:
-- 선택 영상의 핵심 갈등 유형과 클릭을 부르는 구조는 참고하되 등장인물, 사건, 장소, 증거, 결말은 새롭게 구성하세요.
-- 이전 프로젝트에서 자주 썼을 법한 소재를 자동으로 끌어오지 마세요. 특히 휴대폰 발견, 녹음파일, GPS, 코인, 간 이식, 장례식, 정치인, 유산·재산 음모 같은 소재는 선택 영상 제목에서 직접 연상되는 경우가 아니면 임의로 넣지 마세요.
-- 추천 주제는 선택 영상과 '왜 비슷한 시청자가 클릭할지'가 한눈에 보여야 하지만, 내용 자체는 별개의 새 이야기여야 합니다.
-- 억지 반전보다 선택 영상이 가진 관계 갈등과 감정 포인트를 우선하세요.
+[썰쟁 채널 성향]
+- 한국 시청자가 쉽게 몰입하는 현실 사연형 오디오 드라마.
+- 관계 갈등과 감정선이 강해야 한다. 부부, 가족, 시댁, 외도, 배신, 직장, 친구, 상속, 돈 문제 등은 소재가 아니라 '관계와 감정'을 강화하는 도구로 사용한다.
+- 벤치마킹 원본이 재벌·회사·범죄·성공담·해외사연 등 썰쟁과 다른 장르여도 버리지 말고, 원본의 핵심 클릭 구조와 감정 장치를 추출한 뒤 썰쟁 시청자가 공감할 새 현실 사연으로 변환한다.
+- 원본의 고유 인물명·장소·세부 사건·문장을 그대로 가져오지 않는다.
+- 억지로 모든 후보를 부부/시댁으로 만들지 말고, 원본 구조와 가장 잘 맞는 현실적 관계를 선택한다.
+- 초반에는 사건이 빨리 시작되고, 중간에는 숨겨진 사실·증거·관계 변화가 생기며, 후반에는 감정적으로 납득되는 반전 또는 사이다 해결이 있어야 한다.
+- 휴대폰, 녹음파일, GPS, 코인, 간 이식, 장례식, 정치인, 유산·재산 음모 같은 익숙한 소재를 원본과 무관하게 습관적으로 넣지 않는다.
 
-출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 선택 영상에서 파생한 신규 사연 주제 3개 7) 추천 제목 3개.
-마지막에는 반드시 아래 두 블록을 정확히 추가하세요.
-[추천 제목]선택한 영상의 클릭 구조를 참고하되 내용은 완전히 새로운 최종 제목 1개[/추천 제목]
-[추천 주제]선택한 영상의 핵심 관계·갈등을 바탕으로 새롭게 만든 구체적인 사연 주제 1개[/추천 주제]`;
- try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/);const mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
+해야 할 일:
+1) 선택 영상에서 '왜 클릭했을지'를 만드는 핵심 구조를 한 문장으로 추출하세요.
+2) 그 구조를 썰쟁 채널 성향으로 변환한 완전히 새로운 사연 주제 3개를 만드세요.
+3) 세 후보는 인물관계·사건·반전 장치가 서로 확실히 달라야 합니다.
+4) 각 후보마다 제목, 한 줄 주제, 추천도(0~100), 추천 이유를 작성하세요.
+5) 추천도는 참고용이며 최종 선택은 사용자가 합니다.
+
+분석 설명을 먼저 간단히 작성한 뒤, 마지막에는 반드시 아래 블록 3개를 정확히 출력하세요. 태그 이름을 바꾸지 마세요.
+[후보1 제목]제목[/후보1 제목]
+[후보1 주제]구체적인 한 줄 주제[/후보1 주제]
+[후보1 점수]0~100 숫자[/후보1 점수]
+[후보1 이유]짧은 추천 이유[/후보1 이유]
+[후보2 제목]제목[/후보2 제목]
+[후보2 주제]구체적인 한 줄 주제[/후보2 주제]
+[후보2 점수]0~100 숫자[/후보2 점수]
+[후보2 이유]짧은 추천 이유[/후보2 이유]
+[후보3 제목]제목[/후보3 제목]
+[후보3 주제]구체적인 한 줄 주제[/후보3 주제]
+[후보3 점수]0~100 숫자[/후보3 점수]
+[후보3 이유]짧은 추천 이유[/후보3 이유]`;
+ try{
+  const t=await callGeneratePrompt(prompt,'benchmark');
+  $('benchAnalysis').textContent=t.trim();
+  const candidates=[];
+  for(let n=1;n<=3;n++){
+   const title=(t.match(new RegExp('\\[후보'+n+' 제목\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 제목\\]'))||[])[1]?.trim()||'';
+   const topic=(t.match(new RegExp('\\[후보'+n+' 주제\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 주제\\]'))||[])[1]?.trim()||'';
+   const scoreRaw=(t.match(new RegExp('\\[후보'+n+' 점수\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 점수\\]'))||[])[1]?.trim()||'';
+   const reason=(t.match(new RegExp('\\[후보'+n+' 이유\\]\\s*([\\s\\S]*?)\\s*\\[\\/후보'+n+' 이유\\]'))||[])[1]?.trim()||'';
+   if(title||topic)candidates.push({title,topic,score:Math.max(0,Math.min(100,parseInt(scoreRaw,10)||0)),reason});
+  }
+  YT_BENCH_CANDIDATES_V207=candidates;
+  if(candidates.length){YT_BENCH_LAST_TITLE_V179=candidates[0].title;YT_BENCH_LAST_IDEA_V179=candidates[0].topic}
+  if(!candidates.length){
+   const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/),mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);
+   YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():'';
+   if(YT_BENCH_LAST_TITLE_V179||YT_BENCH_LAST_IDEA_V179)YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179,topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:'기존 형식으로 생성된 후보입니다.'}];
+  }
+ }catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}
+}
+function renderBenchmarkCandidateChoicesV207(){
+ const root=$('benchCandidateChoices');if(!root)return;root.innerHTML='';
+ const arr=YT_BENCH_CANDIDATES_V207||[];
+ if(!arr.length){root.innerHTML='<div class="tiny">생성된 후보가 없습니다. AI 벤치마킹 분석을 다시 실행해 주세요.</div>';return}
+ arr.forEach((c,idx)=>{
+  const b=document.createElement('button');b.type='button';b.className='bench-candidate-card'+(idx===YT_BENCH_SELECTED_CANDIDATE_V207?' selected':'');
+  b.innerHTML=`<div class="bench-candidate-top"><b>${String.fromCharCode(65+idx)}안</b><span class="bench-score">${c.score||'-'}점</span></div><div class="bench-candidate-title">${escapeHtml(c.title||'제목 없음')}</div><div class="bench-candidate-topic">${escapeHtml(c.topic||'주제 없음')}</div><div class="bench-candidate-reason">${escapeHtml(c.reason||'')}</div>`;
+  b.onclick=()=>selectBenchmarkCandidateV207(idx);root.appendChild(b);
+ });
+}
+function selectBenchmarkCandidateV207(idx){
+ const c=YT_BENCH_CANDIDATES_V207?.[idx];if(!c)return;YT_BENCH_SELECTED_CANDIDATE_V207=idx;
+ $('benchPreviewTitle').value=c.title||'';$('benchPreviewTopic').value=c.topic||'';renderBenchmarkCandidateChoicesV207();
+}
 function applyBenchmarkIdea(){
  if(!YT_BENCH_SELECTED_V179){alert('먼저 벤치마킹 영상을 선택해 주세요.');return}
- if(!YT_BENCH_LAST_IDEA_V179){alert('먼저 AI 벤치마킹 분석을 실행해 주세요.\n분석이 끝난 뒤 다시 눌러 주세요.');return}
- const title=YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제'));
- $('benchPreviewTitle').value=title;
- $('benchPreviewTopic').value=YT_BENCH_LAST_IDEA_V179;
- $('benchApplyModal').classList.add('active');
- setTimeout(()=>$('benchPreviewTitle')?.focus(),30);
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length&&!YT_BENCH_LAST_IDEA_V179){alert('먼저 AI 벤치마킹 분석을 실행해 주세요.\n분석이 끝난 뒤 다시 눌러 주세요.');return}
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length)YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제')),topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:''}];
+ YT_BENCH_SELECTED_CANDIDATE_V207=0;renderBenchmarkCandidateChoicesV207();selectBenchmarkCandidateV207(0);
+ $('benchApplyModal').classList.add('active');setTimeout(()=>$('benchCandidateChoices')?.scrollIntoView({block:'nearest'}),30);
 }
 function closeBenchmarkApplyModal(){const m=$('benchApplyModal');if(m)m.classList.remove('active')}
 function confirmBenchmarkProject(){
@@ -471,9 +528,7 @@ function confirmBenchmarkProject(){
  if(!topic){alert('프로젝트 주제가 비어 있습니다.');return}
  if($('name')&&title){$('name').value=title;$('name').dispatchEvent(new Event('input',{bubbles:true}))}
  if($('topic')){$('topic').value=topic;$('topic').dispatchEvent(new Event('input',{bubbles:true}))}
- saveLocal(true);
- closeBenchmarkApplyModal();
- setStatus('벤치마킹 추천 제목과 주제를 프로젝트에 넣었습니다.','ok');
+ saveLocal(true);closeBenchmarkApplyModal();setStatus('선택한 벤치마킹 각색 주제를 프로젝트에 넣었습니다.','ok');
  const panel=$('benchmarkPanel');if(panel)panel.classList.remove('active');
  const nameEl=$('name');if(nameEl){nameEl.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>nameEl.focus(),350)}
 }
@@ -1034,7 +1089,7 @@ function normalizeOpening(text,enabled=true){
 function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled&&x.isDefault)||list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.3-capcut-selectable-split',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.7-benchmark-channel-adapt-3choice',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -2741,20 +2796,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 <h3>🎯 선택 영상 분석</h3><div id="benchSelectedMeta" class="tiny"></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
 <button class="btn primary" type="button" onclick="analyzeSelectedBenchmark()">AI 벤치마킹 분석</button>
-<button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">💡 추천 주제를 프로젝트에 넣기</button>
+<button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">✨ 각색 주제 3개에서 고르기</button>
 </div><div id="benchAnalysis" class="bench-analysis">영상을 선택해 주세요.</div></div>
 </div>
 <div id="benchApplyModal" class="bench-modal-backdrop" onclick="benchmarkModalBackdropClick(event)">
  <div class="bench-modal" role="dialog" aria-modal="true" aria-labelledby="benchApplyTitle">
   <h2 id="benchApplyTitle">💡 벤치마킹 기반 새 프로젝트</h2>
-  <div class="bench-modal-note">선택 영상은 구조와 감정만 참고하고, 아래 내용은 새 사연으로 생성된 프로젝트용 제목·주제입니다. 넣기 전에 직접 수정해도 됩니다.</div>
-  <div class="bench-preview-label">추천 제목</div>
+  <div class="bench-modal-note">원본 장르가 재벌·회사·성공담이어도 핵심 클릭 구조만 추출해 썰쟁식 현실 사연 3개로 각색합니다. 마음에 드는 안을 고른 뒤 제목·주제를 직접 수정할 수도 있습니다.</div>
+  <div id="benchCandidateChoices" class="bench-candidate-choices"></div>
+  <div class="bench-preview-label">선택한 제목</div>
   <input id="benchPreviewTitle" type="text" placeholder="추천 제목">
-  <div class="bench-preview-label">추천 주제</div>
+  <div class="bench-preview-label">선택한 주제</div>
   <textarea id="benchPreviewTopic" placeholder="추천 주제"></textarea>
   <div class="bench-modal-actions">
    <button class="btn ghost" type="button" onclick="closeBenchmarkApplyModal()">취소</button>
-   <button class="btn primary" type="button" onclick="confirmBenchmarkProject()">이 내용으로 프로젝트 만들기</button>
+   <button class="btn primary" type="button" onclick="confirmBenchmarkProject()">선택한 주제로 프로젝트 만들기</button>
   </div>
  </div>
 </div>
