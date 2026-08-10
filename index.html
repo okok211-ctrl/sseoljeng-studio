@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v20.5 Flexible Paragraph Workflow</title>
+<title>썰쟁 Studio v20.6 Flexible Paragraph Workflow</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -142,7 +142,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div class="field"><label>프로젝트 이름</label><input id="name" value="새로운 사연"></div>
  <div class="field"><label>주제</label><textarea id="topic">길에서 굶어 죽어가던 노인을 도와줬는데 나중에 알고 보니 엄청난 갑부였습니다.</textarea></div>
  <div class="field"><label>캐릭터 라이브러리</label>
-  <div class="character-tools"><input id="characterSearch" placeholder="이름·역할 검색" oninput="renderCharacters()"><select id="characterFilter" onchange="renderCharacters()"><option value="전체">전체 역할</option><option>주인공</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div>
+  <div class="character-tools"><input id="characterSearch" placeholder="이름·역할 검색" oninput="renderCharacters()"><select id="characterFilter" onchange="renderCharacters()"><option value="전체">전체 역할</option><option>주인공</option><option>남편</option><option>아내</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>시동생</option><option>장모</option><option>장인</option><option>처제</option><option>처남</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div>
   <div id="characterGrid" class="character-grid"></div>
   <input id="characterImageInput" class="file-input" type="file" accept="image/*" onchange="finishCharacterImage(event)">
   <div class="mini-actions"><button class="btn ghost" type="button" onclick="addCharacterPreset()">➕ 새 캐릭터</button><button class="btn ghost" type="button" onclick="duplicateCharacterPreset()">복제</button></div>
@@ -151,7 +151,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  </div>
  <div class="char-editor">
   <h3>선택 캐릭터 편집</h3>
-  <div class="row"><div class="field"><label>이름</label><input id="charName"></div><div class="field"><label>역할</label><select id="charRole"><option>주인공</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div></div>
+  <div class="row"><div class="field"><label>이름</label><input id="charName"></div><div class="field"><label>역할</label><select id="charRole"><option>주인공</option><option>남편</option><option>아내</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>시동생</option><option>장모</option><option>장인</option><option>처제</option><option>처남</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div></div>
   <div class="row"><div class="field"><label>나이/연령대</label><input id="charAge" placeholder="예: 37세"></div><div class="field"><label>기본 의상</label><input id="charOutfit" placeholder="예: 단정한 베이지 블라우스"></div></div>
   <div class="row"><div class="field"><label>등장 등급</label><select id="charScope"><option value="core">핵심 인물</option><option value="support">보조 인물</option><option value="extra">단역</option></select></div><div class="field"><label>내부 캐릭터 ID</label><input id="charInternalId" readonly></div></div>
   <div class="field"><label>외모</label><textarea id="charAppearance" placeholder="얼굴형, 헤어스타일, 인상"></textarea></div>
@@ -894,7 +894,7 @@ function storeCharacters(list){
   storeCharactersMetadataOnlyV177(normalized);
 }
 function characterText(c){return[c.age,c.appearance,c.personality&&`성격과 분위기: ${c.personality}`,c.outfit&&`기본 의상: ${c.outfit}`,c.prompt].filter(Boolean).join(', ')}
-function roleEmoji(role){return({주인공:'⭐',여주:'⭐',남편:'👨',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
+function roleEmoji(role){return({주인공:'⭐',여주:'⭐',남편:'👨',아내:'👩',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',시동생:'👨',장모:'👵',장인:'👴',처제:'👩',처남:'👨',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
 function selectedCharacter(){const list=getCharacters();return list.find(c=>c.id===selectedCharacterId)||list[0]}
 function renderCharacters(){
  const list=getCharacters(),grid=$('characterGrid');if(!list.length)return;
@@ -946,7 +946,7 @@ const NAME_POOLS={
  seniorMale:['태식','정호','준식','영철','성복','만수','병철','동식','기철','상구','종수','덕수','영수','창호','재국','춘식','광수','성태','인호','정식']
 };
 function ageNumber(age=''){const m=String(age).match(/(\d{1,3})/);return m?Number(m[1]):null}
-function genderForRole(role){if(['시어머니','시누이'].includes(role))return'female';if(['남편','시아버지','회장'].includes(role))return'male';return null}
+function genderForRole(role){if(['아내','시어머니','시누이','장모','처제'].includes(role))return'female';if(['남편','시아버지','시동생','장인','처남','회장'].includes(role))return'male';return null}
 function poolForCharacter(c){const n=ageNumber(c.age),g=genderForRole(c.role)||(/여성|여자/.test(c.appearance)?'female':/남성|남자/.test(c.appearance)?'male':Math.random()<.5?'female':'male');if(n!==null&&n>=58)return g==='female'?NAME_POOLS.seniorFemale:NAME_POOLS.seniorMale;if(n!==null&&n<=34)return g==='female'?NAME_POOLS.youngFemale:NAME_POOLS.youngMale;return g==='female'?NAME_POOLS.adultFemale:NAME_POOLS.adultMale}
 function makeRandomName(c,used=new Set()){const pool=poolForCharacter(c);for(let i=0;i<300;i++){const name=KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)];if(!used.has(name))return name}return KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)]}
 function refreshInternalIds(list){let n=1;return list.map(c=>({...c,internalId:c.internalId&&/^CHAR-\d{3,}$/.test(c.internalId)?c.internalId:`CHAR-${String(n++).padStart(3,'0')}`}))}
