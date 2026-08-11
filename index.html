@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v20.4 Flexible Paragraph Workflow</title>
+<title>썰쟁 Studio v20.8 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -73,6 +73,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .bench-title{font-weight:850;font-size:12px;line-height:1.35;margin:6px 0 4px;color:#f8fbff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
 .bench-meta{font-size:10px;color:#9fb0c4;line-height:1.4;white-space:normal}.bench-score{display:inline-block;background:#15263b;color:#fff;border:1px solid #2b4059;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:850}
 #benchmarkSelected{border-top:1px solid #22364d;padding-top:10px!important;margin-top:8px!important}#benchmarkSelected h3{margin:0 0 5px;font-size:15px}#benchSelectedMeta{color:#b9c8d8!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bench-candidate-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0 14px}.bench-candidate-card{display:block;width:100%;text-align:left;border:1px solid #2b4058;border-radius:12px;background:#101c29;color:#eaf2fb;padding:12px;cursor:pointer;font:inherit}.bench-candidate-card:hover{border-color:#4d79a8;transform:translateY(-1px)}.bench-candidate-card.selected{border:2px solid #42a5f5;background:#12283a}.bench-candidate-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.bench-candidate-title{font-weight:800;line-height:1.35;margin-bottom:7px}.bench-candidate-topic{font-size:13px;line-height:1.45;color:#d1deea}.bench-candidate-reason{font-size:12px;line-height:1.4;color:#9eb2c6;margin-top:8px}@media(max-width:800px){.bench-candidate-choices{grid-template-columns:1fr}}
 .bench-analysis{margin-top:9px;white-space:pre-wrap;border:1px solid #263a52;border-radius:11px;padding:12px 14px;background:#07121f;color:#eaf2fb;min-height:100px;max-height:300px;overflow:auto;line-height:1.65;font-size:12px;scrollbar-width:thin}
 .bench-analysis::selection{background:#ff7917;color:#fff}
 @media(max-width:800px){.bench-toolbar{grid-template-columns:1fr 1fr}.bench-toolbar .wide{grid-column:1/-1}.bench-card{flex-basis:180px;min-width:180px}.bench-analysis{max-height:260px}}
@@ -89,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v20.3</h1><div class="sub">문단 번호는 유지 · 문단별 글자 수 제한 없이 자연스럽게 작성 · CapCut 제작 최적화</div></div>
+ <div><h1>🎬 썰쟁 Studio v20.8</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -142,7 +143,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  <div class="field"><label>프로젝트 이름</label><input id="name" value="새로운 사연"></div>
  <div class="field"><label>주제</label><textarea id="topic">길에서 굶어 죽어가던 노인을 도와줬는데 나중에 알고 보니 엄청난 갑부였습니다.</textarea></div>
  <div class="field"><label>캐릭터 라이브러리</label>
-  <div class="character-tools"><input id="characterSearch" placeholder="이름·역할 검색" oninput="renderCharacters()"><select id="characterFilter" onchange="renderCharacters()"><option value="전체">전체 역할</option><option>여주</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div>
+  <div class="character-tools"><input id="characterSearch" placeholder="이름·역할 검색" oninput="renderCharacters()"><select id="characterFilter" onchange="renderCharacters()"><option value="전체">전체 역할</option><option>주인공</option><option>남편</option><option>아내</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>시동생</option><option>장모</option><option>장인</option><option>처제</option><option>처남</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div>
   <div id="characterGrid" class="character-grid"></div>
   <input id="characterImageInput" class="file-input" type="file" accept="image/*" onchange="finishCharacterImage(event)">
   <div class="mini-actions"><button class="btn ghost" type="button" onclick="addCharacterPreset()">➕ 새 캐릭터</button><button class="btn ghost" type="button" onclick="duplicateCharacterPreset()">복제</button></div>
@@ -151,7 +152,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  </div>
  <div class="char-editor">
   <h3>선택 캐릭터 편집</h3>
-  <div class="row"><div class="field"><label>이름</label><input id="charName"></div><div class="field"><label>역할</label><select id="charRole"><option>여주</option><option>남편</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div></div>
+  <div class="row"><div class="field"><label>이름</label><input id="charName"></div><div class="field"><label>역할</label><select id="charRole"><option>주인공</option><option>남편</option><option>아내</option><option>시어머니</option><option>시아버지</option><option>시누이</option><option>시동생</option><option>장모</option><option>장인</option><option>처제</option><option>처남</option><option>아이</option><option>친구</option><option>회장</option><option>비서</option><option>변호사</option><option>직장동료</option><option>기타</option></select></div></div>
   <div class="row"><div class="field"><label>나이/연령대</label><input id="charAge" placeholder="예: 37세"></div><div class="field"><label>기본 의상</label><input id="charOutfit" placeholder="예: 단정한 베이지 블라우스"></div></div>
   <div class="row"><div class="field"><label>등장 등급</label><select id="charScope"><option value="core">핵심 인물</option><option value="support">보조 인물</option><option value="extra">단역</option></select></div><div class="field"><label>내부 캐릭터 ID</label><input id="charInternalId" readonly></div></div>
   <div class="field"><label>외모</label><textarea id="charAppearance" placeholder="얼굴형, 헤어스타일, 인상"></textarea></div>
@@ -167,14 +168,14 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn ghost" style="width:100%;margin-top:7px" type="button" onclick="$('charactersFileInput').click()">📂 캐릭터 보관함 불러오기</button>
   <div class="tiny" style="margin-top:7px">캐릭터 등록은 보관함에 남아 있습니다. 「이번 이야기에서 사용」을 체크한 인물만 GPT·이미지·쇼츠 프롬프트에 들어갑니다. 주인공은 한 명만 지정할 수 있습니다.</div>
  </div>
- <div class="field"><label>현재 여주 설정(자동 연결)</label><textarea id="heroine">37세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
+ <div class="field"><label>현재 주인공 설정(자동 연결)</label><textarea id="heroine">37세 한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상, 동일 인물 유지</textarea></div>
  <div class="heroine-face-panel">
   <div class="heroine-face-head">
    <div id="heroineFacePreview" class="heroine-face-preview">👩</div>
-   <div class="heroine-face-info"><label>현재 여주 선택 · 기준 얼굴</label><select id="heroineSelect" onchange="chooseHeroine(this.value)"></select><div id="heroineFaceState" class="heroine-face-state">여주를 선택한 뒤 얼굴 사진을 등록하세요.</div></div>
+   <div class="heroine-face-info"><label>현재 주인공 선택 · 기준 얼굴</label><select id="heroineSelect" onchange="chooseHeroine(this.value)"></select><div id="heroineFaceState" class="heroine-face-state">주인공을 선택한 뒤 얼굴 사진을 등록하세요.</div></div>
   </div>
-  <div class="heroine-face-actions"><button class="btn primary" type="button" onclick="uploadHeroineFace()">📷 여주 얼굴 지정</button><button class="btn ghost" type="button" onclick="clearHeroineFace()">얼굴 지정 해제</button></div>
-  <div class="tiny" style="margin-top:7px">등록한 사진은 해당 여주 캐릭터에 저장되고, 이미지 프롬프트에서 기준 얼굴이 등록된 캐릭터로 표시됩니다.</div>
+  <div class="heroine-face-actions"><button class="btn primary" type="button" onclick="uploadHeroineFace()">📷 주인공 얼굴 지정</button><button class="btn ghost" type="button" onclick="clearHeroineFace()">얼굴 지정 해제</button></div>
+  <div class="tiny" style="margin-top:7px">등록한 사진은 해당 주인공 캐릭터에 저장되고, 이미지 프롬프트에서 기준 얼굴이 등록된 캐릭터로 표시됩니다.</div>
  </div>
  <div class="row">
   <div class="field"><label>문단 수 · 권장 24~30</label><select id="count"><option>15</option><option>20</option><option>24</option><option>26</option><option>28</option><option selected>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option value="custom">직접 입력</option></select><input id="customCount" type="number" min="10" max="100" value="30" style="margin-top:6px;display:none" placeholder="10~100"></div>
@@ -424,7 +425,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
 
-let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='',YT_BENCH_LAST_TITLE_V179='';
+let YT_BENCH_RESULTS_V179=[],YT_BENCH_SELECTED_V179=null,YT_BENCH_LAST_IDEA_V179='',YT_BENCH_LAST_TITLE_V179='',YT_BENCH_CANDIDATES_V207=[],YT_BENCH_SELECTED_CANDIDATE_V207=0;
 function toggleBenchmarkPanel(){const p=$('benchmarkPanel');if(!p){alert('벤치마킹 화면을 찾지 못했습니다.');return;}p.classList.toggle('active');if(p.classList.contains('active')){setTimeout(()=>{p.scrollIntoView({behavior:'smooth',block:'start'});const q=$('benchQuery');if(q)q.focus();},30)}}
 function formatCompactNumberV179(n){const x=Number(n||0);if(x>=1e8)return(x/1e8).toFixed(x>=1e9?1:0)+'억';if(x>=1e4)return(x/1e4).toFixed(x>=1e5?0:1)+'만';if(x>=1e3)return(x/1e3).toFixed(1)+'천';return String(x)}
 function daysSinceV179(d){const t=new Date(d).getTime();return Number.isFinite(t)?Math.max(1,Math.floor((Date.now()-t)/86400000)):99999}
@@ -438,31 +439,119 @@ async function searchYouTubeBenchmarks(){
 function sortBenchmarkCards(mode){const a=[...YT_BENCH_RESULTS_V179];if(mode==='views')a.sort((x,y)=>y.viewCount-x.viewCount);else if(mode==='recent')a.sort((x,y)=>new Date(y.publishedAt)-new Date(x.publishedAt));else a.sort((x,y)=>y.benchmarkScore-x.benchmarkScore);renderBenchmarkCardsV179(a)}
 function renderBenchmarkCardsV179(items){const root=$('benchmarkResults');root.innerHTML='';for(const i of items){const c=document.createElement('div');c.className='bench-card';c.innerHTML=`<img class="bench-thumb" src="${i.thumbnail||''}"><div class="bench-title">${escapeHtml(i.title||'')}</div><div class="bench-meta">${escapeHtml(i.channelTitle||'')}<br>조회수 ${formatCompactNumberV179(i.viewCount)} · ${daysSinceV179(i.publishedAt)}일 전 · ${escapeHtml(i.durationText||'')}</div><div style="margin-top:8px"><span class="bench-score">${i.benchmarkScore}점 · ${benchmarkLabelV179(i.benchmarkScore)}</span></div>`;c.onclick=()=>selectBenchmarkV179(i.videoId);root.appendChild(c)}}
 function selectBenchmarkV179(id){const i=YT_BENCH_RESULTS_V179.find(x=>x.videoId===id);if(!i)return;YT_BENCH_SELECTED_V179=i;$('benchmarkSelected').style.display='block';$('benchSelectedMeta').textContent=`${i.title} · ${i.channelTitle} · 조회수 ${formatCompactNumberV179(i.viewCount)} · ${i.benchmarkScore}점`;$('benchAnalysis').textContent='AI 벤치마킹 분석을 눌러 주세요.'}
-async function analyzeSelectedBenchmark(){const i=YT_BENCH_SELECTED_V179;if(!i)return;$('benchAnalysis').textContent='AI 분석 중...';YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';const searchKeyword=$('benchQuery')?.value?.trim()||'';const prompt=`당신은 한국 유튜브 사연 채널 벤치마킹 분석가입니다.
-이번 분석은 오직 아래의 '선택한 벤치마킹 영상'과 '검색 키워드'만 참고하세요. 현재 스튜디오 프로젝트의 제목·주제·기존 원고·이전에 만든 사연은 절대로 참고하거나 이어 쓰지 마세요.
+async function analyzeSelectedBenchmark(){
+ const i=YT_BENCH_SELECTED_V179;if(!i)return;
+ $('benchAnalysis').textContent='AI 분석 중...';
+ YT_BENCH_LAST_IDEA_V179='';YT_BENCH_LAST_TITLE_V179='';YT_BENCH_CANDIDATES_V207=[];YT_BENCH_SELECTED_CANDIDATE_V207=0;
+ const searchKeyword=$('benchQuery')?.value?.trim()||'';
+ const prompt=`당신은 한국 유튜브 사연 채널 '썰쟁'의 벤치마킹 각색 기획자입니다.
+이번 분석은 오직 아래의 '선택한 벤치마킹 영상'과 '검색 키워드'를 출발점으로 사용하세요. 현재 스튜디오 프로젝트의 제목·주제·기존 원고·이전 사연은 절대로 참고하거나 이어 쓰지 마세요.
 원본 대본이나 스토리를 복제·추정하지 말고 공개 메타데이터에서 확인 가능한 제목 구조, 감정, 클릭 포인트, 성과 신호만 분석하세요.
+
 [검색 키워드] ${searchKeyword||'없음'}
 [선택한 벤치마킹 영상] 제목: ${i.title} / 채널: ${i.channelTitle} / 조회수: ${i.viewCount} / 업로드일: ${i.publishedAt} / 길이: ${i.durationText} / 점수: ${i.benchmarkScore}
 
-신규 사연을 만들 때 지켜야 할 규칙:
-- 선택 영상의 핵심 갈등 유형과 클릭을 부르는 구조는 참고하되 등장인물, 사건, 장소, 증거, 결말은 새롭게 구성하세요.
-- 이전 프로젝트에서 자주 썼을 법한 소재를 자동으로 끌어오지 마세요. 특히 휴대폰 발견, 녹음파일, GPS, 코인, 간 이식, 장례식, 정치인, 유산·재산 음모 같은 소재는 선택 영상 제목에서 직접 연상되는 경우가 아니면 임의로 넣지 마세요.
-- 추천 주제는 선택 영상과 '왜 비슷한 시청자가 클릭할지'가 한눈에 보여야 하지만, 내용 자체는 별개의 새 이야기여야 합니다.
-- 억지 반전보다 선택 영상이 가진 관계 갈등과 감정 포인트를 우선하세요.
+[썰쟁 채널 성향]
+- 한국 시청자가 쉽게 몰입하는 현실 사연형 오디오 드라마.
+- 관계 갈등과 감정선이 강해야 한다. 부부, 가족, 시댁, 외도, 배신, 직장, 친구, 상속, 돈 문제 등은 소재가 아니라 '관계와 감정'을 강화하는 도구로 사용한다.
+- 벤치마킹 원본이 재벌·회사·범죄·성공담·해외사연 등 썰쟁과 다른 장르여도 버리지 말고, 원본의 핵심 클릭 구조와 감정 장치를 추출한 뒤 썰쟁 시청자가 공감할 새 현실 사연으로 변환한다.
+- 원본의 고유 인물명·장소·세부 사건·문장을 그대로 가져오지 않는다.
+- 억지로 모든 후보를 부부/시댁으로 만들지 말고, 원본 구조와 가장 잘 맞는 현실적 관계를 선택한다.
+- 초반에는 사건이 빨리 시작되고, 중간에는 숨겨진 사실·증거·관계 변화가 생기며, 후반에는 감정적으로 납득되는 반전 또는 사이다 해결이 있어야 한다.
+- 휴대폰, 녹음파일, GPS, 코인, 간 이식, 장례식, 정치인, 유산·재산 음모 같은 익숙한 소재를 원본과 무관하게 습관적으로 넣지 않는다.
 
-출력: 1) 감정 2) 제목 구조 3) 클릭 궁금증 4) 참고할 포장 방식 3개 5) 베끼면 안 될 요소 6) 선택 영상에서 파생한 신규 사연 주제 3개 7) 추천 제목 3개.
-마지막에는 반드시 아래 두 블록을 정확히 추가하세요.
-[추천 제목]선택한 영상의 클릭 구조를 참고하되 내용은 완전히 새로운 최종 제목 1개[/추천 제목]
-[추천 주제]선택한 영상의 핵심 관계·갈등을 바탕으로 새롭게 만든 구체적인 사연 주제 1개[/추천 주제]`;
- try{const t=await callGeneratePrompt(prompt,'benchmark');$('benchAnalysis').textContent=t.trim();const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/);const mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():''}catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}}
+해야 할 일:
+1) 선택 영상에서 '왜 클릭했을지'를 만드는 핵심 구조를 한 문장으로 추출하세요.
+2) 그 구조를 썰쟁 채널 성향으로 변환한 완전히 새로운 사연 주제 3개를 만드세요.
+3) 세 후보는 인물관계·사건·반전 장치가 서로 확실히 달라야 합니다.
+4) 각 후보마다 제목, 한 줄 주제, 추천도(0~100), 추천 이유를 작성하세요.
+5) 추천도는 참고용이며 최종 선택은 사용자가 합니다.
+
+분석 설명을 먼저 간단히 작성한 뒤, 마지막에는 반드시 아래 블록 3개를 정확히 출력하세요. 태그 이름을 바꾸지 마세요.
+[후보1 제목]제목[/후보1 제목]
+[후보1 주제]구체적인 한 줄 주제[/후보1 주제]
+[후보1 점수]0~100 숫자[/후보1 점수]
+[후보1 이유]짧은 추천 이유[/후보1 이유]
+[후보2 제목]제목[/후보2 제목]
+[후보2 주제]구체적인 한 줄 주제[/후보2 주제]
+[후보2 점수]0~100 숫자[/후보2 점수]
+[후보2 이유]짧은 추천 이유[/후보2 이유]
+[후보3 제목]제목[/후보3 제목]
+[후보3 주제]구체적인 한 줄 주제[/후보3 주제]
+[후보3 점수]0~100 숫자[/후보3 점수]
+[후보3 이유]짧은 추천 이유[/후보3 이유]`;
+ try{
+  const t=await callGeneratePrompt(prompt,'benchmark');
+  $('benchAnalysis').textContent=t.trim();
+  const candidates=extractBenchmarkCandidatesV208(t);
+  YT_BENCH_CANDIDATES_V207=candidates;
+  if(candidates.length){YT_BENCH_LAST_TITLE_V179=candidates[0].title;YT_BENCH_LAST_IDEA_V179=candidates[0].topic}
+  if(!candidates.length){
+   const mt=t.match(/\[추천 제목\]\s*([\s\S]*?)\s*\[\/추천 제목\]/),mi=t.match(/\[추천 주제\]\s*([\s\S]*?)\s*\[\/추천 주제\]/);
+   YT_BENCH_LAST_TITLE_V179=mt?mt[1].trim():'';YT_BENCH_LAST_IDEA_V179=mi?mi[1].trim():'';
+   if(YT_BENCH_LAST_TITLE_V179||YT_BENCH_LAST_IDEA_V179)YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179,topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:'기존 형식으로 생성된 후보입니다.'}];
+  }
+ }catch(e){$('benchAnalysis').textContent='AI 분석 실패: '+e.message}
+}
+function extractBenchmarkCandidatesV208(text){
+ const t=String(text||'').replace(/\r/g,'');
+ const out=[];
+ const read=(n,label,nextLabels)=>{
+  const escaped=label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const closes='(?:\\[\\/후보'+n+' '+escaped+'\\])?';
+  const next=nextLabels.map(x=>'\\[후보'+n+' '+x+'\\]').concat(n<3?['\\[후보'+(n+1)+' 제목\\]']:[]).join('|');
+  const re=new RegExp('\\[후보'+n+' '+escaped+'\\]\\s*([\\s\\S]*?)\\s*'+closes+'(?='+ (next||'$') +'|$)','i');
+  const m=t.match(re);return m?m[1].trim():'';
+ };
+ for(let n=1;n<=3;n++){
+  let title=read(n,'제목',['주제','점수','이유']);
+  let topic=read(n,'주제',['점수','이유']);
+  let scoreRaw=read(n,'점수',['이유']);
+  let reason=read(n,'이유',[]);
+  // 일부 모델이 닫는 태그 없이 한 줄 형식으로 출력하는 경우를 추가 지원한다.
+  if(!title){const m=t.match(new RegExp('\\[후보'+n+' 제목\\]\\s*([^\\n\\[]+)','i'));title=m?m[1].trim():''}
+  if(!topic){const m=t.match(new RegExp('\\[후보'+n+' 주제\\]\\s*([^\\n\\[]+)','i'));topic=m?m[1].trim():''}
+  if(!scoreRaw){const m=t.match(new RegExp('\\[후보'+n+' 점수\\]\\s*([^\\n\\[]+)','i'));scoreRaw=m?m[1].trim():''}
+  if(!reason){const m=t.match(new RegExp('\\[후보'+n+' 이유\\]\\s*([^\\n\\[]+)','i'));reason=m?m[1].trim():''}
+  if(title||topic)out.push({title,topic,score:Math.max(0,Math.min(100,parseInt(scoreRaw,10)||0)),reason});
+ }
+ return out;
+}
+function syncBenchmarkCandidatesFromAnalysisV208(){
+ const raw=$('benchAnalysis')?.textContent||'';
+ const parsed=extractBenchmarkCandidatesV208(raw);
+ if(parsed.length){
+  YT_BENCH_CANDIDATES_V207=parsed;
+  YT_BENCH_LAST_TITLE_V179=parsed[0].title||'';
+  YT_BENCH_LAST_IDEA_V179=parsed[0].topic||'';
+  return true;
+ }
+ return false;
+}
+function renderBenchmarkCandidateChoicesV207(){
+ const root=$('benchCandidateChoices');if(!root)return;root.innerHTML='';
+ const arr=YT_BENCH_CANDIDATES_V207||[];
+ if(!arr.length){root.innerHTML='<div class="tiny">분석 결과에서 후보 3개를 찾지 못했습니다. AI 벤치마킹 분석을 다시 실행해 주세요.</div>';return}
+ arr.forEach((c,idx)=>{
+  const b=document.createElement('button');b.type='button';b.className='bench-candidate-card'+(idx===YT_BENCH_SELECTED_CANDIDATE_V207?' selected':'');
+  b.innerHTML=`<div class="bench-candidate-top"><b>${String.fromCharCode(65+idx)}안</b><span class="bench-score">${c.score||'-'}점</span></div><div class="bench-candidate-title">${escapeHtml(c.title||'제목 없음')}</div><div class="bench-candidate-topic">${escapeHtml(c.topic||'주제 없음')}</div><div class="bench-candidate-reason">${escapeHtml(c.reason||'')}</div>`;
+  b.onclick=()=>selectBenchmarkCandidateV207(idx);root.appendChild(b);
+ });
+}
+function selectBenchmarkCandidateV207(idx){
+ const c=YT_BENCH_CANDIDATES_V207?.[idx];if(!c)return;YT_BENCH_SELECTED_CANDIDATE_V207=idx;
+ $('benchPreviewTitle').value=c.title||'';$('benchPreviewTopic').value=c.topic||'';renderBenchmarkCandidateChoicesV207();
+}
 function applyBenchmarkIdea(){
  if(!YT_BENCH_SELECTED_V179){alert('먼저 벤치마킹 영상을 선택해 주세요.');return}
- if(!YT_BENCH_LAST_IDEA_V179){alert('먼저 AI 벤치마킹 분석을 실행해 주세요.\n분석이 끝난 뒤 다시 눌러 주세요.');return}
- const title=YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제'));
- $('benchPreviewTitle').value=title;
- $('benchPreviewTopic').value=YT_BENCH_LAST_IDEA_V179;
- $('benchApplyModal').classList.add('active');
- setTimeout(()=>$('benchPreviewTitle')?.focus(),30);
+ // 메모리 변수뿐 아니라 화면에 이미 표시된 AI 분석 결과에서도 후보 1·2·3을 즉시 복구한다.
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length)syncBenchmarkCandidatesFromAnalysisV208();
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length&&YT_BENCH_LAST_IDEA_V179){
+  YT_BENCH_CANDIDATES_V207=[{title:YT_BENCH_LAST_TITLE_V179||('벤치마킹 신규 사연 - '+(YT_BENCH_SELECTED_V179.title||'추천 주제')),topic:YT_BENCH_LAST_IDEA_V179,score:0,reason:''}];
+ }
+ if(!(YT_BENCH_CANDIDATES_V207||[]).length){alert('분석 결과에서 각색 후보를 찾지 못했습니다.\\nAI 벤치마킹 분석을 한 번만 다시 실행해 주세요.');return}
+ YT_BENCH_SELECTED_CANDIDATE_V207=0;renderBenchmarkCandidateChoicesV207();selectBenchmarkCandidateV207(0);
+ $('benchApplyModal').classList.add('active');setTimeout(()=>$('benchCandidateChoices')?.scrollIntoView({block:'nearest'}),30);
 }
 function closeBenchmarkApplyModal(){const m=$('benchApplyModal');if(m)m.classList.remove('active')}
 function confirmBenchmarkProject(){
@@ -471,9 +560,7 @@ function confirmBenchmarkProject(){
  if(!topic){alert('프로젝트 주제가 비어 있습니다.');return}
  if($('name')&&title){$('name').value=title;$('name').dispatchEvent(new Event('input',{bubbles:true}))}
  if($('topic')){$('topic').value=topic;$('topic').dispatchEvent(new Event('input',{bubbles:true}))}
- saveLocal(true);
- closeBenchmarkApplyModal();
- setStatus('벤치마킹 추천 제목과 주제를 프로젝트에 넣었습니다.','ok');
+ saveLocal(true);closeBenchmarkApplyModal();setStatus('선택한 벤치마킹 각색 주제를 프로젝트에 넣었습니다.','ok');
  const panel=$('benchmarkPanel');if(panel)panel.classList.remove('active');
  const nameEl=$('name');if(nameEl){nameEl.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>nameEl.focus(),350)}
 }
@@ -780,7 +867,7 @@ function thumbPeoplePromptRule(value){
 
 function shortsSituationPromptRules(){
   return `[조회수형 쇼츠 상황 이미지 규칙]
-- 4컷 모두 같은 여주 혼자 서 있는 구도를 반복하지 마세요.
+- 4컷 모두 같은 주인공 혼자 서 있는 구도를 반복하지 마세요.
 - 각 컷마다 원고의 실제 사건에 필요한 인물만 1~4명 자동 선택하세요.
 - 대화·부부 갈등은 2명, 불륜·배신·폭로는 2~3명, 가족 집단 갈등은 최대 4명을 우선 사용하세요.
 - 혼자 결심하거나 증거를 확인하는 장면만 1명을 사용할 수 있습니다.
@@ -828,7 +915,7 @@ function stableSituationImageRules(target='longform'){
     return `${common}
 [쇼츠 이미지 전용]
 - 9:16 세로형이며, 각 컷은 1초 안에 상황이 읽혀야 합니다.
-- 4컷 모두 같은 여주 혼자 반복하지 마세요.
+- 4컷 모두 같은 주인공 혼자 반복하지 마세요.
 - 컷1은 강한 갈등 또는 이상 징후, 컷2는 숨겨진 관계나 증거, 컷3은 대치·폭로·결정적 행동, 컷4는 결말을 완전히 공개하지 않는 강한 여운을 우선하세요.
 - 사건 진행에 따라 등장인물 구성을 바꾸세요.
 - 화면 문구가 들어갈 공간은 확보하되 인물이 너무 작아지지 않게 하세요.
@@ -858,24 +945,24 @@ const fields={story:'story',blueprint:'blueprint',gptprompt:'gptPrompt',images:'
 const panelFields={memory:'memory',voice:'voicePanel',imagetimeline:'imageTimelinePanel',vrew:'vrew',youtubeab:'youtubeABPanel'};
 let longformMode=30,vrewParts=[],vrewCurrentIndex=0,voiceParts=[],voiceCurrentIndex=0;
 const DEFAULT_CHARACTERS=[
- {id:'hero-a',name:'여주 A',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
- {id:'hero-glasses',name:'안경 여주',role:'여주',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
- {id:'hero-glam',name:'화려한 여주',role:'여주',age:'37세',appearance:'한국인 여성, 세련된 롱펌, 또렷한 이목구비, 화려하지만 품위 있는 스타일',personality:'자신감 있고 강단 있음',outfit:'세련된 원피스 또는 정장',prompt:'동일 인물 유지, 얼굴과 헤어스타일 고정',image:'',enabled:false,isDefault:false}
+ {id:'hero-a',name:'여주 A',role:'주인공',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 차분하고 강단 있는 인상',personality:'차분하지만 필요할 때 단호함',outfit:'단정한 일상복',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',image:'',enabled:true,isDefault:true},
+ {id:'hero-glasses',name:'안경 여주',role:'주인공',age:'37세',appearance:'한국인 여성, 자연스러운 롱펌, 얇은 안경, 오똑한 코와 도톰한 입술, 지적인 인상',personality:'차분하고 지적임',outfit:'단정한 셔츠와 재킷',prompt:'동일 인물 유지, 안경과 얼굴 특징 고정',image:'',enabled:false,isDefault:false},
+ {id:'hero-glam',name:'화려한 여주',role:'주인공',age:'37세',appearance:'한국인 여성, 세련된 롱펌, 또렷한 이목구비, 화려하지만 품위 있는 스타일',personality:'자신감 있고 강단 있음',outfit:'세련된 원피스 또는 정장',prompt:'동일 인물 유지, 얼굴과 헤어스타일 고정',image:'',enabled:false,isDefault:false}
 ];
 function uid(){return 'c-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7)}
 function normalizeCharacter(c,i=0){
  const legacyText=c.text||'';
- return{id:c.id||uid(),internalId:c.internalId||`CHAR-${String(i+1).padStart(3,'0')}`,name:c.name||`캐릭터 ${i+1}`,role:c.role||'여주',scope:c.scope||'core',nameLocked:!!c.nameLocked,age:c.age||'',appearance:c.appearance||legacyText,personality:c.personality||'',outfit:c.outfit||'',prompt:c.prompt||(!legacyText?'동일 인물 유지, 장면마다 얼굴 변경 금지':''),image:c.image||'',enabled:c.enabled!==false,isDefault:!!c.isDefault,isProtagonist:c.isProtagonist===true};
+ return{id:c.id||uid(),internalId:c.internalId||`CHAR-${String(i+1).padStart(3,'0')}`,name:c.name||`캐릭터 ${i+1}`,role:(c.role==='여주'?'주인공':(c.role||'주인공')),scope:c.scope||'core',nameLocked:!!c.nameLocked,age:c.age||'',appearance:c.appearance||legacyText,personality:c.personality||'',outfit:c.outfit||'',prompt:c.prompt||(!legacyText?'동일 인물 유지, 장면마다 얼굴 변경 금지':''),image:c.image||'',enabled:c.enabled!==false,isDefault:!!c.isDefault,isProtagonist:c.isProtagonist===true};
 }
 function migrateCharacterList(rawList){
  const list=(rawList||[]).map(normalizeCharacter);
  if(!list.length)return DEFAULT_CHARACTERS.map(normalizeCharacter);
  let protagonist=list.find(c=>c.isProtagonist);
- if(!protagonist)protagonist=list.find(c=>c.role==='여주'&&c.isDefault)||list.find(c=>c.role==='여주'&&c.enabled)||list.find(c=>c.enabled)||list[0];
+ if(!protagonist)protagonist=list.find(c=>c.role==='주인공'&&c.isDefault)||list.find(c=>c.role==='주인공'&&c.enabled)||list.find(c=>c.enabled)||list[0];
  list.forEach(c=>c.isProtagonist=!!protagonist&&c.id===protagonist.id);
  // 구버전에서는 여러 여주 프리셋이 동시에 활성화되던 문제를 자동 정리한다.
  const hasExplicitFlag=(rawList||[]).some(c=>Object.prototype.hasOwnProperty.call(c,'isProtagonist'));
- if(!hasExplicitFlag&&protagonist?.role==='여주')list.forEach(c=>{if(c.role==='여주'&&c.id!==protagonist.id)c.enabled=false});
+ if(!hasExplicitFlag&&protagonist?.role==='주인공')list.forEach(c=>{if(c.role==='주인공'&&c.id!==protagonist.id)c.enabled=false});
  if(protagonist)protagonist.enabled=true;
  return list;
 }
@@ -894,7 +981,7 @@ function storeCharacters(list){
   storeCharactersMetadataOnlyV177(normalized);
 }
 function characterText(c){return[c.age,c.appearance,c.personality&&`성격과 분위기: ${c.personality}`,c.outfit&&`기본 의상: ${c.outfit}`,c.prompt].filter(Boolean).join(', ')}
-function roleEmoji(role){return({여주:'👩',남편:'👨',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
+function roleEmoji(role){return({주인공:'⭐',여주:'⭐',남편:'👨',아내:'👩',시어머니:'👵',시아버지:'👴',시누이:'👩‍🦱',시동생:'👨',장모:'👵',장인:'👴',처제:'👩',처남:'👨',아이:'🧒',친구:'🫂',회장:'🧓',비서:'🧑‍💼',변호사:'⚖️',직장동료:'👥',기타:'👤'})[role]||'👤'}
 function selectedCharacter(){const list=getCharacters();return list.find(c=>c.id===selectedCharacterId)||list[0]}
 function renderCharacters(){
  const list=getCharacters(),grid=$('characterGrid');if(!list.length)return;
@@ -909,24 +996,24 @@ function renderCharacters(){
 function escapeHtml(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderHeroineFacePanel(){
  const select=$('heroineSelect'),preview=$('heroineFacePreview'),state=$('heroineFaceState');if(!select||!preview||!state)return;
- const heroines=getCharacters().filter(c=>c.role==='여주');
+ const heroines=getCharacters().filter(c=>c.role==='주인공'||c.isProtagonist);
  const current=heroines.find(c=>c.enabled&&c.isDefault)||heroines.find(c=>c.enabled)||heroines[0];
  select.innerHTML=heroines.length?heroines.map(c=>`<option value="${escapeHtml(c.id)}" ${current&&c.id===current.id?'selected':''}>${escapeHtml(c.name)}${c.image?' · 얼굴 등록됨':''}${c.enabled?'':' · 미사용'}</option>`).join(''):'<option value="">여주 캐릭터 없음</option>';
- if(!current){preview.innerHTML='👩';state.textContent='여주 역할 캐릭터를 먼저 추가하세요.';return}
+ if(!current){preview.innerHTML='👩';state.textContent='주인공 캐릭터를 먼저 추가하세요.';return}
  preview.innerHTML=current.image?`<img src="${current.image}" alt="${escapeHtml(current.name)}" style="width:100%;height:100%;object-fit:cover;border-radius:11px">`:'👩';
  state.textContent=current.image?`${current.name}의 기준 얼굴이 지정되어 있습니다. 이미지 제작 시 이 얼굴을 기준으로 사용하세요.`:`${current.name}의 기준 얼굴이 아직 없습니다.`;
 }
 function chooseHeroine(id){
- const list=getCharacters(),i=list.findIndex(c=>c.id===id&&c.role==='여주');if(i<0)return;
- list.forEach(c=>{if(c.role==='여주'){c.isDefault=c.id===id;c.enabled=c.id===id}c.isProtagonist=c.id===id});list[i].enabled=true;storeCharacters(list);selectedCharacterId=id;localStorage.setItem('sseoljeng-selected-character-id',id);$('heroine').value=characterText(list[i]);renderCharacters();saveLocal(true);setStatus(`${list[i].name}을(를) 현재 여주로 지정했습니다.`,'ok');
+ const list=getCharacters(),i=list.findIndex(c=>c.id===id&&(c.role==='주인공'||c.isProtagonist));if(i<0)return;
+ list.forEach(c=>{if(c.role==='주인공'||c.isProtagonist){c.isDefault=c.id===id;c.enabled=c.id===id}c.isProtagonist=c.id===id});list[i].enabled=true;storeCharacters(list);selectedCharacterId=id;localStorage.setItem('sseoljeng-selected-character-id',id);$('heroine').value=characterText(list[i]);renderCharacters();saveLocal(true);setStatus(`${list[i].name}을(를) 현재 주인공으로 지정했습니다.`,'ok');
 }
 function uploadHeroineFace(){
- const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 여주 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
+ const id=$('heroineSelect')?.value;if(!id){setStatus('먼저 주인공 캐릭터를 선택하세요.','bad');return}pendingCharacterId=id;$('characterImageInput').click();
 }
 function clearHeroineFace(){
- const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 여주 얼굴 사진이 없습니다.','bad');return}list[i].image='';saveCharacterFaceGlobalV178(list[i],'').catch(console.warn);storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
+ const id=$('heroineSelect')?.value,list=getCharacters(),i=list.findIndex(c=>c.id===id);if(i<0||!list[i].image){setStatus('삭제할 주인공 얼굴 사진이 없습니다.','bad');return}list[i].image='';saveCharacterFaceGlobalV178(list[i],'').catch(console.warn);storeCharacters(list);renderCharacters();saveLocal(true);setStatus(`${list[i].name}의 기준 얼굴 지정을 해제했습니다.`,'ok');
 }
-function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;$('charProtagonist').checked=!!c.isProtagonist;if(c.role==='여주')$('heroine').value=characterText(c)}
+function loadCharacterEditor(){const c=selectedCharacter();if(!c)return;$('charName').value=c.name;$('charRole').value=c.role;$('charScope').value=c.scope||'core';$('charInternalId').value=c.internalId||'';$('charNameLocked').checked=!!c.nameLocked;$('charAge').value=c.age;$('charAppearance').value=c.appearance;$('charPersonality').value=c.personality;$('charOutfit').value=c.outfit;$('charPrompt').value=c.prompt;$('charEnabled').checked=c.enabled;$('charProtagonist').checked=!!c.isProtagonist;if(c.role==='주인공'||c.isProtagonist)$('heroine').value=characterText(c)}
 function selectCharacter(id){selectedCharacterId=id;renderCharacters();const c=selectedCharacter();setStatus(`${c.name} 캐릭터를 선택했습니다.`,'ok');scheduleAutoSave()}
 function readCharacterEditor(base={}){return normalizeCharacter({...base,name:$('charName').value.trim()||'이름 없는 캐릭터',role:$('charRole').value,scope:$('charScope').value,nameLocked:$('charNameLocked').checked,age:$('charAge').value.trim(),appearance:$('charAppearance').value.trim(),personality:$('charPersonality').value.trim(),outfit:$('charOutfit').value.trim(),prompt:$('charPrompt').value.trim(),enabled:$('charEnabled').checked,isProtagonist:$('charProtagonist').checked})}
 function addCharacterPreset(){const list=refreshInternalIds(getCharacters()),base={id:uid(),internalId:`CHAR-${String(list.length+1).padStart(3,'0')}`,name:'',role:'기타',scope:'support',nameLocked:false,age:'',appearance:'',personality:'',outfit:'',prompt:'동일 인물 유지, 장면마다 얼굴과 헤어스타일 변경 금지',enabled:true,isDefault:false,isProtagonist:false};base.name=makeRandomName(base,new Set(list.map(x=>x.name)));const c=normalizeCharacter(base,list.length);list.push(c);storeCharacters(list);selectedCharacterId=c.id;renderCharacters();$('charName').focus();$('charName').select();setStatus(`새 캐릭터 ${c.name}을 추가했습니다. 역할과 나이를 설정하세요.`,'ok');saveLocal(true)}
@@ -946,7 +1033,7 @@ const NAME_POOLS={
  seniorMale:['태식','정호','준식','영철','성복','만수','병철','동식','기철','상구','종수','덕수','영수','창호','재국','춘식','광수','성태','인호','정식']
 };
 function ageNumber(age=''){const m=String(age).match(/(\d{1,3})/);return m?Number(m[1]):null}
-function genderForRole(role){if(['여주','시어머니','시누이'].includes(role))return'female';if(['남편','시아버지','회장'].includes(role))return'male';return null}
+function genderForRole(role){if(['아내','시어머니','시누이','장모','처제'].includes(role))return'female';if(['남편','시아버지','시동생','장인','처남','회장'].includes(role))return'male';return null}
 function poolForCharacter(c){const n=ageNumber(c.age),g=genderForRole(c.role)||(/여성|여자/.test(c.appearance)?'female':/남성|남자/.test(c.appearance)?'male':Math.random()<.5?'female':'male');if(n!==null&&n>=58)return g==='female'?NAME_POOLS.seniorFemale:NAME_POOLS.seniorMale;if(n!==null&&n<=34)return g==='female'?NAME_POOLS.youngFemale:NAME_POOLS.youngMale;return g==='female'?NAME_POOLS.adultFemale:NAME_POOLS.adultMale}
 function makeRandomName(c,used=new Set()){const pool=poolForCharacter(c);for(let i=0;i<300;i++){const name=KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)];if(!used.has(name))return name}return KOREAN_SURNAMES[Math.floor(Math.random()*KOREAN_SURNAMES.length)]+pool[Math.floor(Math.random()*pool.length)]}
 function refreshInternalIds(list){let n=1;return list.map(c=>({...c,internalId:c.internalId&&/^CHAR-\d{3,}$/.test(c.internalId)?c.internalId:`CHAR-${String(n++).padStart(3,'0')}`}))}
@@ -1031,10 +1118,10 @@ function normalizeOpening(text,enabled=true){
  const rest=body.slice(hook.length).trim();
  return `1문단\n\n${hook}\n\n${cta}${rest?`\n\n${rest}`:''}`;
 }
-function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>x.role==='여주'&&x.enabled&&x.isDefault)||list.find(x=>x.role==='여주'&&x.enabled);if(c)$('heroine').value=characterText(c)}
+function syncHeroineFromDefault(){const list=getCharacters(),c=list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled&&x.isDefault)||list.find(x=>(x.role==='주인공'||x.isProtagonist)&&x.enabled);if(c)$('heroine').value=characterText(c)}
 function exportCharacters(){const blob=new Blob([JSON.stringify({version:'6.1-characters',characters:normalizeCharacterSlotsV175(getCharacters())},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁-캐릭터-보관함.json';a.click();URL.revokeObjectURL(a.href);setStatus('캐릭터 보관함 파일을 저장했습니다.','ok')}
 function importCharacters(event){const file=event.target.files&&event.target.files[0];event.target.value='';if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result),chars=preserveCharacterPhotosV175(Array.isArray(data)?data:data.characters, chars);if(!Array.isArray(chars)||!chars.length)throw new Error('캐릭터 데이터가 없습니다.');const normalized=chars.map(normalizeCharacter);storeCharacters(normalized);selectedCharacterId=normalized[0].id;renderCharacters();refreshGlobalFacesV178().catch(console.warn);syncHeroineFromDefault();saveLocal(true);setStatus(`캐릭터 보관함 불러오기 완료 · ${normalized.length}명`,'ok')}catch(e){setStatus('캐릭터 파일을 읽지 못했습니다: '+e.message,'bad')}};reader.readAsText(file,'utf-8')}
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.3-capcut-selectable-split',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='20.8-benchmark-choice-parser-fix',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -2741,20 +2828,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 <h3>🎯 선택 영상 분석</h3><div id="benchSelectedMeta" class="tiny"></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
 <button class="btn primary" type="button" onclick="analyzeSelectedBenchmark()">AI 벤치마킹 분석</button>
-<button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">💡 추천 주제를 프로젝트에 넣기</button>
+<button class="btn secondary" type="button" onclick="applyBenchmarkIdea()">✨ 각색 주제 3개에서 고르기</button>
 </div><div id="benchAnalysis" class="bench-analysis">영상을 선택해 주세요.</div></div>
 </div>
 <div id="benchApplyModal" class="bench-modal-backdrop" onclick="benchmarkModalBackdropClick(event)">
  <div class="bench-modal" role="dialog" aria-modal="true" aria-labelledby="benchApplyTitle">
   <h2 id="benchApplyTitle">💡 벤치마킹 기반 새 프로젝트</h2>
-  <div class="bench-modal-note">선택 영상은 구조와 감정만 참고하고, 아래 내용은 새 사연으로 생성된 프로젝트용 제목·주제입니다. 넣기 전에 직접 수정해도 됩니다.</div>
-  <div class="bench-preview-label">추천 제목</div>
+  <div class="bench-modal-note">원본 장르가 재벌·회사·성공담이어도 핵심 클릭 구조만 추출해 썰쟁식 현실 사연 3개로 각색합니다. 마음에 드는 안을 고른 뒤 제목·주제를 직접 수정할 수도 있습니다.</div>
+  <div id="benchCandidateChoices" class="bench-candidate-choices"></div>
+  <div class="bench-preview-label">선택한 제목</div>
   <input id="benchPreviewTitle" type="text" placeholder="추천 제목">
-  <div class="bench-preview-label">추천 주제</div>
+  <div class="bench-preview-label">선택한 주제</div>
   <textarea id="benchPreviewTopic" placeholder="추천 주제"></textarea>
   <div class="bench-modal-actions">
    <button class="btn ghost" type="button" onclick="closeBenchmarkApplyModal()">취소</button>
-   <button class="btn primary" type="button" onclick="confirmBenchmarkProject()">이 내용으로 프로젝트 만들기</button>
+   <button class="btn primary" type="button" onclick="confirmBenchmarkProject()">선택한 주제로 프로젝트 만들기</button>
   </div>
  </div>
 </div>
