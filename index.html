@@ -2421,7 +2421,7 @@ function rebuildSrtFromFullOriginal(cues,reference,{maxLines=2,lineLen=20,maxDur
   let st=interpolateSrtTime(anchors,ns),en=interpolateSrtTime(anchors,ne);
   if(out.length&&st<out[out.length-1].end)st=out[out.length-1].end;
   if(en<=st)en=st+900;
-  // v20.9 안전장치: 잘못 매칭된 기준점 하나 때문에 한 문장이 수십 초~수분으로 늘어나는 현상을 차단한다.
+  // v21.0 안전장치: 잘못 매칭된 기준점 하나 때문에 한 문장이 수십 초~수분으로 늘어나는 현상을 차단한다.
   // 실제 CapCut 음성 타임라인의 시작점은 유지하되, 표시 시간은 사용자가 고른 최대 표시 시간을 넘기지 않는다.
   const spoken=Math.max(1,srtSpokenChars(p.text));
   const naturalDur=Math.max(900,Math.min(maxDuration,Math.round(spoken*210)));
@@ -2449,6 +2449,32 @@ function cleanSrtCues(cues,{maxLines=2,lineLen=20,maxDuration=6500}={}){
  }
  flush();return out;
 }
+
+// v21.0 최종 안전검사:
+// 어떤 재구성/병합 경로를 거쳤더라도 최종 SRT 직전에 모든 큐를 다시 검사한다.
+// 1) 최대 표시시간 강제 제한  2) 역전/비정상 시간 수정  3) 다음 큐와 겹침 방지
+function enforceFinalSrtDuration(cues,maxDuration=6500){
+ const limit=Math.max(500,Number(maxDuration)||6500),out=[];
+ for(const item of (Array.isArray(cues)?cues:[])){
+  let start=Math.max(0,Number(item.start)||0);
+  let end=Number(item.end);
+  if(!Number.isFinite(end)||end<=start)end=start+Math.min(1200,limit);
+  if(end-start>limit)end=start+limit;
+  if(out.length){
+   const prev=out[out.length-1];
+   if(start<prev.end){
+    // 현재 시작점을 억지로 뒤로 밀어 긴 블록을 만들지 않고,
+    // 이전 큐의 끝을 현재 시작점에 맞춰 겹침만 제거한다.
+    prev.end=Math.max(prev.start+250,Math.min(prev.end,start));
+   }
+  }
+  if(end<=start)end=start+Math.min(900,limit);
+  if(end-start>limit)end=start+limit;
+  out.push({...item,start,end});
+ }
+ return out;
+}
+
 function formatSrtCues(cues){return cues.map((c,i)=>`${i+1}\n${srtMsToTime(c.start)} --> ${srtMsToTime(c.end)}\n${c.text}\n`).join('\n')}
 async function loadSrtFile(event){
  const file=event?.target?.files?.[0];if(!file)return;try{$('srtImport').value=await file.text();setStatus(`SRT 파일을 불러왔습니다: ${file.name}`,'ok');cleanImportedSrt()}catch(e){setStatus('SRT 파일 읽기 실패: '+e.message,'bad')}finally{if(event?.target)event.target.value=''}
@@ -2461,14 +2487,14 @@ function cleanImportedSrt(){
   let ref=$('srtReference')?.value?.trim();if(!ref&&$('story')?.value?.trim()){ref=prepareSrtReference($('story').value);$('srtReference').value=ref}
   if(!ref){setStatus('원본 대본 100% 재구성이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
   const rebuilt=rebuildSrtFromFullOriginal(cues,ref,{maxLines,lineLen,maxDuration});if(!rebuilt.ok){setStatus('원문 자막 재구성 실패: '+rebuilt.reason,'bad');return}
-  $('srt').value=formatSrtCues(rebuilt.cues);saveLocal(true);updateMeta();
+  const finalCues=enforceFinalSrtDuration(rebuilt.cues,maxDuration);$('srt').value=formatSrtCues(finalCues);saveLocal(true);updateMeta();
   const verdict=rebuilt.missingChars===0?'누락 0자 ✅':'누락 '+rebuilt.missingChars.toLocaleString()+'자 ⚠️';
   if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${rebuilt.referenceChars.toLocaleString()}자 → 최종 ${rebuilt.resultChars.toLocaleString()}자 · ${verdict}`;
-  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · 시간 기준점 ${rebuilt.anchors}개(자동 매칭 ${rebuilt.matched}개) · 자동캡션 ${cues.length}개 → 최종 ${rebuilt.cues.length}개 · 최대 ${maxLines}줄`;
+  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · 시간 기준점 ${rebuilt.anchors}개(자동 매칭 ${rebuilt.matched}개) · 자동캡션 ${cues.length}개 → 최종 ${finalCues.length}개 · 최대 ${maxLines}줄 · 큐당 최대 ${(maxDuration/1000).toFixed(1)}초 강제`;
   setStatus(`SRT 완료: 원본 전체 재구성 · ${verdict}`,'ok');return;
  }
- const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration});$('srt').value=formatSrtCues(cleaned);saveLocal(true);updateMeta();
- if($('srtCleanStats'))$('srtCleanStats').textContent=`원문 재구성 안 함 · 자동캡션 ${cues.length}개 → 정리 후 ${cleaned.length}개`;
+ const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration}),finalCleaned=enforceFinalSrtDuration(cleaned,maxDuration);$('srt').value=formatSrtCues(finalCleaned);saveLocal(true);updateMeta();
+ if($('srtCleanStats'))$('srtCleanStats').textContent=`원문 재구성 안 함 · 자동캡션 ${cues.length}개 → 정리 후 ${finalCleaned.length}개 · 큐당 최대 ${(maxDuration/1000).toFixed(1)}초 강제`;
  setStatus(`SRT 완료: ${cues.length}개 → ${cleaned.length}개 자막`,'ok');
 }
 
