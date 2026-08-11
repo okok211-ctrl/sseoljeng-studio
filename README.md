@@ -10,3 +10,9 @@
 - Final SRT export now re-validates every cue.
 - No cue can exceed the selected maximum display duration (default 6.5 seconds), including 100% original-text reconstruction mode.
 - Overlap correction no longer stretches a cue into a long block.
+
+## v21.1 SRT fixed-timeline mode
+- CapCut SRT start/end timestamps are preserved exactly in original-text reconstruction mode.
+- Only caption text is replaced/reallocated from the original script.
+- This structurally prevents one caption from becoming minutes long.
+- The uploaded 0810 (1).srt was inspected: 1,666 cues, longest original CapCut cue about 2.87 s, and zero cues longer than 6.5 s.
