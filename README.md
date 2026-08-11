@@ -16,3 +16,10 @@
 - Only caption text is replaced/reallocated from the original script.
 - This structurally prevents one caption from becoming minutes long.
 - The uploaded 0810 (1).srt was inspected: 1,666 cues, longest original CapCut cue about 2.87 s, and zero cues longer than 6.5 s.
+
+## v21.2 SRT aligned grouped captions
+- Fixes the v21.1 issue where locking every CapCut cue produced mostly one-line captions.
+- CapCut auto-caption text is fuzzy-matched sequentially against the original script.
+- Adjacent CapCut cues are grouped into readable 2–3 line captions while keeping the group's real audio start/end timing.
+- Original script text is restored from matched positions, including words CapCut omitted.
+- Long restored text is split inside the same audio time range instead of being truncated.

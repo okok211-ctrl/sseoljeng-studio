@@ -317,7 +317,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     <div class="tiny" style="margin:0 0 10px">CapCut 자동 캡션은 시간 기준점으로만 사용하고, 최종 자막 글자는 원본 대본 전체에서 다시 만듭니다. 자동캡션에서 빠진 단어도 원문에서 복원하며, 완료 후 원문 누락 검사를 표시합니다.</div>
     <textarea id="srtImport" style="min-height:240px" placeholder="CapCut에서 내보낸 SRT 내용을 붙여넣거나 아래 ‘SRT 파일 불러오기’를 사용하세요."></textarea>
     <div style="margin-top:12px">
-     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 100% 재구성 · CapCut 타임코드 고정 · 누락 방지 · 추천</label>
+     <label style="display:flex;align-items:center;gap:8px;font-weight:800"><input id="srtUseReference" type="checkbox" checked style="width:auto"> ✅ 원본 대본 100% 재구성 · CapCut 음성 싱크 기준 · 누락 방지 · 추천</label>
      <div class="tiny" style="margin:6px 0 8px">자동캡션의 <b>시간값은 그대로 활용</b>하고, 화면에 표시할 글자는 아래 원본 대본에서 다시 가져옵니다. 따라서 ‘제사→재사’ 같은 음성인식 오타를 원문으로 복원합니다.</div>
      <textarea id="srtReference" style="min-height:180px" placeholder="롱폼 원문을 넣으세요. ‘롱폼 원문 가져오기’를 누르면 현재 롱폼 탭의 원고를 자동으로 가져옵니다."></textarea>
      <div class="clean-actions" style="margin-top:8px"><button class="btn ghost" type="button" onclick="loadStoryAsSrtReference()">📄 롱폼 원문 가져오기</button><span id="srtReferenceStats" class="tiny">원문 미등록</span></div>
@@ -2414,9 +2414,172 @@ function splitOriginalForCaptions(raw,maxChars){
  return out;
 }
 
-// v21.1 CapCut 타임코드 고정 복원
+// v21.2 CapCut 타임코드 고정 복원
 // 핵심: 원본 CapCut SRT의 각 cue 시작/종료 시간을 절대 새로 만들지 않는다.
 // 자막 내용만 원본 대본에서 순서대로 재배분하므로 수분짜리/십수분짜리 cue가 생성될 수 없다.
+
+// v21.2 — CapCut 자동캡션을 '시간 기준점'으로 쓰되,
+// 1개 cue = 1개 자막으로 고정하지 않고 읽기 좋은 2~3줄 묶음으로 만든다.
+// 각 CapCut cue를 원본 대본에 순서대로 fuzzy-match해서 실제 원문 구간을 찾아 쓰므로
+// 단순 글자수 비율 배분보다 싱크가 훨씬 안정적이다.
+function wrapKoreanCaptionBalanced(text,lineLen=20,maxLines=2){
+ const clean=String(text||'').replace(/\s+/g,' ').trim();
+ if(!clean)return '';
+ const cap=Math.max(1,Number(lineLen)||20)*Math.max(1,Number(maxLines)||2);
+ if(clean.length<=lineLen)return clean;
+ if(clean.length>cap)return wrapKoreanCaption(clean,lineLen,maxLines);
+
+ const words=clean.split(' ').filter(Boolean);
+ if(words.length<=1){
+   const lines=[];for(let i=0;i<clean.length;i+=lineLen)lines.push(clean.slice(i,i+lineLen));
+   return lines.slice(0,maxLines).join('\n');
+ }
+ const lines=[];let start=0;
+ for(let line=0;line<maxLines && start<words.length;line++){
+   const remainLines=maxLines-line,remainWords=words.length-start;
+   if(remainLines===1){lines.push(words.slice(start).join(' '));break}
+   const remainText=words.slice(start).join(' ');
+   const ideal=Math.ceil(remainText.length/remainLines);
+   let bestEnd=start+1,bestScore=1e9,cur='';
+   for(let j=start;j<words.length;j++){
+     const candidate=cur?cur+' '+words[j]:words[j];
+     if(candidate.length>lineLen && j>start)break;
+     cur=candidate;
+     const wordsLeft=words.length-(j+1);
+     if(wordsLeft<remainLines-1)break;
+     const score=Math.abs(candidate.length-ideal);
+     if(score<bestScore){bestScore=score;bestEnd=j+1}
+   }
+   lines.push(words.slice(start,bestEnd).join(' '));start=bestEnd;
+ }
+ if(start<words.length){
+   if(lines.length<maxLines)lines.push(words.slice(start).join(' '));
+   else lines[lines.length-1]+=' '+words.slice(start).join(' ');
+ }
+ return lines.join('\n');
+}
+function srtNormToRawEnd(R,normPos){
+ if(normPos<=0)return 0;
+ if(normPos>=R.rawPos.length)return R.raw.length;
+ return Math.min(R.raw.length,R.rawPos[Math.max(0,normPos-1)]+1);
+}
+function alignCapCutCuesToReference(cues,reference){
+ const R=buildNormalizedReference(reference);
+ if(!R.raw||!R.norm||!cues.length)return {ok:false,reason:'원문 또는 SRT 없음'};
+ let cursor=0,matched=0;
+ const aligned=[];
+ for(let i=0;i<cues.length;i++){
+   const cue=cues[i],cap=normalizeSrtMatchText(cue.text);
+   let hit=null;
+   if(cap){
+     hit=findBestCueMatch(R.norm,cap,cursor);
+     // 짧은 cue는 오인식되기 쉬워 조금 더 엄격하게, 긴 cue는 약간 여유를 둔다.
+     const threshold=cap.length<=5?.42:cap.length<=10?.48:.56;
+     if(hit && hit.score<=threshold){
+       matched++;
+       cursor=Math.max(cursor,hit.end);
+     }else hit=null;
+   }
+   aligned.push({...cue,hit,cap});
+ }
+ return {ok:true,R,aligned,matched};
+}
+function groupCapCutCues(aligned,{maxLines=2,lineLen=20,maxDuration=6500}={}){
+ const hardChars=Math.max(22,Number(maxLines)*Number(lineLen));
+ const targetChars=Math.max(Number(lineLen)+6,Math.floor(hardChars*.72));
+ const out=[];let cur=null;
+ const flush=()=>{if(cur){out.push(cur);cur=null}};
+ for(let i=0;i<aligned.length;i++){
+   const c=aligned[i],chars=Math.max(1,srtSpokenChars(c.text));
+   if(!cur){
+     cur={first:i,last:i,start:c.start,end:c.end,chars,items:[c]};
+     continue;
+   }
+   const gap=Math.max(0,c.start-cur.end);
+   const newDur=c.end-cur.start;
+   const newChars=cur.chars+chars;
+   // 2~3줄로 읽기 좋게 묶되, 원래 발화 사이 공백이 크거나 제한을 넘으면 끊는다.
+   const canMerge=gap<=850 && newDur<=maxDuration && newChars<=hardChars;
+   if(canMerge){
+     cur.last=i;cur.end=c.end;cur.chars=newChars;cur.items.push(c);
+     // 이미 충분히 읽을 분량이고 3초 이상이면 다음 cue부터 새 자막으로 넘긴다.
+     if(cur.chars>=targetChars && (cur.end-cur.start)>=3000)flush();
+   }else{
+     flush();
+     cur={first:i,last:i,start:c.start,end:c.end,chars,items:[c]};
+   }
+ }
+ flush();return out;
+}
+function rebuildSrtAlignedGrouped(cues,reference,{maxLines=2,lineLen=20,maxDuration=6500}={}){
+ const A=alignCapCutCuesToReference(cues,reference);if(!A.ok)return A;
+ const {R,aligned}=A,groups=groupCapCutCues(aligned,{maxLines,lineLen,maxDuration});
+ if(!groups.length)return {ok:false,reason:'자막 묶음을 만들지 못함'};
+
+ // 각 그룹의 원문 끝 위치를 matched cue로 결정한다.
+ // 그룹 끝이 매칭 실패한 경우 이후 첫 매칭 cue 시작점 전까지를 비율 보정한다.
+ const boundaries=[];
+ let lastNorm=0;
+ for(let gi=0;gi<groups.length;gi++){
+   const g=groups[gi];
+   const hits=g.items.filter(x=>x.hit).map(x=>x.hit);
+   let endNorm=hits.length?Math.max(...hits.map(h=>h.end)):null;
+
+   if(endNorm==null || endNorm<=lastNorm){
+     // 다음 매칭 cue를 찾아 시간/문자 비율로 추정
+     let nextHit=null;
+     for(let j=g.last+1;j<aligned.length;j++){if(aligned[j].hit){nextHit=aligned[j].hit;break}}
+     const nextNorm=nextHit?nextHit.start:R.norm.length;
+     const remainGroups=Math.max(1,groups.length-gi);
+     endNorm=Math.round(lastNorm+(nextNorm-lastNorm)/Math.min(3,remainGroups));
+   }
+
+   // 현재 그룹 이후의 첫 매칭 시작점보다 넘어가지 않게 제한
+   let nextStart=null;
+   for(let j=g.last+1;j<aligned.length;j++){if(aligned[j].hit){nextStart=aligned[j].hit.start;break}}
+   if(nextStart!=null)endNorm=Math.min(endNorm,nextStart);
+
+   endNorm=Math.max(lastNorm+1,Math.min(R.norm.length,endNorm));
+   if(gi===groups.length-1)endNorm=R.norm.length;
+   boundaries.push(endNorm);lastNorm=endNorm;
+ }
+
+ const out=[];let prevNorm=0;
+ for(let gi=0;gi<groups.length;gi++){
+   const g=groups[gi],endNorm=boundaries[gi];
+   const rawStart=srtNormToRawEnd(R,prevNorm),rawEnd=srtNormToRawEnd(R,endNorm);
+   let piece=R.raw.slice(rawStart,rawEnd).trim();
+   if(gi===groups.length-1)piece=R.raw.slice(rawStart).trim();
+   prevNorm=endNorm;
+   if(!piece)continue;
+
+   // 혹시 원문 교정으로 글자가 예상보다 길어진 그룹은 잘라 버리지 않고
+   // 같은 시간 구간 안에서 2개 이상으로 나눠 원문 누락을 막는다.
+   const maxChars=Math.max(22,Number(maxLines)*Number(lineLen));
+   const pieces=splitOriginalForCaptions(piece,maxChars);
+   if(pieces.length<=1){
+     out.push({start:g.start,end:g.end,text:wrapKoreanCaptionBalanced(piece,lineLen,maxLines),sourceText:piece});
+   }else{
+     const weights=pieces.map(p=>Math.max(1,srtSpokenChars(p.text))),sum=weights.reduce((a,b)=>a+b,0);
+     let t=g.start,acc=0;
+     for(let pi=0;pi<pieces.length;pi++){
+       acc+=weights[pi];
+       const en=pi===pieces.length-1?g.end:Math.round(g.start+(g.end-g.start)*(acc/sum));
+       out.push({start:t,end:Math.max(t+250,en),text:wrapKoreanCaptionBalanced(pieces[pi].text,lineLen,maxLines),sourceText:pieces[pi].text});
+       t=en;
+     }
+   }
+ }
+
+ const sourceNorm=normalizeSrtMatchText(R.raw),resultNorm=normalizeSrtMatchText(out.map(x=>x.sourceText).join(''));
+ const maxCue=Math.max(...out.map(x=>x.end-x.start),0);
+ return {
+   ok:true,cues:out,referenceChars:sourceNorm.length,resultChars:resultNorm.length,
+   missingChars:Math.max(0,sourceNorm.length-resultNorm.length),
+   matched:A.matched,sourceCueCount:cues.length,groups:groups.length,maxCue
+ };
+}
+
 function rebuildSrtKeepCapCutTimeline(cues,reference,{maxLines=2,lineLen=20}={}){
  const raw=String(reference||'').trim();
  if(!raw)return {ok:false,reason:'원본 대본이 비어 있음'};
@@ -2510,7 +2673,7 @@ function rebuildSrtFromFullOriginal(cues,reference,{maxLines=2,lineLen=20,maxDur
   let st=interpolateSrtTime(anchors,ns),en=interpolateSrtTime(anchors,ne);
   if(out.length&&st<out[out.length-1].end)st=out[out.length-1].end;
   if(en<=st)en=st+900;
-  // v21.1 안전장치: 잘못 매칭된 기준점 하나 때문에 한 문장이 수십 초~수분으로 늘어나는 현상을 차단한다.
+  // v21.2 안전장치: 잘못 매칭된 기준점 하나 때문에 한 문장이 수십 초~수분으로 늘어나는 현상을 차단한다.
   // 실제 CapCut 음성 타임라인의 시작점은 유지하되, 표시 시간은 사용자가 고른 최대 표시 시간을 넘기지 않는다.
   const spoken=Math.max(1,srtSpokenChars(p.text));
   const naturalDur=Math.max(900,Math.min(maxDuration,Math.round(spoken*210)));
@@ -2539,7 +2702,7 @@ function cleanSrtCues(cues,{maxLines=2,lineLen=20,maxDuration=6500}={}){
  flush();return out;
 }
 
-// v21.1 최종 안전검사:
+// v21.2 최종 안전검사:
 // 어떤 재구성/병합 경로를 거쳤더라도 최종 SRT 직전에 모든 큐를 다시 검사한다.
 // 1) 최대 표시시간 강제 제한  2) 역전/비정상 시간 수정  3) 다음 큐와 겹침 방지
 function enforceFinalSrtDuration(cues,maxDuration=6500){
@@ -2574,12 +2737,12 @@ function cleanImportedSrt(){
  const useRef=!!$('srtUseReference')?.checked,maxLines=Number($('srtMaxLines')?.value||2),lineLen=Number($('srtCharsPerLine')?.value||20),maxDuration=Math.round(Number($('srtMaxDuration')?.value||6.5)*1000);
  if(useRef){
   let ref=$('srtReference')?.value?.trim();if(!ref&&$('story')?.value?.trim()){ref=prepareSrtReference($('story').value);$('srtReference').value=ref}
-  if(!ref){setStatus('원본 대본 100% 재구성 · CapCut 타임코드 고정이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
-  const rebuilt=rebuildSrtKeepCapCutTimeline(cues,ref,{maxLines,lineLen});if(!rebuilt.ok){setStatus('원문 자막 재구성 실패: '+rebuilt.reason,'bad');return}
+  if(!ref){setStatus('원본 대본 100% 재구성 · CapCut 음성 싱크 기준이 켜져 있습니다. ‘롱폼 원문 가져오기’를 먼저 눌러주세요.','bad');return}
+  const rebuilt=rebuildSrtAlignedGrouped(cues,ref,{maxLines,lineLen,maxDuration});if(!rebuilt.ok){setStatus('원문 자막 재구성 실패: '+rebuilt.reason,'bad');return}
   const finalCues=rebuilt.cues;$('srt').value=formatSrtCues(finalCues);saveLocal(true);updateMeta();
   const verdict=rebuilt.missingChars===0?'누락 0자 ✅':'누락 '+rebuilt.missingChars.toLocaleString()+'자 ⚠️';
   if($('srtReferenceStats'))$('srtReferenceStats').textContent=`원문 ${rebuilt.referenceChars.toLocaleString()}자 → 최종 ${rebuilt.resultChars.toLocaleString()}자 · ${verdict}`;
-  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · CapCut 타임코드 고정 ${rebuilt.anchors}개 · 자동캡션 ${cues.length}개 → 최종 ${finalCues.length}개 · 최대 ${maxLines}줄 · 최장 cue ${(rebuilt.maxCue/1000).toFixed(2)}초`;
+  if($('srtCleanStats'))$('srtCleanStats').textContent=`원본 100% 재구성 · ${verdict} · 자동캡션 매칭 ${rebuilt.matched}/${rebuilt.sourceCueCount} · ${rebuilt.groups}개 묶음 → 최종 ${finalCues.length}개 · 최대 ${maxLines}줄 · 최장 cue ${(rebuilt.maxCue/1000).toFixed(2)}초`;
   setStatus(`SRT 완료: 원본 전체 재구성 · ${verdict}`,'ok');return;
  }
  const cleaned=cleanSrtCues(cues,{maxLines,lineLen,maxDuration}),finalCleaned=enforceFinalSrtDuration(cleaned,maxDuration);$('srt').value=formatSrtCues(finalCleaned);saveLocal(true);updateMeta();
