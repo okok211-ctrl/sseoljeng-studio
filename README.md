@@ -18,3 +18,12 @@
 - 기존 구형 JSON도 불러올 수 있으며, 사진이 없는 구형 파일은 현재 PC의 기존 얼굴 정보를 가능한 한 보존합니다.
 - v20.8에 있던 importCharacters의 잘못된 변수 참조도 수정했습니다.
 - 기존 SRT 로직은 수정하지 않았습니다.
+
+## v22.2 Auto Editor - Automatic Layout
+- Existing Studio SRT/reconstruction logic remains untouched.
+- Audio remains the absolute project duration.
+- SRT text density + real cue times are used to create automatic image scene boundaries.
+- Automatic gentle motion cycles: zoom in, zoom out, pan left/right.
+- Scene start boundaries can be manually adjusted in seconds.
+- Auto-edit plan can be exported to JSON for the upcoming local renderer.
+- MP4 rendering is still disabled intentionally; next phase will connect the local FFmpeg renderer after layout validation.
