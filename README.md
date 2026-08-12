@@ -27,3 +27,13 @@
 - Scene start boundaries can be manually adjusted in seconds.
 - Auto-edit plan can be exported to JSON for the upcoming local renderer.
 - MP4 rendering is still disabled intentionally; next phase will connect the local FFmpeg renderer after layout validation.
+
+
+## v22.3 Auto Preview
+- MP3 재생시간에 맞춰 이미지 자동 전환 미리보기
+- 자동 줌/이동 효과 미리보기
+- 현재 SRT 자막 오버레이
+- 16:9 / 9:16 미리보기
+- 렌더링 설계 JSON 저장
+- 기존 SRT 및 캐릭터 로직 미수정
+- 유료 API 없음

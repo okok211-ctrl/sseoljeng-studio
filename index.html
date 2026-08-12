@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v22.2 Benchmark Choice Fix</title>
+<title>썰쟁 Studio v22.3 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v22.2</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v22.3</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -1195,7 +1195,7 @@ function importCharacters(event){
  };
  reader.readAsText(file,'utf-8');
 }
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='22.2-auto-editor-auto-layout',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='22.3-auto-editor-preview',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -2937,7 +2937,14 @@ document.addEventListener('DOMContentLoaded',()=>{
  <audio id="aePlayer" controls style="width:100%"></audio>
  <div id="aeTimeline" style="margin-top:14px"></div>
  <div id="aeWarn" style="margin-top:12px"></div>
- <p><button id="aeExportPlan">💾 편집 설계 저장</button> <button disabled>▶ MP4 만들기 (렌더러 연결 전)</button></p>
+ <p><button id="aePreviewBtn">▶ 자동편집 미리보기</button> <button id="aeExportPlan">💾 편집 설계 저장</button> <button id="aeRenderPack">📦 렌더링 설계 저장</button></p>
+<div id="aeStageWrap" style="display:none;margin-top:12px">
+ <div id="aeStage" style="position:relative;margin:auto;background:#000;overflow:hidden;width:min(100%,960px);aspect-ratio:16/9">
+  <img id="aeStageImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+  <div id="aeStageCaption" style="position:absolute;left:7%;right:7%;bottom:7%;text-align:center;color:#fff;font-weight:800;font-size:clamp(18px,2.4vw,34px);line-height:1.35;text-shadow:0 2px 5px #000,0 0 2px #000;white-space:pre-line"></div>
+ </div>
+ <div class="tiny">브라우저에서 음성·이미지·자막 싱크를 실제로 확인합니다.</div>
+</div>
 </div>
 <button id="autoEditorLauncher" style="position:fixed;right:18px;bottom:18px;z-index:9998;padding:12px 16px;border-radius:24px">🎬 자동편집</button>
 <script>
@@ -2947,6 +2954,54 @@ document.addEventListener('DOMContentLoaded',()=>{
  const parse=t=>{let a=[];for(const b of t.replace(/\r/g,'').split(/\n{2,}/)){let l=b.split('\n'),i=l.findIndex(x=>x.includes('-->'));if(i<0)continue;let m=l[i].match(/(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)/);if(!m)continue;let f=k=>(+m[k]*3600+ +m[k+1]*60+ +m[k+2])*1000+ +m[k+3].padEnd(3,'0').slice(0,3);a.push({start:f(1),end:f(5),text:l.slice(i+1).join('\n')})}return a};
  const motions=['천천히 확대','천천히 축소','좌→우','우→좌'];
  st.scenes=[];
+ st.imgUrls=[]; st.previewTimer=null;
+
+ function refreshImgUrls(){
+  (st.imgUrls||[]).forEach(u=>{try{URL.revokeObjectURL(u)}catch(e){}});
+  st.imgUrls=st.imgs.map(f=>URL.createObjectURL(f));
+ }
+ function updateStage(){
+  if(!st.scenes.length)return;
+  const ms=G('aePlayer').currentTime*1000;
+  const sc=st.scenes.find(x=>x.start<=ms&&ms<x.end)||st.scenes[st.scenes.length-1];
+  const cue=st.cues.find(x=>x.start<=ms&&ms<=x.end);
+  if(sc){
+   const img=G('aeStageImg'),url=st.imgUrls[sc.i];
+   if(url&&img.dataset.i!=String(sc.i)){img.src=url;img.dataset.i=String(sc.i)}
+   const p=Math.max(0,Math.min(1,(ms-sc.start)/Math.max(1,sc.end-sc.start)));
+   let tr='scale(1.03)';
+   if(sc.motion==='천천히 확대')tr=`scale(${1.02+0.08*p})`;
+   else if(sc.motion==='천천히 축소')tr=`scale(${1.10-0.08*p})`;
+   else if(sc.motion==='좌→우')tr=`scale(1.08) translateX(${(-2+4*p).toFixed(2)}%)`;
+   else if(sc.motion==='우→좌')tr=`scale(1.08) translateX(${(2-4*p).toFixed(2)}%)`;
+   img.style.transform=tr;
+  }
+  G('aeStageCaption').textContent=cue?(cue.text||''):'';
+ }
+ function startPreview(){
+  if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}
+  if(!st.scenes.length)st.scenes=makeScenes();
+  G('aeStageWrap').style.display='block';
+  G('aeStage').style.aspectRatio=G('aeRatio').value==='9:16'?'9/16':'16/9';
+  updateStage();
+  G('aePlayer').play().catch(()=>{});
+  if(st.previewTimer)clearInterval(st.previewTimer);
+  st.previewTimer=setInterval(updateStage,100);
+  G('aeStatus').textContent='▶ 자동편집 미리보기 재생 중';
+ }
+ function downloadText(name,content,type='text/plain;charset=utf-8'){
+  const b=new Blob([content],{type}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ }
+ function renderPack(){
+  if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}
+  const ratio=G('aeRatio').value,W=ratio==='9:16'?1080:1920,H=ratio==='9:16'?1920:1080;
+  const manifest={version:'22.3-render-plan',width:W,height:H,fps:30,durationMs:Math.round(st.dur*1000),
+   audio:G('aeAudio').files?.[0]?.name||'',srt:G('aeSrt').files?.[0]?.name||'',
+   images:st.imgs.map(f=>f.name),scenes:st.scenes};
+  downloadText('썰쟁-렌더링-설계.json',JSON.stringify(manifest,null,2),'application/json');
+  G('aeStatus').textContent='✓ 렌더링 설계 저장 완료';
+ }
  function makeScenes(){
   const n=st.imgs.length,d=st.dur*1000;
   if(!n||!d)return [];
@@ -3007,7 +3062,10 @@ document.addEventListener('DOMContentLoaded',()=>{
  G('aeClose').onclick=()=>G('autoEditorV22').style.display='none';
  G('aeAudio').onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),a=new Audio(u);G('aePlayer').src=u;a.onloadedmetadata=()=>{st.dur=a.duration;st.scenes=[];G('aeAudioInfo').textContent=` ✓ ${f.name} · ${tm(a.duration*1000)}`;draw()}};
  G('aeSrt').onchange=async e=>{let f=e.target.files[0];if(!f)return;st.cues=parse(await f.text());st.scenes=[];G('aeSrtInfo').textContent=` ✓ ${st.cues.length}개`;draw()};
- G('aeImgs').onchange=e=>{st.imgs=[...e.target.files];st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장`;draw()};
+ G('aeImgs').onchange=e=>{st.imgs=[...e.target.files];refreshImgUrls();st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장`;draw()};
+ G('aePreviewBtn').onclick=startPreview;
+ G('aeRenderPack').onclick=renderPack;
+ G('aePlayer').addEventListener('timeupdate',updateStage);
  G('aeExportPlan').onclick=()=>{if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}exportPlan();};
  G('aeBuild').onclick=()=>{if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}st.scenes=makeScenes();draw();G('aeStatus').textContent=`✓ 자동배치 완료 · ${st.scenes.length}장 · 최종 길이 ${tm(st.dur*1000)} · 음성 기준축 고정`};
 })();
