@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v22.5 Benchmark Choice Fix</title>
+<title>썰쟁 Studio v22.6 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v22.5</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v22.6</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -1195,7 +1195,7 @@ function importCharacters(event){
  };
  reader.readAsText(file,'utf-8');
 }
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='22.5-browser-video-output',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='22.6-fast-ffmpeg-pack',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -2937,7 +2937,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  <audio id="aePlayer" controls style="width:100%"></audio>
  <div id="aeTimeline" style="margin-top:14px"></div>
  <div id="aeWarn" style="margin-top:12px"></div>
- <p><button id="aePreviewBtn">▶ 자동편집 미리보기</button> <button id="aeOutputBtn" style="font-weight:900">🎬 영상 출력</button> <button id="aeExportPlan">💾 편집 설계 저장</button> <button id="aeRenderPack">📦 렌더링 설계 저장</button></p>
+ <p><button id="aePreviewBtn">▶ 자동편집 미리보기</button> <button id="aeOutputBtn" style="font-weight:900">🎬 영상 출력</button> <button id="aeFastPack" style="font-weight:900">⚡ 고속 FFmpeg 팩</button> <button id="aeExportPlan">💾 편집 설계 저장</button> <button id="aeRenderPack">📦 렌더링 설계 저장</button></p>
 <div id="aeOutputInfo" class="tiny">영상 출력은 브라우저에서 실제 재생하며 녹화합니다. 47분 영상이면 약 47분이 걸립니다. 출력 중 탭을 닫지 마세요.</div>
 <progress id="aeOutputProgress" value="0" max="100" style="display:none;width:100%;height:18px"></progress>
 <div id="aeStageWrap" style="display:none;margin-top:12px">
@@ -3078,6 +3078,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   const b=new Blob([content],{type}),a=document.createElement('a');
   a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
  }
+
+ function fastRenderPack(){
+   if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}
+   if(!st.scenes.length)st.scenes=makeScenes();
+   const ratio=G('aeRatio').value,W=ratio==='9:16'?1080:1920,H=ratio==='9:16'?1920:1080;
+   const plan={
+     version:'22.6-fast-ffmpeg',
+     width:W,height:H,fps:30,durationMs:Math.round(st.dur*1000),
+     audio:G('aeAudio').files?.[0]?.name||'',
+     srt:G('aeSrt').files?.[0]?.name||'',
+     images:st.imgs.map(f=>f.name),
+     scenes:st.scenes.map(x=>({i:x.i,start:Math.round(x.start),end:Math.round(x.end),motion:x.motion}))
+   };
+   downloadText('autoedit-plan.json',JSON.stringify(plan,null,2),'application/json');
+   G('aeStatus').textContent='✓ autoedit-plan.json 저장 완료 · ZIP의 고속렌더링 폴더에 MP3/SRT/이미지와 함께 넣고 RUN_FAST_RENDER.bat 실행';
+ }
  function renderPack(){
   if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}
   const ratio=G('aeRatio').value,W=ratio==='9:16'?1080:1920,H=ratio==='9:16'?1920:1080;
@@ -3150,6 +3166,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  G('aeImgs').onchange=e=>{st.imgs=[...e.target.files];refreshImgUrls();st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장`;draw()};
  G('aePreviewBtn').onclick=startPreview;
  G('aeOutputBtn').onclick=outputVideo;
+ G('aeFastPack').onclick=fastRenderPack;
  G('aeRenderPack').onclick=renderPack;
  G('aePlayer').addEventListener('timeupdate',updateStage);
  G('aeExportPlan').onclick=()=>{if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}exportPlan();};

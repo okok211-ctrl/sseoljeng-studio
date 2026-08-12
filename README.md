@@ -51,3 +51,13 @@
 - 브라우저가 MP4 MediaRecorder를 지원하면 MP4, 아니면 WebM으로 자동 대체
 - 완전 로컬 처리 / 유료 API 없음
 - 브라우저 방식이라 영상 길이만큼 실시간 출력 시간이 필요함
+
+
+## v22.6 Fast FFmpeg Render
+- `⚡ 고속 FFmpeg 팩` 추가
+- 현재 자동편집 설계를 autoedit-plan.json으로 내보냄
+- ZIP의 `고속렌더링/RUN_FAST_RENDER.bat`로 무료 로컬 FFmpeg 고속 렌더링
+- 1920x1080 / 1080x1920 지원
+- 이미지 줌/이동 + MP3 + 노란 자막/검정 테두리 MP4 합성
+- 브라우저 실시간 1:1 녹화 제한 없음
+- 유료 API 없음
