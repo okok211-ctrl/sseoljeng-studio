@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v20.8 Benchmark Choice Fix</title>
+<title>썰쟁 Studio v22.0 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v20.8</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v22.0</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -2846,5 +2846,44 @@ document.addEventListener('DOMContentLoaded',()=>{
   </div>
  </div>
 </div>
-</body>
+
+<div id="autoEditorV22" style="display:none;position:fixed;inset:4%;z-index:9999;background:var(--bg,#fff);color:inherit;border:1px solid #999;border-radius:14px;padding:18px;overflow:auto;box-shadow:0 8px 40px #0005">
+ <div style="display:flex;justify-content:space-between;align-items:center"><h2>🎬 자동편집 · 1차 베타</h2><button id="aeClose">✕ 닫기</button></div>
+ <p>기존 Studio와 분리된 모듈입니다. <b>음성 길이를 최종 영상의 절대 기준축</b>으로 사용합니다.</p>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  <label>🎙 음성<br><input id="aeAudio" type="file" accept="audio/*"><small id="aeAudioInfo"> 불러오기 전</small></label>
+  <label>💬 SRT<br><input id="aeSrt" type="file" accept=".srt,text/plain"><small id="aeSrtInfo"> 불러오기 전</small></label>
+  <label>🖼 이미지<br><input id="aeImgs" type="file" accept="image/*" multiple><small id="aeImgInfo"> 0장</small></label>
+  <label>영상<br><select id="aeRatio"><option>16:9 롱폼</option><option>9:16 쇼츠</option></select></label>
+  <label>이미지 움직임<br><select><option>자동</option><option>천천히 확대</option><option>천천히 축소</option><option>좌→우</option><option>우→좌</option><option>없음</option></select></label>
+  <label>자막 스타일<br><select><option>썰쟁 기본</option><option>하단 기본</option><option>큰 글씨</option></select></label>
+ </div>
+ <p><button id="aeBuild" style="padding:10px 18px">✨ 자동 편집 설계</button></p>
+ <div id="aeStatus">음성 + SRT + 이미지를 불러오세요.</div><hr>
+ <audio id="aePlayer" controls style="width:100%"></audio>
+ <div id="aeTimeline" style="margin-top:14px"></div>
+ <div id="aeWarn" style="margin-top:12px"></div>
+ <p><button disabled>▶ MP4 만들기 (2차에서 연결)</button></p>
+</div>
+<button id="autoEditorLauncher" style="position:fixed;right:18px;bottom:18px;z-index:9998;padding:12px 16px;border-radius:24px">🎬 자동편집</button>
+<script>
+(()=>{
+ const G=id=>document.getElementById(id),st={dur:0,cues:[],imgs:[]};
+ const tm=x=>{let q=Math.round(x/1000);return String(Math.floor(q/60)).padStart(2,'0')+':'+String(q%60).padStart(2,'0')};
+ const parse=t=>{let a=[];for(const b of t.replace(/\r/g,'').split(/\n{2,}/)){let l=b.split('\n'),i=l.findIndex(x=>x.includes('-->'));if(i<0)continue;let m=l[i].match(/(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)/);if(!m)continue;let f=k=>(+m[k]*3600+ +m[k+1]*60+ +m[k+2])*1000+ +m[k+3].padEnd(3,'0').slice(0,3);a.push({start:f(1),end:f(5),text:l.slice(i+1).join('\n')})}return a};
+ function draw(){
+  let n=st.imgs.length,d=st.dur*1000,tl=G('aeTimeline');if(!tl)return;
+  let bars=n&&d?Array.from({length:n},(_,i)=>`<span style="display:inline-block;border:1px solid #aaa;padding:7px;margin:2px;border-radius:5px">🖼${i+1}<br><small>${tm(d*i/n)}</small></span>`).join(''):'';
+  tl.innerHTML=`<b>🎙 음성 기준:</b> ${tm(d)}　<b>💬 SRT:</b> ${st.cues.length}개　<b>🖼:</b> ${n}장<br>${bars}<br>💬 ━━━ SRT 자막 ━━━━━━━━━`;
+  let w=[],prev=0;st.cues.forEach((c,i)=>{if(c.end-c.start>6500)w.push(`#${i+1} ${(c.end-c.start)/1000}s 장시간`);if(c.start<prev)w.push(`#${i+1} 시간 겹침`);if(c.start-prev>8000)w.push(`${tm(prev)}~${tm(c.start)} 빈 구간`);if(c.text.split('\n').length>2)w.push(`#${i+1} 3줄 초과`);prev=Math.max(prev,c.end)});
+  G('aeWarn').innerHTML=w.length?`⚠ SRT 검사 ${w.length}건<br>${w.slice(0,10).join('<br>')}`:'✓ SRT 기본 검사 이상 없음';
+ }
+ G('autoEditorLauncher').onclick=()=>G('autoEditorV22').style.display='block';
+ G('aeClose').onclick=()=>G('autoEditorV22').style.display='none';
+ G('aeAudio').onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),a=new Audio(u);G('aePlayer').src=u;a.onloadedmetadata=()=>{st.dur=a.duration;G('aeAudioInfo').textContent=` ✓ ${f.name} · ${tm(a.duration*1000)}`;draw()}};
+ G('aeSrt').onchange=async e=>{let f=e.target.files[0];if(!f)return;st.cues=parse(await f.text());G('aeSrtInfo').textContent=` ✓ ${st.cues.length}개`;draw()};
+ G('aeImgs').onchange=e=>{st.imgs=[...e.target.files];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장`;draw()};
+ G('aeBuild').onclick=()=>{if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}draw();G('aeStatus').textContent=`✓ 설계 완료 · 최종 길이 ${tm(st.dur*1000)} · 음성 기준축 고정`};
+})();
+</script></body>
 </html>
