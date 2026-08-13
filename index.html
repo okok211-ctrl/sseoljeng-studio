@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v22.9.3 Benchmark Choice Fix</title>
+<title>썰쟁 Studio v23.1 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v22.9.3</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.1</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -2923,7 +2923,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <div id="autoEditorV22" style="display:none;position:fixed;inset:4%;z-index:9999;background:var(--bg,#fff);color:inherit;border:1px solid #999;border-radius:14px;padding:18px;overflow:auto;box-shadow:0 8px 40px #0005">
  <div style="display:flex;justify-content:space-between;align-items:center"><h2>🎬 자동편집 · 1차 베타</h2><button id="aeClose">✕ 닫기</button></div>
- <p>기존 Studio와 분리된 모듈입니다. <b>음성 길이를 최종 영상의 절대 기준축</b>으로 사용합니다.</p>
+ <p>기존 Studio와 분리된 모듈입니다. <b>음성 길이를 최종 영상의 절대 기준축</b>으로 사용하고, 이미지 <b>순서는 파일명 기준으로 고정</b>하고, 문단 연결이 없을 때도 <b>SRT 문장 끝·쉼표 구간을 찾아 전환 시점</b>을 잡습니다.</p>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
   <label>🎙 음성<br><input id="aeAudio" type="file" accept="audio/*"><small id="aeAudioInfo"> 불러오기 전</small></label>
   <label>💬 SRT<br><input id="aeSrt" type="file" accept=".srt,text/plain"><small id="aeSrtInfo"> 불러오기 전</small></label>
@@ -3089,7 +3089,7 @@ document.addEventListener('DOMContentLoaded',()=>{
      audio:G('aeAudio').files?.[0]?.name||'',
      srt:G('aeSrt').files?.[0]?.name||'',
      images:st.imgs.map(f=>f.name),
-     scenes:st.scenes.map(x=>({i:x.i,start:Math.round(x.start),end:Math.round(x.end),motion:x.motion}))
+     scenes:st.scenes.map(x=>({i:x.i,start:Math.round(x.start),end:Math.round(x.end),motion:x.motion,paragraph:x.paragraph||null,mapping:x.mapping||st.mappingMode||''}))
    };
    downloadText('autoedit-plan.json',JSON.stringify(plan,null,2),'application/json');
    G('aeStatus').textContent='✓ autoedit-plan.json 저장 완료 · ZIP의 고속렌더링 폴더에 MP3/SRT/이미지와 함께 넣고 RUN_FAST_RENDER.bat 실행';
@@ -3103,29 +3103,119 @@ document.addEventListener('DOMContentLoaded',()=>{
   downloadText('썰쟁-렌더링-설계.json',JSON.stringify(manifest,null,2),'application/json');
   G('aeStatus').textContent='✓ 렌더링 설계 저장 완료';
  }
+ function naturalFileSort(files){
+  return [...files].sort((a,b)=>a.name.localeCompare(b.name,'ko',{numeric:true,sensitivity:'base'}));
+ }
+ function paragraphAwareScenes(){
+  const n=st.imgs.length,d=st.dur*1000;
+  if(!n||!d||!st.cues.length)return null;
+  try{
+   const story=(document.getElementById('story')?.value||'').trim();
+   const imagePrompt=(document.getElementById('imagesOut')?.value||'').trim();
+   if(!story||!imagePrompt)return null;
+
+   let refs=extractImageParagraphRefs(imagePrompt);
+   if(!refs?.length)return null;
+
+   // 이미지 프롬프트의 "이미지 N · 사용 문단 M"을 이미지 번호순으로 정렬.
+   refs=[...refs].sort((a,b)=>(a.image||0)-(b.image||0));
+   const refText=prepareSrtReference(story);
+   const anchors=buildSrtTimeAnchors(st.cues,refText);
+   if(!anchors?.ok)return null;
+
+   const P=paragraphStartNormPositions(story,refText);
+   const byNo=new Map(P.blocks.map(x=>[x.number,x]));
+   const mapped=[];
+   for(const r of refs){
+     const p=byNo.get(r.paragraph);
+     if(!p)continue;
+     const time=interpolateSrtTime(anchors.anchors,p.pos);
+     mapped.push({image:Number(r.image)||mapped.length+1,paragraph:r.paragraph,time,preview:p.text||''});
+   }
+   if(!mapped.length)return null;
+
+   // 선택한 이미지 수에 맞춰 이미지 1..N 매핑.
+   const starts=[];
+   for(let i=0;i<n;i++){
+     const wanted=i+1;
+     let row=mapped.find(x=>x.image===wanted);
+     if(!row) row=mapped[Math.min(i,mapped.length-1)];
+     starts.push(Math.max(0,Math.min(d,row?.time ?? d*i/n)));
+   }
+   starts[0]=0;
+   for(let i=1;i<starts.length;i++){
+     if(starts[i]<=starts[i-1]+500) starts[i]=Math.min(d-500,starts[i-1]+500);
+   }
+   const scenes=starts.map((x,i)=>({
+      i,
+      start:i===0?0:x,
+      end:i<n-1?starts[i+1]:d,
+      motion:motions[i%motions.length],
+      paragraph:(mapped.find(r=>r.image===i+1)||mapped[Math.min(i,mapped.length-1)])?.paragraph||null,
+      mapping:'paragraph'
+   }));
+   st.mappingMode='paragraph';
+   return scenes;
+  }catch(e){
+   console.warn('문단 기반 이미지 배치 실패, 대사량 방식으로 대체',e);
+   return null;
+  }
+ }
  function makeScenes(){
   const n=st.imgs.length,d=st.dur*1000;
   if(!n||!d)return [];
-  // SRT 실제 타임라인을 기준으로 "대사량"을 이미지 수만큼 나눈다.
-  // 단순 시간 균등분할보다 이야기 흐름 변화에 가깝게 배치된다.
+
+  // 1순위: Studio 이미지 프롬프트의 사용 문단 → 원고 → SRT 시간 연결.
+  const byParagraph=paragraphAwareScenes();
+  if(byParagraph?.length)return byParagraph;
+
+  // 2순위 fallback: 이미지 순서는 그대로 유지하고 SRT의 실제 진행 위치에서 전환점 선택.
+  // 단순 글자수 1/N 분할을 쓰지 않고, 목표 시간 주변의 문장 끝/긴 쉼을 찾아 자연스럽게 전환한다.
+  st.mappingMode='srt_timeline';
   if(st.cues.length){
-   const total=st.cues.reduce((a,c)=>a+Math.max(1,(c.text||'').replace(/\s/g,'').length),0);
-   const target=total/n; let acc=0,scene=0,starts=[0];
-   for(let i=0;i<st.cues.length-1 && scene<n-1;i++){
-    acc+=Math.max(1,(st.cues[i].text||'').replace(/\s/g,'').length);
-    if(acc>=target*(scene+1)){
-      let boundary=st.cues[i].end;
-      // 큰 자막 공백이 있으면 그 중간을 장면 경계로 사용
-      const gap=st.cues[i+1].start-st.cues[i].end;
-      if(gap>500) boundary=st.cues[i].end+gap/2;
-      starts.push(boundary); scene++;
-    }
+   const starts=[0];
+   for(let scene=1; scene<n; scene++){
+     const target=d*scene/n;
+     const search=Math.max(45000, Math.min(150000, d/(n*2)));
+     let best=null, bestScore=1e18;
+
+     for(let i=0;i<st.cues.length-1;i++){
+       const c=st.cues[i], nx=st.cues[i+1];
+       const boundary=(c.end + Math.max(c.end,nx.start))/2;
+       if(Math.abs(boundary-target)>search) continue;
+
+       const txt=(c.text||'').trim();
+       const gap=Math.max(0,nx.start-c.end);
+       let score=Math.abs(boundary-target);
+
+       // 문장 끝과 실제 침묵 구간을 우선.
+       if(/[.!?。！？…]$/.test(txt)) score-=18000;
+       if(gap>=800) score-=Math.min(22000,gap*4);
+       else if(gap>=350) score-=7000;
+
+       // 너무 짧은 자막 한가운데에서 바뀌는 느낌 방지.
+       if((txt.replace(/\s/g,'').length||0)<5) score+=3000;
+
+       if(score<bestScore){bestScore=score;best=boundary;}
+     }
+
+     let t=best ?? target;
+     const minGap=Math.max(5000, Math.min(30000,d/(n*8)));
+     if(t<starts[starts.length-1]+minGap) t=starts[starts.length-1]+minGap;
+     if(t>d-(n-scene)*minGap) t=d-(n-scene)*minGap;
+     starts.push(Math.max(0,Math.min(d,t)));
    }
-   while(starts.length<n)starts.push(d*starts.length/n);
-   starts=starts.slice(0,n).sort((a,b)=>a-b);
-   return starts.map((x,i)=>({i,start:i?x:0,end:i<n-1?starts[i+1]:d,motion:motions[i%motions.length]}));
+
+   return starts.map((x,i)=>({
+     i,
+     start:i?x:0,
+     end:i<n-1?starts[i+1]:d,
+     motion:motions[i%motions.length],
+     paragraph:null,
+     mapping:'srt_timeline'
+   }));
   }
-  return Array.from({length:n},(_,i)=>({i,start:d*i/n,end:d*(i+1)/n,motion:motions[i%motions.length]}));
+  return Array.from({length:n},(_,i)=>({i,start:d*i/n,end:d*(i+1)/n,motion:motions[i%motions.length],paragraph:null,mapping:'equal'}));
  }
  function cueTextAt(ms){
    const c=st.cues.find(x=>x.start<=ms&&x.end>=ms)||st.cues.find(x=>x.start>=ms);
@@ -3135,11 +3225,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   let n=st.imgs.length,d=st.dur*1000,tl=G('aeTimeline');if(!tl)return;
   if(!st.scenes.length||st.scenes.length!==n)st.scenes=makeScenes();
   let bars=st.scenes.map((x,i)=>`<div style="border:1px solid #aaa;padding:8px;margin:4px 0;border-radius:7px">
-    <b>🖼 ${String(i+1).padStart(2,'0')}</b> · ${tm(x.start)} → ${tm(x.end)} · ${x.motion}<br>
-    <small>${cueTextAt(x.start)}</small>
+    <b>🖼 ${String(i+1).padStart(2,'0')}</b> · ${tm(x.start)} → ${tm(x.end)} · ${x.motion}
+    ${x.paragraph?` · <b>문단 ${x.paragraph}</b>`:''}<br>
+    <small>파일: ${(st.imgs[i]?.name||'').slice(0,60)}</small><br>
+    <small>장면 시작: ${cueTextAt(x.start)}</small>
     ${i>0?`<br><label>시작시간(초) <input class="aeBoundary" data-i="${i}" type="number" step="0.1" min="0" max="${Math.round(d/1000)}" value="${(x.start/1000).toFixed(1)}" style="width:90px"></label>`:''}
    </div>`).join('');
-  tl.innerHTML=`<b>🎙 음성 기준:</b> ${tm(d)}　<b>💬 SRT:</b> ${st.cues.length}개　<b>🖼:</b> ${n}장
+  const mode=st.mappingMode==='paragraph'?'✅ 문단↔이미지↔SRT 연결':st.mappingMode==='srt_timeline'?'✅ 이미지 순서 고정 · SRT 문장/쉼 기준 전환':'⚠ 균등 배치';
+  tl.innerHTML=`<b>🎙 음성 기준:</b> ${tm(d)}　<b>💬 SRT:</b> ${st.cues.length}개　<b>🖼:</b> ${n}장　<b>${mode}</b>
   <div style="margin-top:8px">${bars}</div>💬 ━━━ SRT 자막 ━━━━━━━━━`;
   let w=[],prev=0;st.cues.forEach((c,i)=>{if(c.end-c.start>6500)w.push(`#${i+1} ${(c.end-c.start)/1000}s 장시간`);if(c.start<prev)w.push(`#${i+1} 시간 겹침`);if(c.start-prev>8000)w.push(`${tm(prev)}~${tm(c.start)} 빈 구간`);if(c.text.split('\n').length>2)w.push(`#${i+1} 3줄 초과`);prev=Math.max(prev,c.end)});
   G('aeWarn').innerHTML=w.length?`⚠ SRT 검사 ${w.length}건<br>${w.slice(0,10).join('<br>')}`:'✓ SRT 기본 검사 이상 없음';
@@ -3163,14 +3256,14 @@ document.addEventListener('DOMContentLoaded',()=>{
  G('aeClose').onclick=()=>G('autoEditorV22').style.display='none';
  G('aeAudio').onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),a=new Audio(u);G('aePlayer').src=u;a.onloadedmetadata=()=>{st.dur=a.duration;st.scenes=[];G('aeAudioInfo').textContent=` ✓ ${f.name} · ${tm(a.duration*1000)}`;draw()}};
  G('aeSrt').onchange=async e=>{let f=e.target.files[0];if(!f)return;st.cues=parse(await f.text());st.scenes=[];G('aeSrtInfo').textContent=` ✓ ${st.cues.length}개`;draw()};
- G('aeImgs').onchange=e=>{st.imgs=[...e.target.files];refreshImgUrls();st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장`;draw()};
+ G('aeImgs').onchange=e=>{st.imgs=naturalFileSort([...e.target.files]);refreshImgUrls();st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장 · 파일명 순 정렬`;draw()};
  G('aePreviewBtn').onclick=startPreview;
  G('aeOutputBtn').onclick=outputVideo;
  G('aeFastPack').onclick=fastRenderPack;
  G('aeRenderPack').onclick=renderPack;
  G('aePlayer').addEventListener('timeupdate',updateStage);
  G('aeExportPlan').onclick=()=>{if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}exportPlan();};
- G('aeBuild').onclick=()=>{if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}st.scenes=makeScenes();draw();G('aeStatus').textContent=`✓ 자동배치 완료 · ${st.scenes.length}장 · 최종 길이 ${tm(st.dur*1000)} · 음성 기준축 고정`};
+ G('aeBuild').onclick=()=>{if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}st.scenes=makeScenes();draw();const mm=st.mappingMode==='paragraph'?'문단→이미지→SRT 실제시간 연결':st.mappingMode==='srt_timeline'?'이미지 순서 고정 + SRT 자연 전환':'균등 fallback';G('aeStatus').textContent=`✓ 자동배치 완료 · ${st.scenes.length}장 · ${mm} · 최종 길이 ${tm(st.dur*1000)}`};
 })();
 </script></body>
 </html>
