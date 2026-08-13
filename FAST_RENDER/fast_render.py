@@ -13,7 +13,7 @@ if not PLAN.exists():
     die("Studio에서 ⚡ 고속 FFmpeg 팩을 눌러 받은 autoedit-plan.json을 이 폴더에 넣어주세요.")
 
 try:
-    plan=json.loads(PLAN.read_text(encoding="utf-8"))
+    plan=json.loads(PLAN.read_text(encoding="utf-8-sig"))
 except Exception as e:
     die(f"설계 파일을 읽지 못했습니다: {e}")
 

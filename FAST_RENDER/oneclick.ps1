@@ -79,7 +79,9 @@ if ($plan.scenes) {
 }
 
 $fixedPlan = Join-Path $base "autoedit-plan.json"
-$plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $fixedPlan -Encoding UTF8
+$jsonText = $plan | ConvertTo-Json -Depth 20
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($fixedPlan, $jsonText, $utf8NoBom)
 
 Write-Host ""
 Write-Host "파일명 연결 완료." -ForegroundColor Green
