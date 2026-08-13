@@ -87,11 +87,54 @@ cmd=[ffmpeg,"-y","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(join
 print("[합치기] 장면 연결 중...")
 if subprocess.run(cmd).returncode: die("장면 합치기 실패")
 
+# ---- v22.7 subtitle safety normalization ----
+# FFmpeg/libass does not reliably wrap oversized Korean SRT the way the browser preview does.
+# Create a render-only SRT: max 2 lines, shorter line length, no multi-line pile-up inside one cue.
+def normalize_render_srt(src_path):
+    raw=src_path.read_text(encoding="utf-8-sig",errors="replace").replace("\r\n","\n")
+    blocks=re.split(r"\n{2,}",raw.strip())
+    out=[]
+    max_chars=26 if W>=H else 16
+    for b in blocks:
+        lines=b.splitlines()
+        if len(lines)<3: continue
+        idx=lines[0].strip()
+        timing=lines[1].strip()
+        text=" ".join(x.strip() for x in lines[2:] if x.strip())
+        text=re.sub(r"\s+"," ",text).strip()
+        if not text: continue
+        # Character-aware Korean wrapping, capped to two visible lines.
+        chunks=[]
+        cur=""
+        for ch in text:
+            cur+=ch
+            if len(cur)>=max_chars:
+                cut=cur.rfind(" ")
+                if cut>=max_chars//2:
+                    chunks.append(cur[:cut].strip()); cur=cur[cut+1:].strip()
+                else:
+                    chunks.append(cur.strip()); cur=""
+        if cur: chunks.append(cur.strip())
+        if len(chunks)>2:
+            # Preserve all text without creating 3+ lines: merge remainder into line 2.
+            chunks=[chunks[0]," ".join(chunks[1:])]
+        out.append(f"{idx}\n{timing}\n"+"\n".join(chunks[:2]))
+    dst=HERE/"_render_safe.srt"
+    dst.write_text("\n\n".join(out)+"\n",encoding="utf-8")
+    return dst
+
+render_srt=normalize_render_srt(srt)
 out=HERE/"썰쟁-자동편집-완성.mp4"
-sub=esc_filter_path(srt)
-# Yellow text + black outline. Font size is scaled for 1080p/vertical.
-fs=52 if H>=1080 else 40
-style=f"FontName=Malgun Gothic,FontSize={fs},PrimaryColour=&H0000D9FF,OutlineColour=&H00000000,BorderStyle=1,Outline=4,Shadow=1,Alignment=2,MarginV={90 if H<=1080 else 150}"
+sub=esc_filter_path(render_srt)
+
+# Smaller YouTube-style bottom captions: yellow fill + strong black outline.
+# ASS font sizes are visually larger than browser CSS, so keep 1080p around 25.
+fs=25 if W>=H else 22
+margin=65 if W>=H else 120
+style=(f"FontName=Malgun Gothic,FontSize={fs},"
+       f"PrimaryColour=&H0000D9FF,OutlineColour=&H00000000,"
+       f"BorderStyle=1,Outline=3,Shadow=0,Alignment=2,MarginV={margin},"
+       f"Bold=1,WrapStyle=2")
 vf=f"subtitles='{sub}':force_style='{style}'"
 cmd=[ffmpeg,"-y","-i",str(joined),"-i",str(audio),"-vf",vf,
      "-map","0:v:0","-map","1:a:0","-c:v","libx264","-preset","veryfast","-crf","21",
@@ -99,7 +142,7 @@ cmd=[ffmpeg,"-y","-i",str(joined),"-i",str(audio),"-vf",vf,
 print("[마지막] 노란 자막 + 검정 테두리 + MP3 합성 중...")
 if subprocess.run(cmd).returncode: die("최종 MP4 생성 실패")
 
-for p in scene_files+[concat,joined]:
+for p in scene_files+[concat,joined,render_srt]:
     try:p.unlink()
     except:pass
 print("\n완료:",out)
