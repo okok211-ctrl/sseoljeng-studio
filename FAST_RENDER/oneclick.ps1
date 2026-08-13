@@ -71,6 +71,46 @@ foreach ($img in $imageSrcs) {
     $imageStages += $dst
 }
 
+
+# Load the Studio render plan BEFORE copying images so the renderer can preserve
+# the exact image order shown in Studio.
+$plan = Get-Content -LiteralPath $planStage -Raw -Encoding UTF8 | ConvertFrom-Json
+
+# Build selected-image lookup by basename.
+$selectedByName = @{}
+foreach ($imgStage in $imageStages) {
+    $bn = [IO.Path]::GetFileName($imgStage)
+    $selectedByName[$bn] = $imgStage
+}
+
+$orderedImageStages = @()
+$orderedImageNames = @()
+
+if ($plan.images -and $plan.images.Count -gt 0) {
+    foreach ($plannedName in $plan.images) {
+        $bn = [IO.Path]::GetFileName([string]$plannedName)
+        if ($selectedByName.ContainsKey($bn)) {
+            $orderedImageStages += $selectedByName[$bn]
+            $orderedImageNames += $bn
+        }
+    }
+}
+
+# Fallback only if plan-based matching failed.
+if ($orderedImageStages.Count -ne $imageStages.Count) {
+    $orderedImageStages = @($imageStages | Sort-Object { [IO.Path]::GetFileName($_) })
+    $orderedImageNames = @($orderedImageStages | ForEach-Object { [IO.Path]::GetFileName($_) })
+    Write-Host "[주의] Studio 설계 이미지명과 선택 파일명이 완전히 일치하지 않아 파일명 순으로 정렬합니다." -ForegroundColor Yellow
+} else {
+    Write-Host "[이미지 순서] Studio 렌더링 설계 순서를 그대로 사용합니다." -ForegroundColor Green
+}
+
+Write-Host ""
+for ($i=0; $i -lt $orderedImageNames.Count; $i++) {
+    Write-Host ("  {0}. {1}" -f ($i+1), $orderedImageNames[$i])
+}
+Write-Host ""
+
 # Now it is safe to clean prior render inputs/outputs.
 Get-ChildItem $base -File | Where-Object {
     $_.Extension.ToLower() -in ".json",".mp3",".wav",".m4a",".srt",".png",".jpg",".jpeg",".webp",".mp4"
@@ -79,20 +119,19 @@ Get-ChildItem $base -File | Where-Object {
 # Restore staged inputs into FAST_RENDER.
 Copy-Item -LiteralPath $audioStage -Destination (Join-Path $base $audioName) -Force
 Copy-Item -LiteralPath $srtStage   -Destination (Join-Path $base $srtName)   -Force
-foreach ($imgStage in $imageStages) {
+foreach ($imgStage in $orderedImageStages) {
     Copy-Item -LiteralPath $imgStage -Destination $base -Force
 }
 
 # Rewrite the plan to EXACT filenames that now exist in FAST_RENDER.
-$plan = Get-Content -LiteralPath $planStage -Raw -Encoding UTF8 | ConvertFrom-Json
 $plan.audio = $audioName
 $plan.srt = $srtName
-$plan.images = @($imageNames)
+$plan.images = @($orderedImageNames)
 
 # Keep scene image indexes, but validate they fit the newly selected image count.
 if ($plan.scenes) {
     foreach ($sc in $plan.scenes) {
-        if ([int]$sc.i -ge $imageNames.Count) {
+        if ([int]$sc.i -ge $orderedImageNames.Count) {
             throw "설계의 이미지 번호가 선택한 이미지 수보다 큽니다. Studio에서 사용한 이미지와 같은 개수를 선택하세요."
         }
     }
@@ -107,7 +146,7 @@ Write-Host ""
 Write-Host "파일명 연결 완료." -ForegroundColor Green
 Write-Host "  Audio : $audioName"
 Write-Host "  SRT   : $srtName"
-Write-Host "  Images: $($imageNames.Count)"
+Write-Host "  Images: $($orderedImageNames.Count)"
 Write-Host ""
 Write-Host "GPU 자동 감지 후 렌더링 시작..." -ForegroundColor Green
 

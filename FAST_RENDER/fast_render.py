@@ -53,6 +53,10 @@ TEST30=os.environ.get("SSEOLJENG_TEST_30S")=="1"
 audio=HERE/plan.get("audio","")
 srt=HERE/plan.get("srt","")
 images=[HERE/x for x in plan.get("images",[])]
+print("[이미지 배열 확인]")
+for idx, img in enumerate(images, 1):
+    print(f"  {idx}. {img.name}")
+
 if not audio.exists(): die(f"음성 파일 없음: {audio.name}")
 if not srt.exists(): die(f"SRT 파일 없음: {srt.name}")
 for p in images:
@@ -61,6 +65,11 @@ for p in images:
 W=int(plan.get("width",1920)); H=int(plan.get("height",1080)); FPS=int(plan.get("fps",30))
 scenes=plan.get("scenes",[])
 if not scenes: die("장면 설계가 없습니다.")
+for sc in scenes:
+    ii=int(sc.get("i",0))
+    if ii<0 or ii>=len(images):
+        die(f"장면의 이미지 번호가 범위를 벗어났습니다: {ii}")
+
 if TEST30:
     clipped=[]
     for sc in scenes:
