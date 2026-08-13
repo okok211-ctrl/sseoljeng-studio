@@ -42,7 +42,23 @@ Write-Host "[4/5] 이미지 여러 장 선택" -ForegroundColor Cyan
 $imageSrcs = Pick-Many "사용 이미지 선택 (Ctrl/Shift로 여러 장)" "이미지 (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp"
 
 Write-Host "[5/5] 완성 MP4 저장 폴더 선택" -ForegroundColor Cyan
-$outDir = Pick-Folder "완성 MP4를 저장할 폴더 선택"
+$outDir = Pick-Folder "프로젝트 작업폴더를 만들 상위 폴더 선택"
+
+# Create ONE workspace folder for this render job.
+$audioStem = [IO.Path]::GetFileNameWithoutExtension($audioSrc)
+$invalid = [IO.Path]::GetInvalidFileNameChars()
+foreach ($ch in $invalid) { $audioStem = $audioStem.Replace([string]$ch, "_") }
+if ($audioStem.Length -gt 50) { $audioStem = $audioStem.Substring(0,50) }
+$stamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$projectDir = Join-Path $outDir ("썰쟁_" + $audioStem + "_" + $stamp)
+$inputDir = Join-Path $projectDir "01_INPUT"
+$outputDir = Join-Path $projectDir "02_OUTPUT"
+New-Item -ItemType Directory -Path $inputDir -Force | Out-Null
+New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+
+Write-Host ""
+Write-Host "[작업폴더] $projectDir" -ForegroundColor Green
+
 
 # Stage every selected source in Windows TEMP FIRST.
 # This prevents the old bug where selecting an SRT/MP3/image already inside FAST_RENDER
@@ -123,6 +139,14 @@ foreach ($imgStage in $orderedImageStages) {
     Copy-Item -LiteralPath $imgStage -Destination $base -Force
 }
 
+
+# Keep one clean project workspace so old/new jobs do not get mixed.
+Copy-Item -LiteralPath (Join-Path $base $audioName) -Destination $inputDir -Force
+Copy-Item -LiteralPath (Join-Path $base $srtName) -Destination $inputDir -Force
+foreach ($imgStage in $orderedImageStages) {
+    Copy-Item -LiteralPath $imgStage -Destination $inputDir -Force
+}
+
 # Rewrite the plan to EXACT filenames that now exist in FAST_RENDER.
 $plan.audio = $audioName
 $plan.srt = $srtName
@@ -141,6 +165,7 @@ $fixedPlan = Join-Path $base "autoedit-plan.json"
 $jsonText = $plan | ConvertTo-Json -Depth 20
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($fixedPlan, $jsonText, $utf8NoBom)
+Copy-Item -LiteralPath $fixedPlan -Destination (Join-Path $inputDir "autoedit-plan.json") -Force
 
 Write-Host ""
 Write-Host "파일명 연결 완료." -ForegroundColor Green
@@ -174,12 +199,17 @@ try {
         $safeName = "${stem}_완성.mp4"
     }
 
-    $dest = Join-Path $outDir $safeName
+    $dest = Join-Path $outputDir $safeName
     Copy-Item $result.FullName $dest -Force
 
     Write-Host ""
     Write-Host "완료: $dest" -ForegroundColor Green
-    Start-Process explorer.exe "/select,`"$dest`""
+
+    $latestFile = Join-Path $outDir "썰쟁_최근작업폴더.txt"
+    [System.IO.File]::WriteAllText($latestFile, $projectDir, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Host "작업폴더: $projectDir" -ForegroundColor Green
+
+    Start-Process explorer.exe "`"$projectDir`""
 }
 finally {
     Pop-Location
