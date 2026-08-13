@@ -44,27 +44,47 @@ $imageSrcs = Pick-Many "사용 이미지 선택 (Ctrl/Shift로 여러 장)" "이
 Write-Host "[5/5] 완성 MP4 저장 폴더 선택" -ForegroundColor Cyan
 $outDir = Pick-Folder "완성 MP4를 저장할 폴더 선택"
 
-# Previous input/output artifacts only. Scripts are preserved.
-Get-ChildItem $base -File | Where-Object {
-    $_.Extension.ToLower() -in ".json",".mp3",".wav",".m4a",".srt",".png",".jpg",".jpeg",".webp",".mp4"
-} | Remove-Item -Force -ErrorAction SilentlyContinue
+# Stage every selected source in Windows TEMP FIRST.
+# This prevents the old bug where selecting an SRT/MP3/image already inside FAST_RENDER
+# caused cleanup to delete the source before Copy-Item could copy it.
+$stage = Join-Path ([IO.Path]::GetTempPath()) ("sseoljeng_" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $stage -Force | Out-Null
 
-# Copy using exact basenames selected by the user.
+$planStage = Join-Path $stage "source_plan.json"
+Copy-Item -LiteralPath $planSrc -Destination $planStage -Force
+
 $audioName = [IO.Path]::GetFileName($audioSrc)
 $srtName   = [IO.Path]::GetFileName($srtSrc)
 $imageNames = @()
 
-Copy-Item $audioSrc (Join-Path $base $audioName) -Force
-Copy-Item $srtSrc   (Join-Path $base $srtName)   -Force
+$audioStage = Join-Path $stage $audioName
+$srtStage   = Join-Path $stage $srtName
+Copy-Item -LiteralPath $audioSrc -Destination $audioStage -Force
+Copy-Item -LiteralPath $srtSrc   -Destination $srtStage   -Force
 
+$imageStages = @()
 foreach ($img in $imageSrcs) {
     $nm = [IO.Path]::GetFileName($img)
-    Copy-Item $img (Join-Path $base $nm) -Force
+    $dst = Join-Path $stage $nm
+    Copy-Item -LiteralPath $img -Destination $dst -Force
     $imageNames += $nm
+    $imageStages += $dst
+}
+
+# Now it is safe to clean prior render inputs/outputs.
+Get-ChildItem $base -File | Where-Object {
+    $_.Extension.ToLower() -in ".json",".mp3",".wav",".m4a",".srt",".png",".jpg",".jpeg",".webp",".mp4"
+} | Remove-Item -Force -ErrorAction SilentlyContinue
+
+# Restore staged inputs into FAST_RENDER.
+Copy-Item -LiteralPath $audioStage -Destination (Join-Path $base $audioName) -Force
+Copy-Item -LiteralPath $srtStage   -Destination (Join-Path $base $srtName)   -Force
+foreach ($imgStage in $imageStages) {
+    Copy-Item -LiteralPath $imgStage -Destination $base -Force
 }
 
 # Rewrite the plan to EXACT filenames that now exist in FAST_RENDER.
-$plan = Get-Content -LiteralPath $planSrc -Raw -Encoding UTF8 | ConvertFrom-Json
+$plan = Get-Content -LiteralPath $planStage -Raw -Encoding UTF8 | ConvertFrom-Json
 $plan.audio = $audioName
 $plan.srt = $srtName
 $plan.images = @($imageNames)
@@ -124,4 +144,7 @@ try {
 }
 finally {
     Pop-Location
+    if ($stage -and (Test-Path -LiteralPath $stage)) {
+        Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
