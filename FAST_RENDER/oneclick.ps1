@@ -1,4 +1,7 @@
 ﻿$ErrorActionPreference = "Stop"
+if (-not $env:SSEOLJENG_SPEED_MODE) {
+    $env:SSEOLJENG_SPEED_MODE = "FAST"
+}
 Add-Type -AssemblyName System.Windows.Forms
 
 $base = Split-Path -Parent $MyInvocation.MyCommand.Path

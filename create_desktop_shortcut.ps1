@@ -15,7 +15,7 @@ $wsh = New-Object -ComObject WScript.Shell
 $sc = $wsh.CreateShortcut($link)
 $sc.TargetPath = $target
 $sc.WorkingDirectory = $root
-$sc.Description = "썰쟁 Studio 원클릭 MP4 렌더링"
+$sc.Description = "썰쟁 Studio 원클릭 MP4 - TURBO / FAST 선택"
 $sc.WindowStyle = 1
 $sc.Save()
 

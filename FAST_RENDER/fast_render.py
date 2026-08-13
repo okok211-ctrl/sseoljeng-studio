@@ -1,7 +1,10 @@
+import os
 from pathlib import Path
 import json, subprocess, sys, shutil, re, os
 
 HERE=Path(__file__).resolve().parent
+SPEED_MODE=os.environ.get("SSEOLJENG_SPEED_MODE","FAST").upper()
+print(f"[속도 모드] {SPEED_MODE}")
 PLAN=HERE/"autoedit-plan.json"
 
 def die(msg):
@@ -47,7 +50,22 @@ def detect_encoder():
     return "libx264", ["-preset","veryfast","-crf","21"]
 
 VIDEO_ENCODER, VIDEO_ARGS = detect_encoder()
+
+# v23.6 TURBO: keep the proven renderer, but tune hardware encoder for speed.
+# FAST remains the safe fallback.
+if SPEED_MODE=="TURBO":
+    if VIDEO_ENCODER=="h264_qsv":
+        # Intel Quick Sync: lower quality number = higher quality/slower.
+        # 27 is a practical speed-oriented setting for still-image story videos.
+        VIDEO_ARGS=["-global_quality","27","-look_ahead","0"]
+    elif VIDEO_ENCODER=="h264_nvenc":
+        VIDEO_ARGS=["-preset","p1","-tune","ll","-cq","26","-b:v","0"]
+    elif VIDEO_ENCODER=="h264_amf":
+        VIDEO_ARGS=["-quality","speed","-qp_i","26","-qp_p","26"]
+    else:
+        VIDEO_ARGS=["-preset","ultrafast","-crf","23"]
 print(f"[가속] 영상 인코더: {VIDEO_ENCODER}")
+print(f"[인코더 옵션] {' '.join(VIDEO_ARGS)}")
 TEST30=os.environ.get("SSEOLJENG_TEST_30S")=="1"
 
 audio=HERE/plan.get("audio","")
@@ -63,6 +81,9 @@ for p in images:
     if not p.exists(): die(f"이미지 파일 없음: {p.name}")
 
 W=int(plan.get("width",1920)); H=int(plan.get("height",1080)); FPS=int(plan.get("fps",30))
+if SPEED_MODE=="TURBO" and FPS>24:
+    FPS=24
+    print("[TURBO] 이미지 기반 롱폼 FPS: 24 (프레임 생성량 약 20% 감소)")
 scenes=plan.get("scenes",[])
 if not scenes: die("장면 설계가 없습니다.")
 for sc in scenes:
