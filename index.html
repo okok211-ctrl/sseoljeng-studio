@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.8 Benchmark Choice Fix</title>
+<title>썰쟁 Studio v23.9 Benchmark Choice Fix</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.8</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.9</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -3267,7 +3267,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script><section id="capcutTtsCleaner" style="margin:18px 0;padding:14px;border:1px solid #d8d8d8;border-radius:10px;background:#fff">
 <h3>🎙 캡컷 음성용 텍스트 정리</h3>
-<p style="font-size:13px;color:#666">원본 원고/SRT는 그대로 두고 캡컷 TTS용 복사본만 정리합니다.</p>
+<p style="font-size:13px;color:#666">원본 원고/SRT는 그대로 두고, 문단 번호·표시와 TTS 방해 기호를 제거한 음성용 복사본만 만듭니다.</p>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="ttsCleanBtn">✨ 음성용 정리</button><button id="ttsCopyBtn">📋 정리본 복사</button><button id="ttsDownloadBtn">💾 TXT 저장</button></div>
 <textarea id="ttsCleanOut" style="width:100%;min-height:180px;box-sizing:border-box;margin-top:8px" placeholder="정리본"></textarea>
 <div id="ttsCleanInfo" style="font-size:12px;color:#666;margin-top:6px"></div></section>
@@ -3275,6 +3275,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){
 function cleanTTS(text){
  let t=String(text||'').replace(/\r\n?/g,'\n');
+
+ // 문단 번호/표시만 제거하고 실제 내용은 유지
+ t=t.split('\n').map(line=>{
+   let x=line.trim();
+   x=x.replace(/^\s*\[\s*(?:제\s*)?\d+\s*문단\s*\]\s*[:：.\-–—]?\s*/i,'');
+   x=x.replace(/^\s*(?:제\s*)?\d+\s*문단\s*[:：.\-–—]?\s*/i,'');
+   x=x.replace(/^\s*문단\s*\d+\s*[:：.\-–—]?\s*/i,'');
+   if(/^\s*\[?\s*\d+\s*\]?\s*[.)\-:]?\s*$/.test(x)) return '';
+   return x;
+ }).join('\n');
+
  t=t.replace(/[“”„‟"＂「」『』《》〈〉‘’‚‛'＇]/g,'');
  t=t.replace(/\.{2,}|…+/g,' ');
  t=t.replace(/[!?！？]+/g,' ');
