@@ -1,6 +1,6 @@
-# 썰쟁 Studio v23.23
+# 썰쟁 Studio v23.24
 
-## v23.23 인과 진행성 개선
+## v23.24 인과 진행성 개선
 - 실제 작성 본문을 설계도 세부 장면보다 우선하도록 변경
 - 분할 생성 시 직전 실제 본문 최대 3문단을 현재 진행선으로 전달
 - 5문단 묶음 내부를 독립 에피소드가 아닌 문단별 도미노 인과로 강제
@@ -198,7 +198,7 @@
 - 역방향 반사실 검사 문구의 YES/NO 논리도 명확하게 수정.
 
 
-## v23.23 CONTINUITY STATE LOCK
+## v23.24 CONTINUITY STATE LOCK
 - 이전 확정 본문 전체를 다음 분할 프롬프트에 CANON으로 주입
 - 완료 사건 재생성 금지(COMPLETED EVENT LOCK)
 - 시간/장소/참석 인물/현재 행동 상태 잠금(SCENE STATE LOCK)
@@ -207,7 +207,7 @@
 - 우연한 서류/휴대폰/엿듣기 증거 제한(EVIDENCE CONVENIENCE GUARD)
 - 각 문단 신규 정보/행동/결과 검사(NEW INFORMATION GATE)
 
-## v23.23 BLUEPRINT EVIDENCE STAGE GUARD
+## v23.24 BLUEPRINT EVIDENCE STAGE GUARD
 - 설계도 단계 이름 오타/미등록 고유 이름 차단
 - 우연한 서류·휴대폰·엿듣기·무단 수색형 핵심 증거 차단
 - 악역의 허세/해명/자기증명 행동 → 다음 증거로 이어지는 인과 강제
@@ -216,7 +216,7 @@
 - 가족이 후반에 처음 충격받는 설정과 충돌하는 '사전 인지/방관' 복선 차단
 - 에피소드 지도 완성 후 증거 편의성/진실 선점/이름 오류 자체 검사
 
-## v23.23 LAST STATE + FIRST PARAGRAPH BINDING
+## v23.24 LAST STATE + FIRST PARAGRAPH BINDING
 - 직전 확정 문단 원문을 LAST STATE SNAPSHOT으로 최우선 주입
 - 최근 5문단을 COMPLETED EVENTS BLACKLIST로 전달
 - 다음 구간 첫 1~2문장을 직전 마지막 행동/대사에 강제 결속
@@ -224,7 +224,7 @@
 - 이전 본문에 없던 제사/밥자리/방 안 대화 등 UNSEEN BACKSTORY 금지
 - 각 문단이 반드시 새로운 상태를 만드는 FORWARD-ONLY GATE 추가
 
-## v23.23 AUTO BODY CONTINUITY LOCK
+## v23.24 AUTO BODY CONTINUITY LOCK
 - 자동 본문 생성 경로 bodyChunkPrompt()에 연속성 가드 직접 적용
 - AUTO BODY LAST STATE SNAPSHOT 추가
 - AUTO BODY COMPLETED EVENTS BLACKLIST 추가
@@ -233,3 +233,10 @@
 - 이전 본문에 없던 제사/밥자리/방 안 대화/새 서류의 갑작스러운 호출 차단
 - 각 문단 FORWARD-ONLY GATE 적용
 - GPT 분할 프롬프트뿐 아니라 자동 생성 경로에도 동일 철학 적용
+
+## v23.24 PROJECT MEMORY ISOLATION
+- 현재 프로젝트와 다른 주인공 이름이 사건 기억장에 있으면 stale memory로 차단
+- 세컨폰/시누이 사업/집 담보/이혼 소송 등 이전 프로젝트 강한 시그니처가 섞인 기억장 차단
+- 반복된 사건 기억장 섹션 중복 제거
+- 첫 1~5문단에서는 0문단 NEXT ACTION BINDING 비활성화
+- 현재 제목/주제/등장인물/설계도와 충돌하는 과거 기억장을 사용하지 않도록 프롬프트 가드 추가
