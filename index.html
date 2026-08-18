@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.37 Voice Audit Adaptive Switch</title>
+<title>썰쟁 Studio v23.38 Voice Audit Adaptive Switch</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.37</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.38</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -415,6 +415,19 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     <audio id="voiceAuditAudio" controls style="width:100%;margin-top:12px;display:none"></audio>
     <div id="voiceAuditStats" class="note" style="margin-top:10px">음성 파일을 선택하면 파일 길이와 검사 준비 상태가 표시됩니다.</div>
     <div id="voiceAuditResults" style="display:grid;gap:8px;margin-top:10px"></div>
+    <div class="note" style="margin-top:10px;border:1px solid #31506d">
+      <b>🎯 오류 음색 학습 (권장)</b>
+      <div class="tiny" style="margin:5px 0 8px">한 번만 정상 여성 구간과 실제 남성 오류 구간을 등록하면 이후 파일 검사에서 같은 CapCut 화자 급변을 우선 탐지합니다. 기준은 브라우저에 저장됩니다.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <div class="field" style="min-width:125px"><label>정상 시작</label><input id="voiceRefNormalStart" value="00:40"></div>
+        <div class="field" style="min-width:125px"><label>정상 끝</label><input id="voiceRefNormalEnd" value="00:45"></div>
+        <div class="field" style="min-width:125px"><label>오류 시작</label><input id="voiceRefBadStart" value="10:31"></div>
+        <div class="field" style="min-width:125px"><label>오류 끝</label><input id="voiceRefBadEnd" value="10:36"></div>
+        <button class="btn" type="button" onclick="learnVoiceAuditReference()">🧠 이 음색 학습</button>
+        <button class="btn ghost" type="button" onclick="clearVoiceAuditReference()">초기화</button>
+      </div>
+      <div id="voiceRefStatus" class="tiny" style="margin-top:7px">저장된 오류 음색 기준 없음</div>
+    </div>
    </div>
   </div>
  </div>
@@ -1907,9 +1920,50 @@ function voiceAuditSeverity(score,threshold,kind){if(kind==='male')return score>
 function renderVoiceAuditResults(){
  const root=$('voiceAuditResults');if(!root)return;
  if(!voiceAuditResultsData.length){root.innerHTML='<div class="note">✓ 현재 민감도에서 지속적인 화자/음색 이탈 후보를 찾지 못했습니다. 순간적인 저음·억양 변화는 자동으로 제외합니다.</div>';return}
- root.innerHTML=voiceAuditResultsData.map((r,i)=>`<div class="note" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${r.kind==='male'?'🔴':'⚠'} ${i+1}. ${voiceAuditClock(r.start)} ~ ${voiceAuditClock(r.end)}</b> · ${r.level}<br><span class="tiny">화자 이탈 ${r.score.toFixed(1)} · 음색 ${r.timbre.toFixed(1)} · 급변 ${Number(r.switchScore||0).toFixed(1)} · 상대급변 Z ${Number(r.adaptiveZ||0).toFixed(1)} · 피치 ${r.pitch.toFixed(1)}${r.kind==='male'?' · 재생성 우선 확인':''}</span></div><button class="btn ghost" type="button" onclick="playVoiceAuditAt(${r.start.toFixed(2)})">▶ 여기부터 듣기</button></div>`).join('');
+ root.innerHTML=voiceAuditResultsData.map((r,i)=>`<div class="note" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${r.kind==='male'?'🔴':'⚠'} ${i+1}. ${voiceAuditClock(r.start)} ~ ${voiceAuditClock(r.end)}</b> · ${r.level}<br><span class="tiny">화자 이탈 ${r.score.toFixed(1)} · 음색 ${r.timbre.toFixed(1)} · 급변 ${Number(r.switchScore||0).toFixed(1)} · 상대급변 Z ${Number(r.adaptiveZ||0).toFixed(1)} · 학습오류 ${Number(r.learnedScore||0).toFixed(1)} · 피치 ${r.pitch.toFixed(1)}${r.kind==='male'?' · 재생성 우선 확인':''}</span></div><button class="btn ghost" type="button" onclick="playVoiceAuditAt(${r.start.toFixed(2)})">▶ 여기부터 듣기</button></div>`).join('');
 }
 function playVoiceAuditAt(sec){const a=$('voiceAuditAudio');if(!a?.src)return;a.currentTime=Math.max(0,(Number(sec)||0)-2);a.play().catch(()=>{});}
+
+function voiceAuditParseTime(v){
+ const s=String(v||'').trim();if(!s)return 0;if(/^\d+(\.\d+)?$/.test(s))return Number(s);
+ const a=s.split(':').map(Number);if(a.some(x=>!Number.isFinite(x)))return 0;if(a.length===2)return a[0]*60+a[1];if(a.length===3)return a[0]*3600+a[1]*60+a[2];return 0;
+}
+function voiceAuditRefVector(f){
+ const out=[];for(let m=1;m<Math.min(6,f.mfcc.length);m++)out.push(f.mfcc[m]);
+ for(let i=0;i<f.signature.length;i++)out.push(f.signature[i]);
+ out.push(f.centroid*4,f.tilt*1.5,f.zcr*12,Math.log(Math.max(70,f.f0||170)));
+ return out;
+}
+async function voiceAuditReferenceFrames(startSec,endSec){
+ if(!voiceAuditBuffer)return [];
+ const b=voiceAuditBuffer,sr=b.sampleRate,channels=b.numberOfChannels,targetRate=6000,stride=Math.max(1,Math.round(sr/targetRate)),effRate=sr/stride;
+ const s0=Math.max(0,Math.floor(startSec*sr)),s1=Math.min(b.length,Math.ceil(endSec*sr));if(s1-s0<sr*.8)return [];
+ const len=Math.ceil((s1-s0)/stride),mono=new Float32Array(len),ch=[];for(let c=0;c<channels;c++)ch.push(b.getChannelData(c));
+ for(let j=s0,k=0;j<s1;j+=stride,k++){let v=0;for(let c=0;c<channels;c++)v+=ch[c][j]||0;mono[k]=v/channels}
+ const win=Math.max(256,Math.round(effRate*.5)),hop=Math.max(128,Math.round(effRate*.25)),raw=[];
+ for(let p=0;p+win<=mono.length;p+=hop){const f=voiceAuditFeatureFrame(mono.subarray(p,p+win),effRate);if(f.rms>.002)raw.push(voiceAuditRefVector(f))}
+ return raw;
+}
+function voiceAuditBuildReference(normal,bad){
+ if(!normal.length||!bad.length)return null;const all=normal.concat(bad),d=all[0].length,scale=[],nmed=[],bmed=[];
+ for(let k=0;k<d;k++){const av=all.map(x=>x[k]),med=voiceAuditMedian(av),mad=1.4826*voiceAuditMedian(av.map(v=>Math.abs(v-med)))+.06;scale.push(mad);nmed.push(voiceAuditMedian(normal.map(x=>x[k])));bmed.push(voiceAuditMedian(bad.map(x=>x[k])))}
+ return {normal:nmed,bad:bmed,scale,created:Date.now()};
+}
+function voiceAuditRefDistance(v,c,sc){let s=0,n=0;for(let i=0;i<Math.min(v.length,c.length,sc.length);i++){let z=(v[i]-c[i])/(sc[i]||1);z=Math.max(-6,Math.min(6,z));s+=z*z;n++}return n?Math.sqrt(s/n):99}
+async function learnVoiceAuditReference(){
+ if(!voiceAuditBuffer){setStatus('먼저 문제 음성 파일을 선택하세요.','bad');return}
+ const ns=voiceAuditParseTime($('voiceRefNormalStart')?.value),ne=voiceAuditParseTime($('voiceRefNormalEnd')?.value),bs=voiceAuditParseTime($('voiceRefBadStart')?.value),be=voiceAuditParseTime($('voiceRefBadEnd')?.value);
+ if(ne<=ns+.8||be<=bs+.8){setStatus('정상/오류 구간을 각각 1초 이상 지정하세요.','bad');return}
+ const st=$('voiceRefStatus');if(st)st.textContent='기준 음색을 분석 중...';
+ const normal=await voiceAuditReferenceFrames(ns,ne),bad=await voiceAuditReferenceFrames(bs,be),ref=voiceAuditBuildReference(normal,bad);
+ if(!ref){if(st)st.textContent='⚠ 기준 학습 실패';return}
+ localStorage.setItem('sseoljeng_voice_ref_v238',JSON.stringify(ref));if(st)st.innerHTML=`✅ 기준 저장됨 · 정상 ${voiceAuditClock(ns)}~${voiceAuditClock(ne)} / 오류 ${voiceAuditClock(bs)}~${voiceAuditClock(be)}`;setStatus('오류 음색 기준을 저장했습니다.','ok');
+}
+function clearVoiceAuditReference(){localStorage.removeItem('sseoljeng_voice_ref_v238');const st=$('voiceRefStatus');if(st)st.textContent='저장된 오류 음색 기준 없음';}
+function getVoiceAuditReference(){try{return JSON.parse(localStorage.getItem('sseoljeng_voice_ref_v238')||'null')}catch(e){return null}}
+function updateVoiceAuditReferenceStatus(){const r=getVoiceAuditReference(),st=$('voiceRefStatus');if(st)st.textContent=r?'✅ 저장된 오류 음색 기준 사용 중':'저장된 오류 음색 기준 없음'}
+setTimeout(updateVoiceAuditReferenceStatus,100);
+
 async function analyzeVoiceAudit(){
  if(!voiceAuditBuffer){setStatus('먼저 검사할 MP3/WAV 파일을 선택하세요.','bad');return}
  const b=voiceAuditBuffer,dur=b.duration,sr=b.sampleRate,channels=b.numberOfChannels;
@@ -1975,7 +2029,15 @@ async function analyzeVoiceAudit(){
    return {...f,score,timbre,pitch,maleLike,localScore,localTimbre,localPitch,localMaleLike,globalScore,switchScore,switchPeak};
   });
 
-  // v23.37 적응형 화자교체 검출:
+  // v23.38 학습형 오류 음색 검출: 정상 여성 기준보다 저장된 오류 음색에 가까운 프레임을 별도 점수화.
+  const learnedRef=getVoiceAuditReference();
+  if(learnedRef){
+   rows.forEach((r,i)=>{if(!valid[i]){r.learnedScore=0;return}const v=voiceAuditRefVector(feats[i]),dn=voiceAuditRefDistance(v,learnedRef.normal,learnedRef.scale),db=voiceAuditRefDistance(v,learnedRef.bad,learnedRef.scale);r.learnedNormal=dn;r.learnedBad=db;r.learnedScore=Math.max(0,Math.min(8,(dn-db)*1.35 + Math.max(0,2.1-db)*.75));});
+   // 1.25초 이동평균: 짧은 음절 한두 개는 무시하고 오류 음색이 이어지는 경우 강화.
+   const ls=rows.map(r=>r.learnedScore||0),rad=2;rows.forEach((r,i)=>{let sum=0,n=0;for(let j=Math.max(0,i-rad);j<=Math.min(rows.length-1,i+rad);j++){if(valid[j]){sum+=ls[j];n++}}r.learnedSmooth=n?sum/n:0});
+  }else rows.forEach(r=>{r.learnedScore=0;r.learnedSmooth=0});
+
+  // v23.38 적응형 화자교체 검출:
   // 절대 임계값 외에도 파일 내부에서 상대적으로 가장 크게 튀는 구간을 자동 후보로 올린다.
   // CapCut TTS처럼 남성화가 피치가 아니라 음색 일부 축에서만 나타나는 경우를 놓치지 않기 위함이다.
   const rawSwitch=rows.map((r,i)=>valid[i]?(0.48*(r.localTimbre||0)+0.34*(r.switchScore||0)+0.18*Math.min(8,r.localScore||0)):0);
@@ -1993,35 +2055,37 @@ async function analyzeVoiceAudit(){
    const switchHot=r.switchScore>=localThreshold*.88&&r.switchPeak>=1.85;
    const adaptiveHot=valid[i] && r.adaptiveSwitch>=swQ96 && r.adaptiveZ>=(sens==='high'?1.65:sens==='low'?2.55:2.00);
    const adaptivePeak=valid[i] && r.adaptiveSwitch>=swQ985 && r.adaptiveZ>=1.55;
-   return globalHot||localHot||switchHot||adaptiveHot||adaptivePeak;
+   const learnedHot=valid[i] && (r.learnedSmooth||0)>=(sens==='high'?.42:sens==='low'?.82:.58) && (r.learnedBad||99)<(r.learnedNormal||0)*.94;
+   return globalHot||localHot||switchHot||adaptiveHot||adaptivePeak||learnedHot;
   });
   let runs=[];
   for(let i=0;i<rows.length;){
    if(!hot[i]){i++;continue}
-   let j=i,hotCount=0,maxScore=0,maxT=0,maxP=0,maxLocal=0,maxLocalT=0,maxSwitch=0,maxSwitchPeak=0,maxAdaptive=0,maxAdaptiveZ=0,maleVotes=0,localMaleVotes=0,switchVotes=0,gaps=0;
+   let j=i,hotCount=0,maxScore=0,maxT=0,maxP=0,maxLocal=0,maxLocalT=0,maxSwitch=0,maxSwitchPeak=0,maxAdaptive=0,maxAdaptiveZ=0,maxLearned=0,maleVotes=0,localMaleVotes=0,switchVotes=0,gaps=0;
    while(j<rows.length){
-    if(hot[j]){hotCount++;gaps=0;maxScore=Math.max(maxScore,rows[j].score);maxT=Math.max(maxT,rows[j].timbre);maxP=Math.max(maxP,rows[j].pitch);maxLocal=Math.max(maxLocal,rows[j].localScore);maxLocalT=Math.max(maxLocalT,rows[j].localTimbre);if(rows[j].maleLike)maleVotes++;if(rows[j].localMaleLike)localMaleVotes++;maxSwitch=Math.max(maxSwitch,rows[j].switchScore||0);maxSwitchPeak=Math.max(maxSwitchPeak,rows[j].switchPeak||0);maxAdaptive=Math.max(maxAdaptive,rows[j].adaptiveSwitch||0);maxAdaptiveZ=Math.max(maxAdaptiveZ,rows[j].adaptiveZ||0);if((rows[j].switchScore||0)>=localThreshold*.88&&(rows[j].switchPeak||0)>=1.85)switchVotes++}
+    if(hot[j]){hotCount++;gaps=0;maxScore=Math.max(maxScore,rows[j].score);maxT=Math.max(maxT,rows[j].timbre);maxP=Math.max(maxP,rows[j].pitch);maxLocal=Math.max(maxLocal,rows[j].localScore);maxLocalT=Math.max(maxLocalT,rows[j].localTimbre);if(rows[j].maleLike)maleVotes++;if(rows[j].localMaleLike)localMaleVotes++;maxSwitch=Math.max(maxSwitch,rows[j].switchScore||0);maxSwitchPeak=Math.max(maxSwitchPeak,rows[j].switchPeak||0);maxAdaptive=Math.max(maxAdaptive,rows[j].adaptiveSwitch||0);maxAdaptiveZ=Math.max(maxAdaptiveZ,rows[j].adaptiveZ||0);maxLearned=Math.max(maxLearned,rows[j].learnedSmooth||0);if((rows[j].switchScore||0)>=localThreshold*.88&&(rows[j].switchPeak||0)>=1.85)switchVotes++}
     else{gaps++;if(gaps>8)break}
     j++
    }
    const span=(j-i)*hopSec+winSec;
-   if(hotCount>=4&&span>=1.35)runs.push({start:Math.max(0,rows[i].t-.35),end:Math.min(dur,rows[Math.max(i,j-1)].t+winSec+.35),score:maxScore,timbre:maxT,pitch:maxP,localScore:maxLocal,localTimbre:maxLocalT,switchScore:maxSwitch,switchPeak:maxSwitchPeak,adaptiveSwitch:maxAdaptive,adaptiveZ:maxAdaptiveZ,maleVotes,localMaleVotes,switchVotes,hotCount});
+   if(hotCount>=4&&span>=1.35)runs.push({start:Math.max(0,rows[i].t-.35),end:Math.min(dur,rows[Math.max(i,j-1)].t+winSec+.35),score:maxScore,timbre:maxT,pitch:maxP,localScore:maxLocal,localTimbre:maxLocalT,switchScore:maxSwitch,switchPeak:maxSwitchPeak,adaptiveSwitch:maxAdaptive,adaptiveZ:maxAdaptiveZ,learnedScore:maxLearned,maleVotes,localMaleVotes,switchVotes,hotCount});
    i=Math.max(i+1,j)
   }
   // 같은 변화가 1초 안쪽으로 끊겨도 하나로 합친다. 13초를 넘는 거대한 경고는 만들지 않는다.
-  let merged=[];for(const r of runs){const last=merged[merged.length-1];if(last&&r.start<=last.end+1.05&&r.end-last.start<=13){last.end=Math.max(last.end,r.end);last.score=Math.max(last.score,r.score);last.timbre=Math.max(last.timbre,r.timbre);last.pitch=Math.max(last.pitch,r.pitch);last.localScore=Math.max(last.localScore,r.localScore);last.localTimbre=Math.max(last.localTimbre,r.localTimbre);last.maleVotes+=r.maleVotes;last.localMaleVotes+=r.localMaleVotes;last.switchVotes+=r.switchVotes;last.switchScore=Math.max(last.switchScore||0,r.switchScore||0);last.switchPeak=Math.max(last.switchPeak||0,r.switchPeak||0);last.adaptiveSwitch=Math.max(last.adaptiveSwitch||0,r.adaptiveSwitch||0);last.adaptiveZ=Math.max(last.adaptiveZ||0,r.adaptiveZ||0);last.hotCount+=r.hotCount}else merged.push({...r})}
+  let merged=[];for(const r of runs){const last=merged[merged.length-1];if(last&&r.start<=last.end+1.05&&r.end-last.start<=13){last.end=Math.max(last.end,r.end);last.score=Math.max(last.score,r.score);last.timbre=Math.max(last.timbre,r.timbre);last.pitch=Math.max(last.pitch,r.pitch);last.localScore=Math.max(last.localScore,r.localScore);last.localTimbre=Math.max(last.localTimbre,r.localTimbre);last.maleVotes+=r.maleVotes;last.localMaleVotes+=r.localMaleVotes;last.switchVotes+=r.switchVotes;last.switchScore=Math.max(last.switchScore||0,r.switchScore||0);last.switchPeak=Math.max(last.switchPeak||0,r.switchPeak||0);last.adaptiveSwitch=Math.max(last.adaptiveSwitch||0,r.adaptiveSwitch||0);last.adaptiveZ=Math.max(last.adaptiveZ||0,r.adaptiveZ||0);last.learnedScore=Math.max(last.learnedScore||0,r.learnedScore||0);last.hotCount+=r.hotCount}else merged.push({...r})}
   merged=merged.map(r=>{
     const ratio=(r.maleVotes+r.localMaleVotes)/Math.max(1,r.hotCount*2);
     const localStrong=r.localScore>=localThreshold*1.10&&r.localTimbre>=localThreshold*.84;
     const switchRatio=(r.switchVotes||0)/Math.max(1,r.hotCount),switchStrong=(r.switchScore||0)>=localThreshold*.98&&(r.switchPeak||0)>=2.05&&switchRatio>=.20; const adaptiveStrong=(r.adaptiveZ||0)>=2.0;
-    const kind=((ratio>=.24||r.pitch>=1.35||localStrong||switchStrong||adaptiveStrong)&&Math.max(r.timbre,r.localTimbre,r.switchScore||0,r.adaptiveSwitch||0)>=Math.min(threshold,localThreshold)*.66)?'male':'voice';
+    const learnedStrong=(r.learnedScore||0)>=.58;
+    const kind=((ratio>=.24||r.pitch>=1.35||localStrong||switchStrong||adaptiveStrong||learnedStrong)&&Math.max(r.timbre,r.localTimbre,r.switchScore||0,r.adaptiveSwitch||0)>=Math.min(threshold,localThreshold)*.66)?'male':'voice';
     return {...r,kind,level:voiceAuditSeverity(Math.max(r.score,r.localScore),Math.min(threshold,localThreshold),kind)};
   })
    .filter(r=>r.end-r.start>=1.15&&r.end-r.start<=13)
    .sort((a,b)=>(b.kind==='male')-(a.kind==='male')||Math.max(b.score,b.localScore)-Math.max(a.score,a.localScore)).slice(0,maxN).sort((a,b)=>a.start-b.start);
   voiceAuditResultsData=merged;renderVoiceAuditResults();
   const maleN=merged.filter(x=>x.kind==='male').length;
-  $('voiceAuditStats').innerHTML=`정밀 검사 완료 · ${voiceAuditClock(dur)} 전체에서 <b>${merged.length}개</b> 지속 변화 후보 · <b style="color:#d33">남성화 우선 후보 ${maleN}개</b> · 민감도 ${sens==='high'?'높음':sens==='low'?'낮음':'보통'}<br><span class="tiny">v23.37: 0.5초 창/0.25초 이동 · 전체/직전 화자 이중 비교 + 적응형 화자교체 피크 검출. 절대 임계값을 못 넘더라도 파일 내부 상위 급변 구간은 후보로 표시합니다.</span>`;
+  $('voiceAuditStats').innerHTML=`정밀 검사 완료 · ${voiceAuditClock(dur)} 전체에서 <b>${merged.length}개</b> 지속 변화 후보 · <b style="color:#d33">남성화 우선 후보 ${maleN}개</b> · 민감도 ${sens==='high'?'높음':sens==='low'?'낮음':'보통'}<br><span class="tiny">v23.38: 일반 검사 + 사용자 오류 음색 학습 검사. 정상 여성/남성 오류 샘플을 한 번 등록하면 이후 파일에서 같은 화자 이탈을 우선 탐지합니다.</span>`;
   setStatus(`음성 정밀 검사 완료: 남성화 우선 ${maleN}개 / 전체 후보 ${merged.length}개`,'ok');
  }catch(e){$('voiceAuditStats').innerHTML=`⚠ 분석 실패: ${escapeHtml(e.message||String(e))}`;setStatus('음성 분석 실패: '+(e.message||e),'bad')}
 }
