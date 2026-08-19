@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.42 SRT Restore Guard</title>
+<title>썰쟁 Studio v23.43 SRT Restore Guard</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.42</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.43</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -1339,7 +1339,7 @@ function importCharacters(event){
  };
  reader.readAsText(file,'utf-8');
 }
-const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='23.32-snapshot-handoff-clean',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
+const APP_ID='sseoljeng-studio',SCHEMA_VERSION=8,APP_VERSION='23.43-srt-prompt-hard-guard',LOCAL_KEY='sseoljeng-v8',IMPORT_BACKUP_KEY='sseoljeng-import-backup-v8',BACKUP_RING_KEY='sseoljeng-backup-ring-v8';
 function outputsNow(){return {...Object.fromEntries(Object.entries(fields).map(([k,id])=>[k,$(id).value])),voice:$('voice')?.value||'',voiceParts,memoryFacts:$('memoryFacts')?.value||'',memoryConflicts:$('memoryConflicts')?.value||'',memoryClues:$('memoryClues')?.value||'',memoryTimeline:$('memoryTimeline')?.value||'',vrewParts}}
 
 function updateMeta(){
@@ -3435,25 +3435,37 @@ function srtSpokenChars(text){return String(text||'').replace(/[^0-9A-Za-z가-�
 function extractActualStoryOnly(text){
  const source=String(text||'').replace(/\r/g,'').trim();
  if(!source)return '';
- // v23.42: SRT 원문은 반드시 실제 'N문단' 본문에서만 추출한다.
- // 프롬프트의 1. 2. 규칙/설계도/사건기억장 등은 원문으로 절대 사용하지 않는다.
+ // v23.43: GPT 생성 프롬프트/설계도 오염을 '문단 추출보다 먼저' 차단한다.
+ // 프롬프트 안에 "1문단, 2문단" 예시가 있어도 실제 원고로 오인하지 않는다.
+ const promptGuard=/(?:\[설계도 인과 진행 절대 규칙\]|\[연속 인과 가드[^\]]*\]|\[반사실 인과관계 검증[^\]]*\]|\[고유 이름 보호 규칙\]|\[사건 기억장\]|\[작성 시 금지[^\]]*\]|\[연속 작성 지시[^\]]*\]|\[이번 출력 규칙[^\]]*\]|핵심 축약 검사|과거부터 반복된 피해만으로)/i;
+ if(promptGuard.test(source)) return '';
+
  const heading=/^\s*(?:#{1,6}\s*)?(?:\*\*|__)?\s*(\d+)\s*문단\s*(?:\*\*|__)?\s*[:：.-]?\s*$/gm;
  const hits=[...source.matchAll(heading)];
  if(hits.length){
+  // 실제 장편 원고라면 문단 번호가 대체로 순차 증가해야 한다.
+  // 프롬프트 속 산발적인 'N문단' 예시는 여기서 제외한다.
+  const runs=[]; let run=[];
+  for(const h of hits){
+   const n=Number(h[1]);
+   if(!run.length || n===Number(run[run.length-1][1])+1) run.push(h);
+   else { if(run.length)runs.push(run); run=[h]; }
+  }
+  if(run.length)runs.push(run);
+  runs.sort((a,b)=>b.length-a.length);
+  const best=runs[0]||[];
+  if(best.length<2) return '';
   const bodies=[];
-  for(let i=0;i<hits.length;i++){
-   const st=hits[i].index+hits[i][0].length;
-   const en=i+1<hits.length?hits[i+1].index:source.length;
-   let body=source.slice(st,en).trim();
-   // 원고 뒤에 내부 프롬프트가 붙은 비정상 데이터도 여기서 차단한다.
-   const guard=body.search(/\n\s*\[(?:설계도 인과 진행 절대 규칙|연속 인과 가드|반사실 인과관계 검증|고유 이름 보호 규칙|사건 기억장|작성 시 금지|연속 작성 지시|이번 출력 규칙)\]/);
-   if(guard>=0)body=body.slice(0,guard).trim();
+  for(let i=0;i<best.length;i++){
+   const h=best[i], globalIndex=hits.indexOf(h);
+   const st=h.index+h[0].length;
+   const en=globalIndex+1<hits.length?hits[globalIndex+1].index:source.length;
+   const body=source.slice(st,en).trim();
    if(body)bodies.push(body);
   }
   return bodies.join('\n\n').trim();
  }
- // 명시적 문단 제목이 없는데 내부 프롬프트 표식이 있으면 오염된 데이터로 간주한다.
- if(/\[(?:설계도 인과 진행 절대 규칙|연속 인과 가드|반사실 인과관계 검증|고유 이름 보호 규칙|사건 기억장|연속 작성 지시|이번 출력 규칙)\]/.test(source))return '';
+ // 문단 제목이 없는 완성 원고도 허용하되, 명령문/프롬프트 흔적은 위에서 이미 차단한다.
  return source;
 }
 function prepareSrtReference(text){
@@ -3602,7 +3614,7 @@ function cleanImportedSrt(){
   const storySource=$('story')?.value||'';
   if(!storySource.trim()){setStatus('원본 대본 100% 재구성이 켜져 있습니다. 먼저 롱폼 탭에 실제 사연 원고를 넣어주세요.','bad');return}
   const actualStory=extractActualStoryOnly(storySource);
-  if(!actualStory.trim()){setStatus('원문 복원 중지: 실제 N문단 본문을 찾지 못했습니다. 프롬프트/설계도는 자막 원문으로 사용할 수 없습니다.','bad');return}
+  if(!actualStory.trim()){setStatus('원문 복원 중지: 롱폼 탭이 실제 사연 본문이 아니라 GPT 프롬프트/설계도로 감지됐습니다. 기존 SRT 결과는 변경하지 않았습니다.','bad');return}
   const ref=prepareSrtReference(actualStory);
   $('srtReference').value=ref;
   if($('srtReferenceStats'))$('srtReferenceStats').textContent=`실제 N문단 본문 ${srtSpokenChars(ref).toLocaleString()}자 · 내부 프롬프트 0자`;
