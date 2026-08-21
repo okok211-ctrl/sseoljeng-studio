@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.45 SRT Restore Guard</title>
+<title>썰쟁 Studio v23.46 Clean UI + Japanese SRT</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.45</h1><div class="sub">문단 자유 작성 · CapCut 제작 최적화 · 벤치마킹 각색 3안 선택 연동</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.46</h1><div class="sub">핵심 기능 중심 UI · 일본어 SRT 싱크 유지 · CapCut 제작 최적화</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -105,15 +105,13 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   </div>
   <div class="longform-stats"><div class="longform-stat"><b id="longformParagraphs">30</b><span>문단</span></div><div class="longform-stat"><b id="longformChars">약 13,000</b><span>예상 글자</span></div><div class="longform-stat"><b id="longformParts">2</b><span>Vrew 파트</span></div></div>
   <div id="longformPartMap" class="part-map"></div>
-  <div class="clean-actions"><button class="btn secondary" type="button" onclick="showTab('blueprint')">전체 설계</button><button class="btn secondary" type="button" onclick="showTab('memory')">사건 기억장</button><button class="btn primary wide" type="button" onclick="makeVrewParts()">Vrew용 자동 분할</button></div>
+  <div class="clean-actions"><button class="btn secondary" type="button" onclick="showTab('blueprint')">전체 설계</button><button class="btn primary wide" type="button" onclick="makeVrewParts()">Vrew용 자동 분할</button></div>
   <div class="section-help">장편은 3부 구조로 관리하고, Vrew 출력은 문단을 자르지 않은 채 파트당 9,500자 이하로 나눕니다.</div>
  </div>
  <div class="step-nav">
   <button class="step-link active" type="button" onclick="showTab('story')"><span class="step-num">1</span>원고</button>
   <button class="step-link" type="button" onclick="showTab('blueprint')"><span class="step-num">2</span>전체 설계</button>
-  <button class="step-link" type="button" onclick="showTab('memory')"><span class="step-num">3</span>사건 기억장</button>
-  <button class="step-link" type="button" onclick="showTab('consistency')"><span class="step-num">4</span>품질 검사</button>
-  <button class="step-link" type="button" onclick="showTab('vrew')"><span class="step-num">5</span>Vrew 출력</button>
+  <button class="step-link" type="button" onclick="showTab('vrew')"><span class="step-num">3</span>Vrew 출력</button>
  </div>
  <div class="wizard">
   <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
@@ -230,7 +228,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="btn secondary" onclick="generate('japanese')">일본어판</button>
   <button class="btn secondary" onclick="makeSrt()">SRT 자막</button>
   <button class="btn secondary" onclick="makeVoice()">🎙 CapCut 음성용</button>
-  <button id="consistencyBtn" class="btn secondary" onclick="checkConsistency()" title="스토리 설계도와 완성 원고를 비교해 인물·시간·관계·사건·결말 충돌을 검사합니다.">🔍 스토리 설정 충돌 검사</button>
   <button class="btn success wide" onclick="downloadZip()">📦 캡컷용 ZIP 저장</button>
   <button class="btn ghost" onclick="saveLocal()">이 PC에 저장</button>
   <button class="btn ghost" onclick="loadLocal()">이 PC에서 불러오기</button>
@@ -270,7 +267,6 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab active" data-tab="story">📝 롱폼 붙여넣기</button>
   <button class="tab" data-tab="gptprompt">🧩 GPT 분할생성</button>
   <button class="tab" data-tab="blueprint">스토리 설계도</button>
-  <button class="tab" data-tab="memory">사건 기억장</button>
   <button class="tab" data-tab="images">이미지 프롬프트</button>
   <button class="tab" data-tab="shorts">쇼츠 4컷</button>
   <button class="tab" data-tab="youtube">유튜브 정보</button>
@@ -279,9 +275,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
   <button class="tab" data-tab="japanese">일본어</button>
   <button class="tab" data-tab="voice">🎙 음성 만들기</button>
   <button class="tab" data-tab="srt">📝 자막 정리</button>
-  <button class="tab" data-tab="imagetimeline">🖼️ 이미지 넣기</button>
   <button class="tab" data-tab="vrew">Vrew 출력</button>
-  <button class="tab" data-tab="consistency">설정 충돌 검사</button>
  </nav>
  <div class="toolbar"><span id="meta" class="meta">0자</span><button class="btn ghost" onclick="copyCurrent()">현재 내용 복사</button></div>
  <textarea id="story" class="output" placeholder="ChatGPT에서 작성한 1문단~마지막 문단 원고를 그대로 붙여넣으세요."></textarea>
@@ -340,6 +334,17 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     </div>
     <input id="srtFileInput" class="file-input" type="file" accept=".srt,text/plain" onchange="loadSrtFile(event)">
     <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
+
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(128,128,128,.25)">
+     <h2>🇯🇵 일본어 SRT · 기존 싱크 그대로</h2>
+     <div class="tiny" style="margin:0 0 10px">현재 한국어 SRT의 <b>시작/종료 시간은 1ms도 바꾸지 않고</b>, 일본어 탭의 번역 본문만 같은 순서로 배치합니다. 먼저 일본어판을 생성한 뒤 사용하세요.</div>
+     <div class="clean-actions">
+      <button class="btn primary" type="button" onclick="makeJapaneseSrt()">🇯🇵 일본어 SRT 만들기</button>
+      <button class="btn ghost" type="button" onclick="downloadJapaneseSrt()">⬇ 일본어 SRT 저장</button>
+     </div>
+     <textarea id="japaneseSrt" style="min-height:240px;margin-top:10px" readonly placeholder="일본어판 + 한국어 SRT를 준비한 뒤 ‘일본어 SRT 만들기’를 누르세요."></textarea>
+     <div id="japaneseSrtStats" class="tiny" style="margin-top:8px">기존 SRT의 타임코드를 그대로 유지합니다.</div>
+    </div>
 
    </div>
   </div>
@@ -3252,6 +3257,49 @@ function parseSrtText(raw){
  }
  return cues.sort((a,b)=>a.start-b.start||a.end-b.end);
 }
+function cleanJapaneseStoryText(text){
+ return String(text||'')
+  .replace(/^\s*(?:\[?\s*\d+\s*文段\s*\]?|\[?\s*\d+\s*문단\s*\]?|第?\s*\d+\s*(?:段落|文段))\s*[:：.\-]?\s*/gm,'')
+  .replace(/^\s*#+\s*/gm,'')
+  .replace(/\n{2,}/g,'\n')
+  .trim();
+}
+function japaneseBoundary(text,target,min,max){
+ const lo=Math.max(min,Math.floor(target-18)),hi=Math.min(max,Math.ceil(target+18));
+ let best=-1,bestScore=1e9;
+ for(let i=lo;i<=hi;i++){
+  const ch=text[i-1]||'';
+  const boundary=/[。！？!?、，,.」』）)\s]/.test(ch);
+  if(boundary){const score=Math.abs(i-target);if(score<bestScore){best=i;bestScore=score}}
+ }
+ return best>=0?best:Math.max(min,Math.min(max,Math.round(target)));
+}
+function makeJapaneseSrt(){
+ const jp=cleanJapaneseStoryText($('japanese')?.value||'');
+ if(!jp){showTab('japanese');setStatus('먼저 일본어판을 생성하거나 일본어 탭에 번역 본문을 넣으세요.','bad');return}
+ const raw=($('srt')?.value||'').trim()||($('srtImport')?.value||'').trim();
+ const cues=parseSrtText(raw);
+ if(!cues.length){showTab('srt');setStatus('기준이 될 한국어 SRT가 없습니다. SRT를 먼저 불러오거나 정리하세요.','bad');return}
+ const flat=jp.replace(/\s*\n\s*/g,'').replace(/\s+/g,' ').trim();
+ if(!flat){setStatus('일본어 본문에서 자막 텍스트를 읽지 못했습니다.','bad');return}
+ const weights=cues.map(c=>Math.max(1,String(c.text||'').replace(/\s/g,'').length));
+ const totalW=weights.reduce((a,b)=>a+b,0); let pos=0,cum=0,out=[];
+ for(let i=0;i<cues.length;i++){
+  cum+=weights[i];
+  let end=i===cues.length-1?flat.length:japaneseBoundary(flat,flat.length*(cum/totalW),pos+1,flat.length-(cues.length-i-1));
+  let txt=flat.slice(pos,end).trim().replace(/^\s+|\s+$/g,'');
+  if(!txt&&end<flat.length){end=Math.min(flat.length,end+1);txt=flat.slice(pos,end).trim()}
+  out.push(`${i+1}\n${srtMsToTime(cues[i].start)} --> ${srtMsToTime(cues[i].end)}\n${txt}\n`);pos=end;
+ }
+ $('japaneseSrt').value=out.join('\n');
+ $('japaneseSrtStats').textContent=`완료 · ${cues.length}개 자막 · 기존 타임코드 ${cues.length}개 그대로 유지 · 일본어 ${flat.length.toLocaleString()}자 배치`;
+ saveLocal(true);setStatus('일본어 SRT 완료: 기존 한국어 SRT의 싱크를 그대로 유지했습니다.','ok');
+}
+function downloadJapaneseSrt(){
+ const text=($('japaneseSrt')?.value||'').trim();if(!text){setStatus('먼저 일본어 SRT를 만드세요.','bad');return}
+ const blob=new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${safeFileName(cfg().name||'썰쟁')}_일본어_싱크유지.srt`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);setStatus('일본어 SRT를 저장했습니다.','ok');
+}
+
 function wrapKoreanCaption(text,lineLen,maxLines){
  const clean=String(text||'').replace(/\s+/g,' ').trim();if(!clean)return '';
  const maxChars=lineLen*maxLines;if(clean.length<=lineLen)return clean;
@@ -3554,15 +3602,15 @@ async function downloadZip(){
  if(!$('story').value.trim()){setStatus('먼저 ChatGPT 원고를 롱폼 탭에 붙여넣으세요.','bad');return}
  const z=new JSZip(),f=z.folder('sseoljeng-project');
  f.file('00_스토리설계도.txt',$('blueprint').value);f.file('00-0_사건기억장.txt',memoryText());f.file('00-1_GPT롱폼프롬프트.txt',$('gptPrompt').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
- f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);
+ f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);if($('japaneseSrt')?.value?.trim())f.file('08_일본어_싱크유지.srt',$('japaneseSrt').value);
  if(vrewParts.length){const vf=f.folder('Vrew파트');vrewParts.forEach((p,i)=>vf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text))}
- f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 같은 탭의 이미지 타임라인 가이드에서 이미지 프롬프트의 사용 문단을 실제 캡컷 삽입시간으로 계산할 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
+ f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 일본어판을 만든 뒤 자막 정리 탭의 일본어 SRT 기능을 사용하면 기존 한국어 SRT의 타임코드를 그대로 유지한 일본어 자막을 만들 수 있습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
  const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
  setStatus('캡컷용 ZIP 저장 완료','ok')
 }
 
 
-function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('srtTools'))$('srtTools').classList.toggle('hidden',key!=='srt');if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','memory','consistency','vrew'][i]===key)));updateMeta()}
+function showTab(key){active=key;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===key));Object.entries(fields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));Object.entries(panelFields).forEach(([k,id])=>$(id).classList.toggle('hidden',k!==key));if($('srtTools'))$('srtTools').classList.toggle('hidden',key!=='srt');if($('ytCtrGuide'))$('ytCtrGuide').classList.toggle('hidden',key!=='youtube');document.querySelectorAll('.step-link').forEach((x,i)=>x.classList.toggle('active',(['story','blueprint','vrew'][i]===key)));updateMeta()}
 $('count').addEventListener('change',()=>{$('customCount').style.display=$('count').value==='custom'?'block':'none'});
 function cleanParagraphText(text){return String(text||'').replace(/\[\s*문단\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\]/g,'').replace(/\(\s*문단?\s*글자\s*수?\s*[:：]\s*[0-9,]+\s*자\s*\)/g,'').trim()}
 function paragraphCharCount(text){
