@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.47 Clean UI + Block JP SRT</title>
+<title>썰쟁 Studio v23.48 Clean UI + Block JP SRT</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -90,7 +90,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.47</h1><div class="sub">핵심 기능 중심 UI · 일본어 SRT 블록별 직접 번역 · CapCut 제작 최적화</div></div>
+ <div><h1>🎬 썰쟁 Studio v23.48</h1><div class="sub">핵심 기능 중심 UI · 일본어 SRT 블록 완전 분리 번역 · CapCut 제작 최적화</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
@@ -336,14 +336,14 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
     <div id="srtCleanStats" class="tiny" style="margin-top:8px">자동 캡션 SRT와 원본 대본을 넣으면 오타 교정 상태와 정리 후 자막 개수를 표시합니다.</div>
 
     <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(128,128,128,.25)">
-     <h2>🇯🇵 일본어 SRT · 한국어 자막 1:1 직접 번역</h2>
+     <h2>🇯🇵 일본어 SRT · 블록 완전 분리 1:1 번역</h2>
      <div class="tiny" style="margin:0 0 10px">현재 한국어 SRT의 <b>시작/종료 시간은 그대로 유지</b>하고, 각 한국어 자막 블록을 같은 번호의 일본어 자막으로 직접 번역합니다. 일본어 본문을 억지로 잘라 넣지 않기 때문에 뒤로 갈수록 내용이 밀리는 문제를 막습니다.</div>
      <div class="clean-actions">
       <button id="japaneseSrtBtn" class="btn primary" type="button" onclick="makeJapaneseSrt()">🇯🇵 한국어 SRT → 일본어 SRT</button>
       <button class="btn ghost" type="button" onclick="downloadJapaneseSrt()">⬇ 일본어 SRT 저장</button>
      </div>
      <textarea id="japaneseSrt" style="min-height:240px;margin-top:10px" readonly placeholder="한국어 SRT를 불러오거나 정리한 뒤 ‘한국어 SRT → 일본어 SRT’를 누르세요."></textarea>
-     <div id="japaneseSrtStats" class="tiny" style="margin-top:8px">자막 번호·타임코드 고정 · 한국어 블록별 1:1 일본어 번역</div>
+     <div id="japaneseSrtStats" class="tiny" style="margin-top:8px">자막 번호·타임코드 고정 · 각 한국어 블록을 독립 요청으로 일본어 번역</div>
     </div>
 
    </div>
@@ -3273,25 +3273,73 @@ function parseIndexedTranslations(raw){
  }
  return out;
 }
-function japaneseSrtTranslationPrompt(cues,startIndex){
- const payload=cues.map((c,i)=>`[[${startIndex+i+1}]] ${c.text}`).join('\n');
- return `당신은 유튜브 한국어 사연 영상의 일본어 자막 번역가입니다.\n\n[목표]\n아래 한국어 SRT 자막 블록을 일본어로 1:1 번역하세요. 각 번호는 원본 SRT 번호와 정확히 대응해야 합니다.\n\n[절대 규칙]\n1. 블록을 합치거나 나누지 마세요. 입력 1개당 출력 1개입니다.\n2. 각 출력은 반드시 [[번호]] 로 시작하세요. 번호를 바꾸거나 빠뜨리지 마세요.\n3. 타임코드, 설명, 한국어 원문, 주석, 따옴표를 출력하지 마세요. 일본어 번역문만 출력하세요.\n4. 앞뒤 자막 내용을 섞지 말고 해당 블록에 있는 의미만 번역하세요.\n5. 일본 유튜브 시청자가 자연스럽게 읽는 구어체 자막으로 번역하되 의미를 추가하거나 삭제하지 마세요.\n6. 고유명사는 문맥상 자연스럽게 유지하고, '엄마/장모님/남편' 같은 가족 호칭은 일본어 문맥에 맞게 자연스럽게 옮기세요.\n7. 자막이 짧으면 번역도 짧게 유지하세요. 불필요한 설명을 덧붙이지 마세요.\n8. 출력 형식은 아래 예시처럼 번호와 번역 한 줄만 사용하세요.\n[[1]] 日本語字幕\n[[2]] 日本語字幕\n\n[번역할 자막]\n${payload}`;
+function cleanJapaneseSingleTranslation(raw){
+ let text=String(raw||'').replace(/```[a-zA-Z]*\n?/g,'').replace(/```/g,'').trim();
+ text=text.replace(/^\s*(?:번역|일본어|日本語|訳文|翻訳)\s*[:：-]\s*/i,'').trim();
+ text=text.replace(/^[[\]「」『』"']+|[[\]「」『』"']+$/g,'').trim();
+ text=text.replace(/\r?\n+/g,' ').replace(/\s+/g,' ').trim();
+ return text;
 }
-async function translateJapaneseCueBatch(cues,startIndex){
- let prompt=japaneseSrtTranslationPrompt(cues,startIndex);
- let text=await callGeneratePrompt(prompt,'japaneseSrt');
- let parsed=parseIndexedTranslations(text);
- let missing=[];
- for(let i=0;i<cues.length;i++)if(!parsed[startIndex+i+1])missing.push(i);
- if(missing.length){
-  const retryCues=missing.map(i=>cues[i]);
-  const retryNums=missing.map(i=>startIndex+i+1);
-  const payload=retryCues.map((c,j)=>`[[${retryNums[j]}]] ${c.text}`).join('\n');
-  const retryPrompt=`다음 한국어 자막만 다시 일본어로 정확히 번역하세요. 블록 수와 번호를 절대 바꾸지 마세요. 각 줄은 반드시 [[번호]] 일본어번역 형식으로만 출력하세요. 설명 금지.\n\n${payload}`;
-  const retryText=await callGeneratePrompt(retryPrompt,'japaneseSrtRetry');
-  parsed={...parsed,...parseIndexedTranslations(retryText)};
+function japaneseSingleCuePrompt(cues,index){
+ const cur=cues[index];
+ const prev=index>0?cues[index-1].text:'(없음)';
+ const next=index+1<cues.length?cues[index+1].text:'(없음)';
+ return `당신은 유튜브 한국어 사연 영상의 일본어 자막 전문 번역가입니다.
+
+[목표]
+아래의 '번역 대상' 한 블록만 일본어로 번역하세요. 이전/다음 블록은 문맥 파악용이며 절대로 번역 결과에 섞으면 안 됩니다.
+
+[절대 규칙]
+1. 출력은 번역 대상 블록의 일본어 번역문 딱 1개만 작성하세요.
+2. 이전 블록이나 다음 블록의 내용을 번역문에 추가하지 마세요.
+3. 번역 대상이 문장 중간 조각이어도 그 조각의 범위만 번역하세요. 앞 문장의 끝이나 다음 문장의 시작을 가져오지 마세요.
+4. 번호, 타임코드, 설명, 주석, '번역:' 같은 라벨을 출력하지 마세요.
+5. 자연스러운 일본어 자막으로 옮기되 의미를 추가·삭제하지 마세요.
+6. 가족 호칭과 말투는 일본 시청자에게 자연스럽게 옮기세요.
+7. 원문이 짧으면 번역도 짧게 유지하세요.
+
+[이전 블록 - 문맥 전용 / 번역 금지]
+${prev}
+
+[번역 대상 - 이것만 번역]
+${cur.text}
+
+[다음 블록 - 문맥 전용 / 번역 금지]
+${next}`;
+}
+function japaneseTranslationLooksSuspicious(source,translated){
+ const src=String(source||'').trim(),ja=String(translated||'').trim();
+ if(!ja)return true;
+ if(/\[\[\d+\]\]|-->|번역 대상|이전 블록|다음 블록|한국어 SRT/.test(ja))return true;
+ const hangul=(ja.match(/[가-힣]/g)||[]).length;
+ if(hangul>=Math.max(3,Math.ceil(ja.length*0.15)))return true;
+ const maxLen=Math.max(36,src.length*3.2+18);
+ if(ja.length>maxLen)return true;
+ return false;
+}
+async function translateJapaneseCueSingle(cues,index){
+ let last='';
+ for(let attempt=1;attempt<=3;attempt++){
+  const extra=attempt===1?'':`\n\n[재시도 지시]\n직전 출력이 범위를 벗어났습니다. 반드시 '번역 대상'의 내용만 번역하고 이전/다음 블록의 단어를 절대 포함하지 마세요.`;
+  const raw=await callGeneratePrompt(japaneseSingleCuePrompt(cues,index)+extra,'japaneseSrtSingle');
+  const txt=cleanJapaneseSingleTranslation(raw);
+  last=txt;
+  if(!japaneseTranslationLooksSuspicious(cues[index].text,txt))return txt;
  }
- return parsed;
+ throw new Error(`자막 ${index+1}번의 1:1 번역 검증에 실패했습니다.`+(last?` 마지막 결과: ${last.slice(0,60)}`:''));
+}
+async function runJapaneseTranslationPool(cues,onProgress){
+ const results=new Array(cues.length);let next=0,done=0;
+ const workers=Math.min(4,cues.length);
+ async function worker(){
+  while(true){
+   const i=next++;if(i>=cues.length)return;
+   results[i]=await translateJapaneseCueSingle(cues,i);
+   done++;if(onProgress)onProgress(done,i);
+  }
+ }
+ await Promise.all(Array.from({length:workers},()=>worker()));
+ return results;
 }
 async function makeJapaneseSrt(){
  if(busy){setStatus('다른 생성 작업이 진행 중입니다. 잠시 후 다시 시도하세요.','bad');return}
@@ -3300,26 +3348,22 @@ async function makeJapaneseSrt(){
  if(!cues.length){showTab('srt');setStatus('기준이 될 한국어 SRT가 없습니다. SRT를 먼저 불러오거나 정리하세요.','bad');return}
  busy=true;const btn=$('japaneseSrtBtn');if(btn)btn.disabled=true;
  $('japaneseSrt').value='';
- $('japaneseSrtStats').textContent=`번역 준비 · ${cues.length}개 자막 · 타임코드 고정`;
+ $('japaneseSrtStats').textContent=`번역 준비 · ${cues.length}개 자막 · 완전 분리 1:1 번역 · 타임코드 고정`;
  try{
-  const BATCH=40,translations={};
-  for(let start=0;start<cues.length;start+=BATCH){
-   const batch=cues.slice(start,start+BATCH);
-   setStatus(`일본어 SRT 번역 중... ${start+1}~${Math.min(cues.length,start+batch.length)} / ${cues.length}`);
-   $('japaneseSrtStats').textContent=`번역 중 · ${Math.min(start,cues.length)}/${cues.length} 완료 · 자막 번호/타임코드 고정`;
-   const got=await translateJapaneseCueBatch(batch,start);
-   Object.assign(translations,got);
-  }
-  const missing=[];let out=[];
+  const translations=await runJapaneseTranslationPool(cues,(done,i)=>{
+   setStatus(`일본어 SRT 1:1 번역 중... ${done}/${cues.length} 완료`);
+   $('japaneseSrtStats').textContent=`번역 중 · ${done}/${cues.length} 완료 · 각 자막 독립 번역 · 타임코드 고정`;
+  });
+  const out=[];
   for(let i=0;i<cues.length;i++){
-   const idx=i+1,txt=String(translations[idx]||'').trim();
-   if(!txt)missing.push(idx);
-   out.push(`${idx}\n${srtMsToTime(cues[i].start)} --> ${srtMsToTime(cues[i].end)}\n${txt||cues[i].text}\n`);
+   const txt=String(translations[i]||'').trim();
+   if(!txt)throw new Error(`일본어 번역 누락 자막 ${i+1}`);
+   if(japaneseTranslationLooksSuspicious(cues[i].text,txt))throw new Error(`일본어 번역 검증 실패 자막 ${i+1}`);
+   out.push(`${i+1}\n${srtMsToTime(cues[i].start)} --> ${srtMsToTime(cues[i].end)}\n${txt}\n`);
   }
-  if(missing.length)throw new Error(`일본어 번역 누락 자막 ${missing.slice(0,12).join(', ')}${missing.length>12?' 외 '+(missing.length-12)+'개':''}`);
   $('japaneseSrt').value=out.join('\n');
-  $('japaneseSrtStats').textContent=`완료 · ${cues.length}개 자막 1:1 번역 · 번호 ${cues.length}개 유지 · 타임코드 ${cues.length}개 그대로`;
-  saveLocal(true);setStatus('일본어 SRT 완료: 한국어 자막을 블록별로 1:1 번역하고 기존 싱크를 그대로 유지했습니다.','ok');
+  $('japaneseSrtStats').textContent=`완료 · ${cues.length}개 자막 완전 분리 1:1 번역 · 번호/타임코드 ${cues.length}개 고정`;
+  saveLocal(true);setStatus('일본어 SRT 완료: 각 한국어 자막을 독립 요청으로 번역해 앞뒤 블록 섞임을 차단했습니다.','ok');
  }catch(e){
   console.error(e);setStatus('일본어 SRT 생성 실패: '+e.message,'bad');
   $('japaneseSrtStats').textContent='생성 실패 · 한국어 SRT는 변경되지 않았습니다.';
@@ -3634,7 +3678,7 @@ async function downloadZip(){
  f.file('00_스토리설계도.txt',$('blueprint').value);f.file('00-0_사건기억장.txt',memoryText());f.file('00-1_GPT롱폼프롬프트.txt',$('gptPrompt').value);f.file('01_롱폼.txt',$('story').value);f.file('02_본문이미지프롬프트.txt',$('imagesOut').value);f.file('03_쇼츠4컷.txt',$('shorts').value);
  f.file('03-1_음성AI용.txt',$('voice').value);if(voiceParts.length){const cf=f.folder('CapCut음성파트');voiceParts.forEach((p,i)=>cf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.text.length}자.txt`,p.text))}f.file('03-2_설정검사.txt',$('consistency').value);f.file('04_유튜브정보.txt',$('youtube').value);f.file('05_썸네일.txt',$('thumbnail').value);f.file('06_일본어판.txt',$('japanese').value);f.file('07_자막.srt',$('srt').value);if($('japaneseSrt')?.value?.trim())f.file('08_일본어_싱크유지.srt',$('japaneseSrt').value);
  if(vrewParts.length){const vf=f.folder('Vrew파트');vrewParts.forEach((p,i)=>vf.file(`${String(i+1).padStart(2,'0')}_${p.title}_${p.start}-${p.end}문단.txt`,p.text))}
- f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 자막 정리 탭의 일본어 SRT 기능은 한국어 SRT 각 블록을 일본어로 1:1 직접 번역하며 기존 타임코드를 그대로 유지합니다. 일본어 본문을 잘라 배치하지 않으므로 자막 내용 밀림을 줄였습니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
+ f.file('README.txt','이미지는 02_본문이미지프롬프트.txt의 프롬프트를 ChatGPT 이미지 생성에 사용하세요.\nPC/웹 캡컷에서는 07_자막.srt를 불러올 수 있습니다. SRT 탭의 자동 정리 기능으로 CapCut 자동 캡션 SRT를 원문 기준 자막으로 재구성할 수 있습니다. 자막 정리 탭의 일본어 SRT 기능은 한국어 SRT 각 블록을 서로 완전히 분리해 독립적으로 일본어 번역하고 기존 타임코드를 그대로 유지합니다. 이전/다음 블록은 문맥 참고만 하며 번역문에 섞지 않도록 검증합니다.\n모바일 캡컷에서는 음성 삽입 후 자동 자막을 사용하는 것이 편합니다.');
  const blob=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${cfg().name||'썰쟁'}_${new Date().toISOString().slice(0,10)}.zip`;a.click();URL.revokeObjectURL(a.href);
  setStatus('캡컷용 ZIP 저장 완료','ok')
 }
