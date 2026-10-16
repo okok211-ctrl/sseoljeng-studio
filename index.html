@@ -61,7 +61,7 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 
 .yt-ab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.yt-ab-title{font-weight:950;font-size:14px}.yt-ab-help{font-size:10px;color:var(--muted);margin-top:4px}.yt-ab-output{width:100%;min-height:280px;max-height:420px;margin-top:10px;background:#06101d;color:#f5f8fc;border:1px solid #30465f;border-radius:11px;padding:13px;line-height:1.65;resize:vertical}
 
-/* v24.1: page-based settings navigation; keep legacy form elements and IDs intact */
+/* v24.2: page-based settings navigation; keep legacy form elements and IDs intact */
 .side{max-height:none!important;overflow:visible!important;position:static!important}
 .studio-page-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e6eaf2}
 .studio-page-button{border:1px solid #e1e7f0;background:#f7f9fc;color:#526176;padding:12px 8px;border-radius:12px;font:inherit;font-weight:750;font-size:13px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s}
@@ -74,6 +74,33 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .studio-page-intro p{margin:0;color:#78869a;font-size:12px;line-height:1.5}
 .studio-nav-shortcut{width:100%;margin:12px 0 4px;padding:11px;border:1px solid #c9d7f6;border-radius:10px;background:#f2f6ff;color:#3652a4;font-weight:700;cursor:pointer}
 @media(max-width:780px){.studio-page-nav{grid-template-columns:repeat(4,minmax(0,1fr))}.studio-page-button{padding:10px 3px;font-size:11px}}
+
+/* v24.2 compact workspace: minimal scrolling, no removal of legacy controls */
+@media(min-width:1180px){.layout{grid-template-columns:minmax(480px,540px) minmax(0,1fr)!important;gap:14px!important}}
+.side{padding:15px!important}.main{padding:17px!important}
+.studio-page-nav{position:sticky;top:0;z-index:15;background:#fff;padding:8px 0 12px;margin-bottom:10px;gap:6px}
+.studio-page-button{padding:9px 5px;font-size:12px;border-radius:9px}
+.studio-page-intro{margin-bottom:10px;padding-bottom:7px}
+.studio-page-intro h2{font-size:17px}.studio-page-intro p{font-size:11px}
+.studio-settings-page.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.studio-settings-page>.studio-page-intro,.studio-settings-page>.studio-compact-toolbar,.studio-settings-page>.studio-wide,.studio-settings-page>.longform-card,.studio-settings-page>.wizard,.studio-settings-page>.cloud-box,.studio-settings-page>.char-editor,.studio-settings-page>.heroine-face-panel,.studio-settings-page>.actions,.studio-settings-page>.project-actions,.studio-settings-page>.studio-fold{grid-column:1/-1}
+.studio-settings-page>.field,.studio-settings-page>.row{min-width:0;margin:0!important}
+.studio-settings-page .field textarea{min-height:76px!important}
+.studio-settings-page .field{margin-bottom:0!important}
+.studio-settings-page .longform-card,.studio-settings-page .char-editor,.studio-settings-page .heroine-face-panel{padding:11px!important}
+.studio-settings-page .row{gap:7px}
+.studio-compact-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 0 3px}
+.studio-compact-toolbar span{font-size:11px;color:#69778e}
+.studio-compact-toolbar button{border:1px solid #d8e0ef;background:#f7f9ff;color:#3955a1;padding:7px 10px;border-radius:8px;cursor:pointer;font-weight:700;font-size:11px}
+.studio-fold{border:1px solid #e1e7f1;border-radius:11px;background:#fff;min-width:0;overflow:hidden}
+.studio-fold>summary{cursor:pointer;padding:11px 13px;background:#f6f8fd;font-size:12px;font-weight:800;color:#35476a;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.studio-fold>summary::-webkit-details-marker{display:none}
+.studio-fold>summary:after{content:'펼치기 ▾';font-size:10px;font-weight:600;color:#6476a3}
+.studio-fold[open]>summary:after{content:'접기 ▴'}
+.studio-fold>.studio-fold-content{padding:12px}
+.studio-fold-content>.field,.studio-fold-content>.row{margin-bottom:8px}
+.studio-settings-page .tiny{font-size:10px}
+@media(max-width:680px){.studio-settings-page.active{grid-template-columns:1fr}.studio-page-nav{position:static}.side{padding:12px!important}}
 </style>
 <style>
 #benchmarkPanel{display:none;max-width:1320px;margin:18px auto 40px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text)}
@@ -4601,6 +4628,42 @@ window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById
  const subtitleShortcut=document.createElement('button');subtitleShortcut.type='button';subtitleShortcut.className='studio-nav-shortcut';subtitleShortcut.textContent='📝 본문 ↔ 자막 맞춤법·글자 수 비교';
  subtitleShortcut.addEventListener('click',()=>{if(typeof showTab==='function')showTab('srt');document.querySelector('section.panel.main')?.scrollIntoView({behavior:'smooth',block:'start'});});
  nav.after(subtitleShortcut);
+})();
+</script>
+
+<script>
+/* v24.2: compact settings with optional panels; retain original elements and event handlers. */
+(function(){
+ const sections=document.querySelectorAll('.studio-settings-page');
+ if(!sections.length)return;
+ const foldMap={
+  plan:[['제작 분량·작업 구간','.longform-card',true],['원고 진행 단계','.step-nav',false],['추가 안내','.tiny',false]],
+  cast:[['캐릭터 상세 편집','.char-editor',false],['주인공 기준 얼굴','.heroine-face-panel',true]],
+  make:[['GPT 원고 생성 마법사','.wizard',true],['썸네일 상세 설정','.char-editor',false],['쇼츠 제작 (선택)','.char-editor',false]],
+  save:[['클라우드 프로젝트','.cloud-box',true],['백업·복원 도구','.project-actions',false]]
+ };
+ sections.forEach(section=>{
+  const key=section.dataset.page, rules=foldMap[key]||[];
+  const toolbar=document.createElement('div');toolbar.className='studio-compact-toolbar';
+  const label=document.createElement('span');label.textContent='자주 쓰는 설정만 먼저 표시';
+  const toggle=document.createElement('button');toggle.type='button';toggle.textContent='모두 펼치기';
+  toolbar.append(label,toggle);
+  const intro=section.querySelector('.studio-page-intro');if(intro)intro.after(toolbar);
+  const used=new Set();
+  rules.forEach(([title,selector,opened])=>{
+   const node=Array.from(section.children).find(el=>el.matches(selector)&&!used.has(el));
+   if(!node)return;used.add(node);
+   const detail=document.createElement('details');detail.className='studio-fold';detail.open=opened;
+   const summary=document.createElement('summary');summary.textContent=title;
+   const body=document.createElement('div');body.className='studio-fold-content';
+   node.before(detail);body.appendChild(node);detail.append(summary,body);
+  });
+  toggle.addEventListener('click',()=>{
+   const details=Array.from(section.querySelectorAll('.studio-fold'));
+   const expand=details.some(d=>!d.open);details.forEach(d=>d.open=expand);
+   toggle.textContent=expand?'모두 접기':'모두 펼치기';
+  });
+ });
 })();
 </script>
 </body>
