@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>썰쟁 Studio v23.51 Ending Power</title>
+<title>썰쟁 Studio v24.0 · Creative Workspace</title>
 <meta name="description" content="Gemini API를 이용한 썰쟁 전용 AI 사연 제작 스튜디오">
 <style>
 :root{
@@ -86,16 +86,28 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .bench-modal textarea{min-height:150px;resize:vertical;line-height:1.55}
 .bench-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .bench-modal-note{font-size:12px;color:#9eb0c5;line-height:1.5;margin-top:8px}
-</style></head>
+</style>
+<style id="sseoljeng-v24-ui">
+:root{--bg:#f4f6fa;--panel:#ffffff;--panel2:#f8fafc;--line:#e3e8ef;--text:#1d2939;--muted:#6b7789;--accent:#4659db;--accent2:#6779ed;--ok:#139d76;--danger:#d64b64}
+html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!important;font-family:Inter,Pretendard,"Noto Sans KR",system-ui,sans-serif!important}
+.app{max-width:1640px;padding:24px 26px 40px}.top{background:#fff;border:1px solid #e8ecf3;box-shadow:0 3px 22px #1e293b08;border-radius:18px;padding:20px 26px;min-height:102px}.top h1{font-size:29px;letter-spacing:-.055em;font-weight:850;color:#202a42}.brand-muted{font-weight:500;color:#5a6783}.brand-version{font-size:12px;vertical-align:middle;letter-spacing:0;background:#edf0ff;color:#4959d3;padding:5px 8px;border-radius:7px;margin-left:4px}.sub{font-size:12px;letter-spacing:.06em;color:#8290a4}.badge{background:#eefaf5;color:#177d5d;border-color:#d5f0e4}
+.layout{grid-template-columns:minmax(310px,350px) minmax(0,1fr);gap:20px;margin-top:20px;align-items:start}.panel{background:#fff;border:1px solid #e5eaf2;border-radius:18px;box-shadow:0 3px 18px #25304d09}.side{padding:22px;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}.main{padding:23px 25px;min-height:760px}.sidebar-heading{padding:2px 2px 14px;border-bottom:1px solid #edf0f4;margin-bottom:16px}.sidebar-heading h2{font-size:21px;letter-spacing:-.04em;margin:5px 0}.sidebar-heading p{font-size:12px;color:#8994a4;margin:0}.eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;color:#6473db}
+.longform-card{background:#f6f7ff;border:1px solid #e1e5fc;padding:16px;border-radius:13px}.longform-title{color:#2b3662}.longform-summary{color:#6875a3}.longform-stat,.part-chip{background:#fff;border-color:#e5e8f4}.longform-stat b,.part-chip b{color:#26334a}.longform-stat span,.part-chip span{color:#79869c}.duration-pill{background:#fff;color:#65718b;border-color:#dfe4f1}.duration-pill.active{background:#e8ebff;color:#4253c8;border-color:#aab5ff;box-shadow:none}
+.field label{color:#46536a;font-weight:750;font-size:12px}input,textarea,select{background:#fff!important;color:#24334b!important;border:1px solid #dce3ed!important;border-radius:10px;padding:10px 12px}input:focus,textarea:focus,select:focus{border-color:#8290ee!important;box-shadow:0 0 0 3px #4659db14!important}input::placeholder,textarea::placeholder{color:#9ba6b5}.btn{border-radius:10px;font-weight:750;font-size:12px;padding:11px 13px;box-shadow:none}.primary{background:#485bd8!important;color:white!important}.secondary{background:#eef1fb!important;color:#4054ae!important}.ghost{background:#fff!important;color:#5e6b82!important;border:1px solid #dfe5ee!important}.success{background:#e5f8f0!important;color:#117a59!important}
+.step-nav{gap:3px;margin:17px 0}.step-link{font-size:12px;color:#68758a;padding:10px 12px}.step-link.active,.step-link:hover{background:#edf0ff;color:#4556cb}.step-num{background:#e9edf5;color:#64728b}.step-link.active .step-num{background:#495cda;color:#fff}.wizard,.char-editor,.heroine-face-panel,.cloud-box{background:#fafbfe;border:1px solid #e4e9f2;border-radius:13px;padding:13px}.wizard-title,.cloud-title,.char-editor h3{color:#34415b}.wizard-step{color:#5d6cda}.wizard-list,.char-card,.status{background:#fff;color:#536179;border-color:#e2e7f0}.wizard-item{color:#6b778b}.wizard-item.current{background:#eef0ff;color:#4658cf}.wizard-item.done{color:#118264}.char-card span{color:#32425b}.char-card.active{border-color:#5a6fe5;box-shadow:0 0 0 2px #485bd817}.char-card.protagonist{border-color:#c3a057}.char-card img,.char-placeholder,.heroine-face-preview{background:#edf0f7}.heroine-face-state,.tiny,.section-help,.cloud-state{color:#7a879a}.note{background:#fff8eb;color:#956322;border-color:#f2e0b9}.tabs{gap:6px;flex-wrap:wrap;overflow:visible;padding-bottom:12px;border-bottom:1px solid #e9edf4;margin-bottom:18px}.tab{border:1px solid transparent;background:#f2f4f8;color:#66748b;border-radius:9px;font-size:12px;padding:10px 14px}.tab.active{background:#e9edff;border-color:#cfd7ff;color:#3e52cd}.toolbar{margin-bottom:14px}.output{background:#fff;color:#253149;border:1px solid #e0e6f0;line-height:1.8;border-radius:12px;min-height:590px}.status.ok{color:#0d7c5c;border-color:#b5e7d4}.status.bad{color:#bd3953;border-color:#f2c5ce}.meta{color:#8290a3}.legacy-vrew{display:none!important}
+#benchmarkPanel{background:#fff!important;color:#253149!important;border-color:#e4e9f2!important}
+@media(max-width:1050px){.layout{grid-template-columns:300px minmax(0,1fr)}.app{padding:16px}.side{padding:15px}.main{padding:18px}}@media(max-width:760px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none}.top{padding:18px}.main{min-height:400px}.row{grid-template-columns:1fr}.top h1{font-size:25px}.app{padding:10px}.tabs{flex-wrap:nowrap;overflow:auto}}
+</style>
+</head>
 <body>
 <div class="app">
 <header class="top">
- <div><h1>🎬 썰쟁 Studio v23.51</h1><div class="sub">핵심 기능 중심 UI · 본문 이미지 10~40장 · 결말 실행/결과 강화 · 일본어 SRT 블록 완전 분리 번역</div></div>
+ <div><h1>썰쟁 <span class="brand-muted">Studio</span> <span class="brand-version">24.0</span></h1><div class="sub">STORY WORKSPACE  /  기획 · 원고 · 캐릭터 · 이미지 · 캡컷</div></div>
  <button class="badge benchmark-top-btn" type="button" onclick="toggleBenchmarkPanel()" title="유튜브 벤치마킹 열기">🔎 YouTube Benchmarking</button>
 </header>
 <div class="layout">
 <aside class="panel side">
- <h2>이야기 설정</h2>
+ <div class="sidebar-heading"><span class="eyebrow">PROJECT SETUP</span><h2>이야기 설정</h2><p>작품별로 다른 시점과 전개를 설계하세요.</p></div>
  <div class="longform-card">
   <div class="longform-head"><div class="longform-title">📚 장편 제작 모드</div><div id="longformModeLabel" class="longform-summary">30분 · 일반형</div></div>
   <div class="duration-pills">
@@ -103,15 +115,15 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
    <button class="duration-pill" type="button" data-duration="60" onclick="setLongformMode(60)">60분</button>
    <button class="duration-pill" type="button" data-duration="90" onclick="setLongformMode(90)">90분</button>
   </div>
-  <div class="longform-stats"><div class="longform-stat"><b id="longformParagraphs">30</b><span>문단</span></div><div class="longform-stat"><b id="longformChars">약 13,000</b><span>예상 글자</span></div><div class="longform-stat"><b id="longformParts">2</b><span>Vrew 파트</span></div></div>
+  <div class="longform-stats"><div class="longform-stat"><b id="longformParagraphs">30</b><span>문단</span></div><div class="longform-stat"><b id="longformChars">약 13,000</b><span>예상 글자</span></div><div class="longform-stat"><b id="longformParts">2</b><span>작업 구간</span></div></div>
   <div id="longformPartMap" class="part-map"></div>
-  <div class="clean-actions"><button class="btn secondary" type="button" onclick="showTab('blueprint')">전체 설계</button><button class="btn primary wide" type="button" onclick="makeVrewParts()">Vrew용 자동 분할</button></div>
-  <div class="section-help">장편은 3부 구조로 관리하고, Vrew 출력은 문단을 자르지 않은 채 파트당 9,500자 이하로 나눕니다.</div>
+  <div class="clean-actions"><button class="btn secondary" type="button" onclick="showTab('blueprint')">전체 설계</button><button class="btn primary wide" type="button" onclick="showTab('story')">원고 작업하기 →</button></div>
+  <div class="section-help">작품의 구조를 먼저 설계하고, 완성한 원고와 이미지를 캡컷에서 편집하세요.</div>
  </div>
  <div class="step-nav">
   <button class="step-link active" type="button" onclick="showTab('story')"><span class="step-num">1</span>원고</button>
   <button class="step-link" type="button" onclick="showTab('blueprint')"><span class="step-num">2</span>전체 설계</button>
-  <button class="step-link" type="button" onclick="showTab('vrew')"><span class="step-num">3</span>Vrew 출력</button>
+  <button class="step-link" type="button" onclick="showTab('images')"><span class="step-num">3</span>이미지 프롬프트</button>
  </div>
  <div class="wizard">
   <div class="wizard-head"><div class="wizard-title">🧩 GPT 분할 생성 마법사</div><div id="wizardStep" class="wizard-step">대기</div></div>
@@ -183,8 +195,9 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
  </div>
  <div class="row">
   <div class="field"><label>문단 수 · 기본 30</label><select id="count"><option>15</option><option selected>30</option><option>45</option><option>60</option><option value="custom">직접 입력</option></select><input id="customCount" type="number" min="10" max="100" value="30" style="margin-top:6px;display:none" placeholder="10~100"><button class="btn secondary" type="button" onclick="recommendStoryLength()" style="margin-top:6px;width:100%">✨ AI 분량 추천</button><div id="lengthRecommendStatus" class="tiny" style="margin-top:5px">사건 수와 반전 수를 보고 15·30·45·60 중 추천</div></div>
-  <div class="field"><label>이미지 수</label><select id="images"><option selected>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>35</option><option>40</option></select></div>
+  <div class="field"><label>이미지 수</label><select id="images"><option selected>10</option><option>15</option><option>20</option><option>25</option><option>30</option></select></div>
  </div>
+ <div class="field"><label>이야기 전개 유형 · 반복 방지 설계</label><select id="storyArc" onchange="updateArcTip()"><option value="auto">작품에 맞춰 자유롭게 설계</option><option value="mystery">진실 추적 · 미스터리</option><option value="growth">선택과 성장</option><option value="ensemble">다중 인물 시점</option><option value="reconciliation">오해와 화해</option><option value="tragedy">후회와 여운</option><option value="slice">생활 밀착형 현실극</option><option value="conflict">갈등과 대응</option></select><div class="tiny" id="arcTip" style="margin-top:7px">작품마다 갈등의 원인·해결 방식·결말을 다르게 설계합니다.</div></div>
  <div class="row">
   <div class="field"><label>시점</label><select id="pov"><option>3인칭 관찰자</option><option>1인칭 회고체</option></select></div>
   <div class="field"><label>분위기</label><select id="tone"><option>긴장감과 반전</option><option>감동</option><option>통쾌함</option><option>가족 갈등</option></select></div>
@@ -4532,5 +4545,8 @@ document.addEventListener('change',(ev)=>{
 });
 
 </script>
-</body>
+<script>
+function updateArcTip(){const el=document.getElementById('storyArc');const tip=document.getElementById('arcTip');if(!el||!tip)return;const notes={auto:'작품마다 갈등의 원인·해결 방식·결말을 다르게 설계합니다.',mystery:'단서를 쌓고 진실을 단계적으로 밝히는 이야기.',growth:'인물의 선택과 내적 변화를 중심으로 전개.',ensemble:'인물마다 서로 다른 정보와 관점을 드러내는 이야기.',reconciliation:'오해가 생긴 이유와 관계가 회복되는 과정을 중심으로 전개.',tragedy:'늦은 깨달음과 되돌릴 수 없는 선택을 다루는 이야기.',slice:'작은 생활 사건을 통해 현실적인 변화를 보여주는 이야기.',conflict:'갈등의 원인과 결과를 구체적으로 다루되 응징 공식 반복은 피합니다.'};tip.textContent=notes[el.value]||notes.auto;try{localStorage.setItem('sseoljeng-v24-arc',el.value)}catch(e){}}
+window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('storyArc');if(el){try{const saved=localStorage.getItem('sseoljeng-v24-arc');if(saved&&Array.from(el.options).some(x=>x.value===saved))el.value=saved}catch(e){}updateArcTip()}});
+</script></body>
 </html>
