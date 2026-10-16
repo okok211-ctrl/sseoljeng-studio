@@ -60,6 +60,20 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .yt-ab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.yt-ab-card{background:#0d1b2d;border:1px solid #2c435d;border-radius:14px;padding:16px;min-height:240px}.yt-ab-card.a{border-color:#ff8a32}.yt-ab-card.b{border-color:#5c9dff}.yt-ab-card.c{border-color:#b986ff}.yt-ab-card h3{margin:0 0 12px;font-size:16px}.yt-ab-row{margin:10px 0}.yt-ab-label{display:block;font-size:11px;color:#9fb3c9;margin-bottom:4px}.yt-ab-value{font-size:14px;line-height:1.55;white-space:pre-wrap}.yt-ab-score{font-size:24px;font-weight:950;margin-top:10px}.yt-ab-recommend{margin-top:14px;padding:14px;border-radius:12px;background:rgba(255,202,58,.08);border:1px solid rgba(255,202,58,.35)}.yt-ab-raw{display:none}@media(max-width:900px){.yt-ab-grid{grid-template-columns:1fr}}
 
 .yt-ab-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.yt-ab-title{font-weight:950;font-size:14px}.yt-ab-help{font-size:10px;color:var(--muted);margin-top:4px}.yt-ab-output{width:100%;min-height:280px;max-height:420px;margin-top:10px;background:#06101d;color:#f5f8fc;border:1px solid #30465f;border-radius:11px;padding:13px;line-height:1.65;resize:vertical}
+
+/* v24.1: page-based settings navigation; keep legacy form elements and IDs intact */
+.side{max-height:none!important;overflow:visible!important;position:static!important}
+.studio-page-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e6eaf2}
+.studio-page-button{border:1px solid #e1e7f0;background:#f7f9fc;color:#526176;padding:12px 8px;border-radius:12px;font:inherit;font-weight:750;font-size:13px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s}
+.studio-page-button:hover{background:#edf3ff;border-color:#b8cafa}
+.studio-page-button.active{background:#eaf0ff;border-color:#9aaff7;color:#2946a4;box-shadow:inset 0 0 0 1px #d1ddff}
+.studio-settings-page{display:none;min-width:0}
+.studio-settings-page.active{display:block}
+.studio-page-intro{margin:0 0 15px;padding:0 0 12px;border-bottom:1px solid #edf0f4}
+.studio-page-intro h2{margin:0 0 5px;font-size:20px;color:#24334d}
+.studio-page-intro p{margin:0;color:#78869a;font-size:12px;line-height:1.5}
+.studio-nav-shortcut{width:100%;margin:12px 0 4px;padding:11px;border:1px solid #c9d7f6;border-radius:10px;background:#f2f6ff;color:#3652a4;font-weight:700;cursor:pointer}
+@media(max-width:780px){.studio-page-nav{grid-template-columns:repeat(4,minmax(0,1fr))}.studio-page-button{padding:10px 3px;font-size:11px}}
 </style>
 <style>
 #benchmarkPanel{display:none;max-width:1320px;margin:18px auto 40px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text)}
@@ -4548,5 +4562,46 @@ document.addEventListener('change',(ev)=>{
 <script>
 function updateArcTip(){const el=document.getElementById('storyArc');const tip=document.getElementById('arcTip');if(!el||!tip)return;const notes={auto:'작품마다 갈등의 원인·해결 방식·결말을 다르게 설계합니다.',mystery:'단서를 쌓고 진실을 단계적으로 밝히는 이야기.',growth:'인물의 선택과 내적 변화를 중심으로 전개.',ensemble:'인물마다 서로 다른 정보와 관점을 드러내는 이야기.',reconciliation:'오해가 생긴 이유와 관계가 회복되는 과정을 중심으로 전개.',tragedy:'늦은 깨달음과 되돌릴 수 없는 선택을 다루는 이야기.',slice:'작은 생활 사건을 통해 현실적인 변화를 보여주는 이야기.',conflict:'갈등의 원인과 결과를 구체적으로 다루되 응징 공식 반복은 피합니다.'};tip.textContent=notes[el.value]||notes.auto;try{localStorage.setItem('sseoljeng-v24-arc',el.value)}catch(e){}}
 window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('storyArc');if(el){try{const saved=localStorage.getItem('sseoljeng-v24-arc');if(saved&&Array.from(el.options).some(x=>x.value===saved))el.value=saved}catch(e){}updateArcTip()}});
-</script></body>
+</script>
+<script>
+/* Sidebar page navigation: move existing nodes, never recreate their contents. */
+(function(){
+ const side=document.querySelector('aside.panel.side');
+ if(!side || side.dataset.pageNavReady)return;
+ side.dataset.pageNavReady='1';
+ const original=Array.from(side.children);
+ const specs=[
+  {id:'plan',name:'📖 기획·설정',title:'이야기 기획',desc:'주제, 길이, 전개 방식과 문단 설정',items:[0,1,2,5,6,11,12,13,14,15,16,17,18]},
+  {id:'cast',name:'👥 캐릭터',title:'캐릭터와 얼굴',desc:'인물 라이브러리, 주인공 얼굴 등록과 고정',items:[7,8,9,10]},
+  {id:'make',name:'🎬 제작 도구',title:'원고·이미지 제작',desc:'GPT 생성, 썸네일, 제작 자료 및 쇼츠 도구',items:[3,19,20,21]},
+  {id:'save',name:'💾 저장·백업',title:'프로젝트 보관',desc:'클라우드, 프로젝트 파일과 전체 데이터 백업',items:[4,22,23,24,25,26,27]}
+ ];
+ const nav=document.createElement('nav');nav.className='studio-page-nav';nav.setAttribute('aria-label','설정 페이지 이동');
+ const pages={};
+ specs.forEach(spec=>{
+  const btn=document.createElement('button');btn.type='button';btn.className='studio-page-button';btn.textContent=spec.name;btn.dataset.page=spec.id;
+  btn.addEventListener('click',()=>window.showSettingsPage(spec.id));nav.appendChild(btn);
+  const section=document.createElement('div');section.className='studio-settings-page';section.dataset.page=spec.id;
+  const intro=document.createElement('div');intro.className='studio-page-intro';
+  const h=document.createElement('h2');h.textContent=spec.title;const p=document.createElement('p');p.textContent=spec.desc;
+  intro.append(h,p);section.appendChild(intro);
+  spec.items.forEach(i=>{if(original[i])section.appendChild(original[i]);});
+  pages[spec.id]=section;
+ });
+ side.prepend(nav);specs.forEach(x=>side.appendChild(pages[x.id]));
+ window.showSettingsPage=function(id){
+  if(!pages[id])return;
+  Object.entries(pages).forEach(([key,el])=>el.classList.toggle('active',key===id));
+  nav.querySelectorAll('button').forEach(b=>{const selected=b.dataset.page===id;b.classList.toggle('active',selected);b.setAttribute('aria-current',selected?'page':'false');});
+  try{sessionStorage.setItem('sseoljeng-settings-page',id)}catch(e){}
+ };
+ let initial='plan';try{initial=sessionStorage.getItem('sseoljeng-settings-page')||'plan'}catch(e){}
+ window.showSettingsPage(initial in pages?initial:'plan');
+ // Retain the existing main tabs and the original subtitle comparison logic.
+ const subtitleShortcut=document.createElement('button');subtitleShortcut.type='button';subtitleShortcut.className='studio-nav-shortcut';subtitleShortcut.textContent='📝 본문 ↔ 자막 맞춤법·글자 수 비교';
+ subtitleShortcut.addEventListener('click',()=>{if(typeof showTab==='function')showTab('srt');document.querySelector('section.panel.main')?.scrollIntoView({behavior:'smooth',block:'start'});});
+ nav.after(subtitleShortcut);
+})();
+</script>
+</body>
 </html>
