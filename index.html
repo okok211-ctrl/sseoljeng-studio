@@ -389,6 +389,8 @@ html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!
      <div class="field"><label>한 줄 글자 수</label><select id="srtCharsPerLine"><option value="18">18자</option><option value="20" selected>20자 · 추천</option><option value="22">22자</option><option value="24">24자</option></select></div>
      <div class="field"><label>최대 표시 시간</label><select id="srtMaxDuration"><option value="5">5초</option><option value="6.5" selected>6.5초 · 추천</option><option value="8">8초</option></select></div>
     </div>
+    <div class="tiny" style="margin-bottom:8px">📌 업로드된 이미지가 아래에 나타납니다. 끌어서 순서를 바꾸거나 ◀ ▶ 버튼을 누르세요. 순서 변경 시 기존 계산 결과는 초기화됩니다.</div>
+    <div id="timelineImagePreviewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-bottom:14px"></div>
     <div class="clean-actions">
      <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 SRT 파일 불러오기</button>
      <button class="btn primary" type="button" onclick="cleanImportedSrt()">✨ 원문 복원 + 2~3줄 정리</button>
@@ -417,9 +419,17 @@ html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!
     <h2>🖼️ 이미지 넣기 · 타임라인 가이드</h2>
     <div class="tiny" style="margin:0 0 12px">복잡한 설정 없이 <b>CapCut 자동캡션 SRT</b>와 이미 만들어 둔 <b>이미지 프롬프트의 사용 문단</b>을 연결해 이미지 넣을 시간을 계산합니다.</div>
     <div class="note" style="margin-bottom:12px"><b>사용 순서</b> ① SRT 파일 불러오기 → ② 이미지 시간 계산 → ③ CapCut 타임라인의 표시된 시간에 이미지 넣기</div>
+    <div class="note" style="margin-bottom:10px"><b>v25.1 자동 타임라인</b> · SRT + 롱폼 원고 + 이미지 30장을 함께 읽고 시작/끝/길이를 자동 계산합니다. 이미지 이름은 바꾸지 마세요. 업로드 후 썸네일을 드래그하거나 화살표로 순서를 정하세요. CSV/JSON을 내려받아 편집에 활용할 수 있습니다. <b>CapCut은 CSV를 영상 트랙으로 직접 불러오는 기능을 보장하지 않습니다.</b></div>
+    <div class="clean-actions" style="margin-bottom:10px">
+     <label class="btn ghost" style="cursor:pointer">🖼 이미지 30장 선택<input id="timelineImageFiles" type="file" accept="image/*" multiple style="display:none" onchange="loadTimelineImages(event)"></label>
+     <span id="timelineImageFileStats" class="tiny">이미지 미선택</span>
+     <button class="btn ghost" type="button" onclick="downloadOrderedTimelineImages()">📦 번호 자동 부여 ZIP 저장</button>
+    </div>
     <div class="clean-actions">
      <button class="btn ghost" type="button" onclick="$('srtFileInput').click()">📂 CapCut SRT 불러오기</button>
-     <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 이미지 시간 계산</button>
+     <button class="btn primary" type="button" onclick="buildImageTimelineGuide()">✨ 자동 타임라인 계산</button>
+     <button class="btn ghost" type="button" onclick="downloadImageTimelineCsv()">⬇ CSV 저장</button>
+     <button class="btn ghost" type="button" onclick="downloadImageTimelineJson()">⬇ JSON 저장</button>
      <button class="btn ghost" type="button" onclick="copyImageTimelineGuide()">📋 가이드 복사</button>
     </div>
     <textarea id="imageTimelineGuide" style="min-height:420px;margin-top:12px" readonly placeholder="SRT 파일을 불러온 뒤 ‘이미지 시간 계산’을 누르세요.
@@ -3765,18 +3775,82 @@ function shortClock(ms){
  ms=Math.max(0,Math.round(ms));const total=Math.floor(ms/1000),h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
  return h?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
+let timelineImageFiles=[],imageTimelineRows=[],timelinePreviewUrls=[];
+function clearTimelinePreviewUrls(){timelinePreviewUrls.forEach(u=>URL.revokeObjectURL(u));timelinePreviewUrls=[];}
+function timelineFileDisplayName(i){const f=timelineImageFiles[i];return f?`${String(i+1).padStart(2,'0')} · ${f.name}`:'';}
+function renderTimelineImages(){
+ const grid=$('timelineImagePreviewGrid');if(!grid)return;
+ clearTimelinePreviewUrls();grid.replaceChildren();
+ timelineImageFiles.forEach((file,i)=>{
+  const card=document.createElement('div');card.draggable=true;card.dataset.index=String(i);
+  card.style.cssText='border:1px solid var(--line,#5555);border-radius:10px;padding:7px;min-width:0;background:var(--panel,#ffffff08)';
+  const img=document.createElement('img'),url=URL.createObjectURL(file);timelinePreviewUrls.push(url);
+  img.src=url;img.alt=`${i+1}번 이미지`;img.style.cssText='width:100%;height:94px;object-fit:cover;border-radius:6px;display:block';card.appendChild(img);
+  const name=document.createElement('div');name.textContent=timelineFileDisplayName(i);name.title=file.name;name.style.cssText='font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:6px 0';card.appendChild(name);
+  const controls=document.createElement('div');controls.style.cssText='display:flex;gap:5px;align-items:center;justify-content:space-between';
+  const label=document.createElement('b');label.textContent=`${String(i+1).padStart(2,'0')}`;controls.appendChild(label);
+  for(const [txt,delta] of [['◀',-1],['▶',1]]){const b=document.createElement('button');b.type='button';b.textContent=txt;b.title=delta<0?'앞으로 이동':'뒤로 이동';b.disabled=i+delta<0||i+delta>=timelineImageFiles.length;b.style.cssText='padding:4px 12px;border:1px solid #8886;border-radius:6px;cursor:pointer;background:transparent;color:inherit';b.onclick=()=>moveTimelineImage(i,i+delta);controls.appendChild(b)}
+  card.appendChild(controls);
+  card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(i));e.dataTransfer.effectAllowed='move'});
+  card.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';card.style.outline='2px solid #57a9ff'});
+  card.addEventListener('dragleave',()=>card.style.outline='');
+  card.addEventListener('drop',e=>{e.preventDefault();card.style.outline='';const from=Number(e.dataTransfer.getData('text/plain'));if(Number.isInteger(from))moveTimelineImage(from,i)});
+  card.addEventListener('dragend',()=>card.style.outline='');grid.appendChild(card);
+ });
+ const el=$('timelineImageFileStats');if(el)el.textContent=timelineImageFiles.length?`${timelineImageFiles.length}장 · 화면 순서대로 자동 번호 부여 (원본 이름 변경 없음)`:'이미지 미선택';
+}
+function moveTimelineImage(from,to){
+ if(from<0||to<0||from>=timelineImageFiles.length||to>=timelineImageFiles.length||from===to)return;
+ const [item]=timelineImageFiles.splice(from,1);timelineImageFiles.splice(to,0,item);imageTimelineRows=[];
+ const guide=$('imageTimelineGuide');if(guide)guide.value='이미지 순서가 변경되었습니다. 자동 타임라인 계산을 다시 눌러 주세요.';
+ renderTimelineImages();
+}
+function loadTimelineImages(event){
+ // 브라우저 파일 선택 순서는 항상 보장되지 않으므로 이름순으로 시작하고 썸네일에서 최종 확인한다.
+ timelineImageFiles=Array.from(event?.target?.files||[]).filter(f=>f.type.startsWith('image/')).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));
+ imageTimelineRows=[];renderTimelineImages();
+ setStatus(`이미지 ${timelineImageFiles.length}장을 읽었습니다. 썸네일 순서를 확인하고 자동 타임라인 계산을 누르세요.`,'ok');
+}
+async function downloadOrderedTimelineImages(){
+ if(!timelineImageFiles.length){setStatus('먼저 이미지 파일을 선택하세요.','bad');return}
+ if(typeof JSZip==='undefined'){setStatus('ZIP 기능을 불러오지 못했습니다. 인터넷 연결을 확인하세요.','bad');return}
+ const zip=new JSZip(),folder=zip.folder('ordered-images'),manifest=[];
+ for(let i=0;i<timelineImageFiles.length;i++){
+  const file=timelineImageFiles[i],ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
+  const filename=`${String(i+1).padStart(2,'0')}.${ext}`;
+  folder.file(filename,file);manifest.push({image:i+1,filename,original_name:file.name});
+ }
+ zip.file('image-order.json',JSON.stringify({version:'25.2',images:manifest},null,2));
+ const blob=await zip.generateAsync({type:'blob'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${safeFileName(cfg().name||'썰쟁')}_순서정렬_이미지.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+ setStatus(`이미지 ${timelineImageFiles.length}장에 번호를 자동 부여해 ZIP으로 저장했습니다. 원본은 변경되지 않았습니다.`,'ok');
+}
+function downloadTimelineText(text,filename,type){
+ const blob=new Blob(['\ufeff'+text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function downloadImageTimelineCsv(){
+ if(!imageTimelineRows.length){setStatus('먼저 자동 타임라인을 계산하세요.','bad');return}
+ const head=['image_number','file_name','paragraph','start_ms','end_ms','duration_ms','start_time','end_time','paragraph_preview'];
+ const rows=imageTimelineRows.map(r=>[r.image,r.filename,r.paragraph,r.start,r.end,r.duration,shortClock(r.start),shortClock(r.end),r.preview]);
+ downloadTimelineText([head,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n'),`${safeFileName(cfg().name||'썰쟁')}_이미지_타임라인.csv`,'text/csv;charset=utf-8');setStatus('타임라인 CSV를 저장했습니다.','ok');
+}
+function downloadImageTimelineJson(){
+ if(!imageTimelineRows.length){setStatus('먼저 자동 타임라인을 계산하세요.','bad');return}
+ downloadTimelineText(JSON.stringify({version:'25.2',note:'Editing timeline data; not a native CapCut project',clips:imageTimelineRows},null,2),`${safeFileName(cfg().name||'썰쟁')}_이미지_타임라인.json`,'application/json;charset=utf-8');setStatus('타임라인 JSON을 저장했습니다.','ok');
+}
 function buildImageTimelineGuide(){
- const story=$('story')?.value||'',images=$('imagesOut')?.value||'',raw=$('srtImport')?.value?.trim()||'';
+ const story=$('story')?.value||'',images=$('imagesOut')?.value||'',raw=$('srtImport')?.value?.trim()||$('srt')?.value?.trim()||'';
  if(!story.trim()){setStatus('롱폼 원고가 없습니다. 먼저 롱폼 탭에 원고를 붙여넣으세요.','bad');return}
- if(!images.trim()){setStatus('이미지 프롬프트가 없습니다. 먼저 이미지 프롬프트를 생성하세요.','bad');return}
+ if(!images.trim()&&!timelineImageFiles.length){setStatus('이미지 프롬프트를 생성하거나 이미지 파일을 선택하세요.','bad');return}
  if(!raw){setStatus('CapCut 자동캡션 SRT가 없습니다. SRT 파일을 먼저 불러오세요.','bad');return}
  const cues=parseSrtText(raw);if(!cues.length){setStatus('CapCut SRT 시간 정보를 읽지 못했습니다.','bad');return}
  const ref=prepareSrtReference(story),A=buildSrtTimeAnchors(cues,ref);if(!A.ok){setStatus('이미지 시간 계산 실패: '+A.reason,'bad');return}
  let refs=extractImageParagraphRefs(images),usedFallback=false;
+ if(timelineImageFiles.length&&(!refs.length||refs.length!==timelineImageFiles.length)){refs=[];usedFallback=true;}
  const P=paragraphStartNormPositions(story,ref),byNo=new Map(P.blocks.map(x=>[x.number,x]));
  if(!refs.length){
   // 이미지 프롬프트 형식이 달라도 작업이 막히지 않게 설정 이미지 수 기준으로 균등 문단을 사용한다.
-  const n=Math.max(1,Number(cfg().images)||1),nums=P.blocks.map(x=>x.number);
+  const n=timelineImageFiles.length||Math.max(1,Number(cfg().images)||1),nums=P.blocks.map(x=>x.number);
   if(!nums.length){setStatus('롱폼 문단 번호를 읽지 못했습니다.','bad');return}
   refs=Array.from({length:n},(_,i)=>({image:i+1,paragraph:nums[Math.min(nums.length-1,Math.floor(i*nums.length/n))]}));usedFallback=true;
  }
@@ -3786,14 +3860,19 @@ function buildImageTimelineGuide(){
   const time=interpolateSrtTime(A.anchors,p.pos);rows.push({...r,time,preview:p.text.slice(0,42)});
  }
  if(!rows.length){setStatus('이미지 프롬프트의 사용 문단과 롱폼 문단을 연결하지 못했습니다.','bad');return}
- let out=`[이미지 타임라인 가이드]\n총 영상 길이: ${shortClock(cues[cues.length-1].end)}\n\n`;
- rows.forEach((r,i)=>{
-  const next=rows[i+1];const end=next?next.time:cues[cues.length-1].end,dur=Math.max(0,end-r.time);
-  out+=`이미지 ${r.image} · 문단 ${r.paragraph}\n삽입: ${shortClock(r.time)}${next?`  → 다음 이미지: ${shortClock(end)}  · 유지 약 ${shortClock(dur)}`:`  → 영상 끝까지 · 유지 약 ${shortClock(dur)}`}\n장면 시작: ${r.preview}${r.preview.length>=42?'…':''}\n\n`;
+ const videoEnd=Math.max(...cues.map(c=>c.end));
+ const sorted=rows.sort((a,b)=>a.image-b.image);
+ imageTimelineRows=sorted.map((r,i)=>{
+  const next=sorted[i+1],start=Math.max(0,Math.round(r.time)),end=Math.max(start,Math.round(next?next.time:videoEnd));
+  return {image:r.image,filename:timelineImageFiles[i]?.name||`${String(r.image).padStart(2,'0')}.png`,paragraph:r.paragraph,start,end,duration:end-start,preview:r.preview};
+ });
+ let out=`[이미지 자동 타임라인 · v25.2]\n총 영상 길이: ${shortClock(videoEnd)}\n이미지: ${imageTimelineRows.length}장\n\n`;
+ imageTimelineRows.forEach(r=>{
+  out+=`이미지 ${r.image} · ${r.filename} · 문단 ${r.paragraph}\n${shortClock(r.start)} → ${shortClock(r.end)} · 길이 ${shortClock(r.duration)}\n장면 시작: ${r.preview}${r.preview.length>=42?'…':''}\n\n`;
  });
  $('imageTimelineGuide').value=out.trim();
- if($('imageTimelineStats'))$('imageTimelineStats').textContent=`이미지 ${rows.length}개 위치 계산 완료 · 시간 기준점 ${A.anchors.length}개${usedFallback?' · ⚠️ 사용 문단 표기를 못 찾아 균등 문단으로 임시 계산':''}`;
- setStatus(`이미지 ${rows.length}개 삽입시간을 계산했습니다. 캡컷 타임라인에서 표시된 시간에 이미지를 넣으세요.`,'ok');
+ if($('imageTimelineStats'))$('imageTimelineStats').textContent=`이미지 ${imageTimelineRows.length}개 위치 계산 완료 · 시간 기준점 ${A.anchors.length}개${usedFallback?' · ⚠️ 사용 문단 표기를 못 찾아 균등 문단으로 임시 계산':''}`;
+ setStatus(`이미지 ${imageTimelineRows.length}개의 시작·종료·길이를 계산했습니다. CSV/JSON으로 저장할 수 있습니다.`,'ok');
 }
 async function copyImageTimelineGuide(){
  const t=$('imageTimelineGuide')?.value||'';if(!t.trim()){setStatus('먼저 이미지 삽입시간을 계산하세요.','bad');return}
