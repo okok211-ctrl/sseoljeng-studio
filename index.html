@@ -101,6 +101,13 @@ textarea{resize:vertical;line-height:1.6}.field textarea{min-height:75px}input:f
 .studio-fold-content>.field,.studio-fold-content>.row{margin-bottom:8px}
 .studio-settings-page .tiny{font-size:10px}
 @media(max-width:680px){.studio-settings-page.active{grid-template-columns:1fr}.studio-page-nav{position:static}.side{padding:12px!important}}
+/* v24.7: Retain legacy inputs for compatibility while simplifying visible casting UI. */
+.studio-settings-page[data-page="cast"] > .field:has(#characterGrid),
+.studio-settings-page[data-page="cast"] > .char-editor,
+.studio-settings-page[data-page="cast"] > .field:has(#heroine),
+.studio-settings-page[data-page="cast"] > .heroine-face-panel {display:none!important}
+.studio-settings-page[data-page="cast"] .studio-compact-toolbar{display:none!important}
+.studio-settings-page[data-page="cast"] .sb-character-vault{margin-top:8px}
 </style>
 <style>
 #benchmarkPanel{display:none;max-width:1320px;margin:18px auto 40px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text)}
@@ -4625,7 +4632,7 @@ window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById
  const original=Array.from(side.children);
  const specs=[
   {id:'plan',name:'📖 기획·설정',title:'이야기 기획',desc:'주제, 길이, 전개 방식과 문단 설정',items:[0,1,2,5,6,11,12,13,14,15,16,17,18]},
-  {id:'cast',name:'👥 캐릭터',title:'캐릭터와 얼굴',desc:'인물 라이브러리, 주인공 얼굴 등록과 고정',items:[7,8,9,10]},
+  {id:'cast',name:'🖼️ 얼굴 보관함',title:'얼굴 보관함',desc:'사진을 저장하고 대본 완성 후 오른쪽에서 주요 인물 얼굴을 배정하세요',items:[7,8,9,10]},
   {id:'make',name:'🎬 제작 도구',title:'원고·이미지 제작',desc:'GPT 생성, 썸네일, 제작 자료 및 쇼츠 도구',items:[3,19,20,21]},
   {id:'save',name:'💾 저장·백업',title:'프로젝트 보관',desc:'클라우드, 프로젝트 파일과 전체 데이터 백업',items:[4,22,23,24,25,26,27]}
  ];
@@ -4664,7 +4671,7 @@ window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById
  if(!sections.length)return;
  const foldMap={
   plan:[['제작 분량·작업 구간','.longform-card',true],['원고 진행 단계','.step-nav',false],['추가 안내','.tiny',false]],
-  cast:[['캐릭터 상세 편집','.char-editor',false],['주인공 기준 얼굴','.heroine-face-panel',true]],
+  cast:[],
   make:[['GPT 원고 생성 마법사','.wizard',true],['썸네일 상세 설정','.char-editor',false],['쇼츠 제작 (선택)','.char-editor',false]],
   save:[['클라우드 프로젝트','.cloud-box',true],['백업·복원 도구','.project-actions',false]]
  };
