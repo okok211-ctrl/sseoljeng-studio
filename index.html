@@ -4669,5 +4669,22 @@ window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <script src="js/supabase-characters.js" defer></script>
+<style>
+/* v24.4 — compact script-first casting workspace */
+#scriptCastPanel{margin:8px 0 10px;border:1px solid var(--line,#d9e1ec);border-radius:12px;background:var(--card,#fff);padding:10px;color:inherit}
+#scriptCastPanel summary{font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#scriptCastPanel summary::-webkit-details-marker{display:none}
+#scriptCastPanel .cast-actionbar{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+#scriptCastPanel .cast-actionbar button{padding:7px 11px;border-radius:8px;border:1px solid #c7d5e5;background:#eff5ff;color:#183a6a;font-weight:700;cursor:pointer}
+#scriptCastPanel .cast-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:290px;overflow-y:auto;overscroll-behavior:contain}
+#scriptCastPanel .cast-item{display:grid;grid-template-columns:minmax(90px,1fr) minmax(120px,1.2fr) 28px;align-items:center;gap:7px;padding:8px;border:1px solid #dce5ef;border-radius:9px;min-width:0}
+#scriptCastPanel .cast-item label{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+#scriptCastPanel .cast-item select,#scriptCastPanel .cast-custom input{width:100%;min-width:0;padding:7px;border:1px solid #cbd5e1;border-radius:7px;background:var(--input-bg,#fff);color:inherit}
+#scriptCastPanel .cast-item button{border:0;background:transparent;cursor:pointer;font-size:17px;color:#ad3e4d}
+#scriptCastPanel .cast-custom{display:flex;gap:7px;margin:8px 0}
+#scriptCastPanel .cast-note{font-size:12px;opacity:.8;line-height:1.45}
+@media(max-width:750px){#scriptCastPanel .cast-list{grid-template-columns:1fr;max-height:240px}}
+</style>
+<script src="js/script-casting.js" defer></script>
 </body>
 </html>
