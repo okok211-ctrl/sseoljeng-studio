@@ -4309,7 +4309,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <div id="autoEditorV22" style="display:none;position:fixed;inset:4%;z-index:9999;background:var(--bg,#fff);color:inherit;border:1px solid #999;border-radius:14px;padding:18px;overflow:auto;box-shadow:0 8px 40px #0005">
  <div style="display:flex;justify-content:space-between;align-items:center"><h2>🎬 자동편집 · 1차 베타</h2><button id="aeClose">✕ 닫기</button></div>
- <p>기존 Studio와 분리된 모듈입니다. <b>음성 길이를 최종 영상의 절대 기준축</b>으로 사용하고, 이미지 <b>순서는 파일명 기준으로 고정</b>하고, 문단 연결이 없을 때도 <b>SRT 문장 끝·쉼표 구간을 찾아 전환 시점</b>을 잡습니다.</p>
+ <p>기존 Studio와 분리된 모듈입니다. <b>음성 길이를 최종 영상의 절대 기준축</b>으로 사용하고, 이미지 <b>순서는 검증 후 확정한 순서로 적용</b>하고, 문단 연결이 없을 때도 <b>SRT 문장 끝·쉼표 구간을 찾아 전환 시점</b>을 잡습니다.</p>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
   <label>🎙 음성<br><input id="aeAudio" type="file" accept="audio/*"><small id="aeAudioInfo"> 불러오기 전</small></label>
   <label>💬 SRT<br><input id="aeSrt" type="file" accept=".srt,text/plain"><small id="aeSrtInfo"> 불러오기 전</small></label>
@@ -4318,7 +4318,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   <label>이미지 움직임<br><select><option>자동</option><option>천천히 확대</option><option>천천히 축소</option><option>좌→우</option><option>우→좌</option><option>없음</option></select></label>
   <label>자막 스타일<br><select><option>썰쟁 기본 · 노랑/검정테두리</option><option>하단 기본</option><option>큰 글씨</option></select></label>
  </div>
- <p><button id="aeBuild" style="padding:10px 18px">✨ 자동 편집 설계</button></p>
+ <section id="aeOrderPanel" style="border:1px solid #94a3b8;border-radius:12px;padding:14px;margin:16px 0;background:var(--card,#f8fafc)">
+<h3>🖼️ 이미지 순서 검증 · v25.4</h3><p class="tiny">이미지를 끌어서 순서를 바꾸세요. 장면 설명은 Studio의 이미지 프롬프트에서 가져옵니다. 순서를 확정해야 영상 출력이 가능합니다.</p>
+<div id="aeOrderStatus">이미지를 선택하면 30장 미리보기가 표시됩니다.</div>
+<div id="aeOrderGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:12px 0"></div>
+<button type="button" id="aeOrderConfirm">✓ 이 순서 확정 · 타임라인 반영</button> <button type="button" id="aeOrderDownload">⬇ 번호 부여 이미지 ZIP</button>
+</section>
+<p><button id="aeBuild" style="padding:10px 18px">✨ 자동 편집 설계</button></p>
  <div id="aeStatus">음성 + SRT + 이미지를 불러오세요.</div><hr>
  <audio id="aePlayer" controls style="width:100%"></audio>
  <div id="aeTimeline" style="margin-top:14px"></div>
@@ -4344,12 +4350,41 @@ document.addEventListener('DOMContentLoaded',()=>{
  const parse=t=>{let a=[];for(const b of t.replace(/\r/g,'').split(/\n{2,}/)){let l=b.split('\n'),i=l.findIndex(x=>x.includes('-->'));if(i<0)continue;let m=l[i].match(/(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)/);if(!m)continue;let f=k=>(+m[k]*3600+ +m[k+1]*60+ +m[k+2])*1000+ +m[k+3].padEnd(3,'0').slice(0,3);a.push({start:f(1),end:f(5),text:l.slice(i+1).join('\n')})}return a};
  const motions=['천천히 확대','천천히 축소','좌→우','우→좌'];
  st.scenes=[];
- st.imgUrls=[]; st.previewTimer=null;
+ st.imgUrls=[]; st.previewTimer=null; st.orderConfirmed=false;
 
  function refreshImgUrls(){
   (st.imgUrls||[]).forEach(u=>{try{URL.revokeObjectURL(u)}catch(e){}});
   st.imgUrls=st.imgs.map(f=>URL.createObjectURL(f));
  }
+ function orderDescriptions(){
+  const raw=G('imagesOut')?.value||'';
+  const matches=[...raw.matchAll(/\[장면 설명\s*[:：]\s*([^\]\n]+)\]/g)];
+  return matches.map(x=>x[1].trim());
+ }
+ function renderOrderGrid(){
+  const grid=G('aeOrderGrid'),desc=orderDescriptions();grid.replaceChildren();
+  st.imgs.forEach((file,i)=>{
+   const card=document.createElement('div');card.draggable=true;card.dataset.index=i;
+   card.style.cssText='border:1px solid #cbd5e1;border-radius:9px;padding:8px;background:#fff;color:#111;cursor:grab';
+   const im=document.createElement('img');im.src=st.imgUrls[i];im.alt=file.name;im.style.cssText='width:100%;aspect-ratio:16/9;object-fit:contain;background:#111;border-radius:5px';
+   const head=document.createElement('b');head.textContent=`${String(i+1).padStart(2,'0')} · ${file.name}`;head.style.cssText='display:block;font-size:12px;overflow-wrap:anywhere';
+   const note=document.createElement('div');note.textContent=desc[i]||`장면 ${i+1} · 설명 없음 (원고 이미지 프롬프트 확인)`;note.style.cssText='font-size:12px;max-height:76px;overflow:auto;margin-top:6px';
+   card.append(im,head,note);
+   card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(i));e.dataTransfer.effectAllowed='move'});
+   card.addEventListener('dragover',e=>e.preventDefault());
+   card.addEventListener('drop',e=>{e.preventDefault();const from=Number(e.dataTransfer.getData('text/plain'));if(!Number.isInteger(from)||from<0||from>=st.imgs.length)return;const [m]=st.imgs.splice(from,1);st.imgs.splice(i,0,m);st.orderConfirmed=false;st.scenes=[];refreshImgUrls();renderOrderGrid();draw()});
+   grid.append(card);
+  });
+  G('aeOrderStatus').textContent=`${st.imgs.length}장 · ${st.orderConfirmed?'✓ 순서 확정됨':'⚠ 순서 미확정'} · 드래그로 이동 가능`;
+ }
+ function requireOrder(){if(st.orderConfirmed)return true;G('aeStatus').textContent='⚠ 이미지 순서를 먼저 확인하고 [이 순서 확정]을 눌러주세요.';G('aeOrderPanel').scrollIntoView({behavior:'smooth'});return false}
+ G('aeOrderConfirm').onclick=()=>{if(!st.imgs.length)return;st.orderConfirmed=true;st.scenes=[];if(st.dur&&st.cues.length)st.scenes=makeScenes();renderOrderGrid();draw();G('aeStatus').textContent='✓ 이미지 순서 확정 · 변경된 순서로 타임라인 재계산 완료'};
+ G('aeOrderDownload').onclick=async()=>{
+  if(!requireOrder())return;
+  if(typeof JSZip==='undefined'){G('aeStatus').textContent='⚠ ZIP 라이브러리를 사용할 수 없습니다.';return}
+  const zip=new JSZip();for(let i=0;i<st.imgs.length;i++){const f=st.imgs[i];const ext=(f.name.match(/\.[^.]+$/)||['.png'])[0];zip.file(`${String(i+1).padStart(2,'0')}${ext}`,f)}
+  const blob=await zip.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='썰쟁_확정이미지_01-30.zip';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+ };
  function updateStage(){
   if(!st.scenes.length)return;
   const ms=G('aePlayer').currentTime*1000;
@@ -4643,14 +4678,14 @@ document.addEventListener('DOMContentLoaded',()=>{
  G('aeClose').onclick=()=>G('autoEditorV22').style.display='none';
  G('aeAudio').onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),a=new Audio(u);G('aePlayer').src=u;a.onloadedmetadata=()=>{st.dur=a.duration;st.scenes=[];G('aeAudioInfo').textContent=` ✓ ${f.name} · ${tm(a.duration*1000)}`;draw()}};
  G('aeSrt').onchange=async e=>{let f=e.target.files[0];if(!f)return;st.cues=parse(await f.text());st.scenes=[];G('aeSrtInfo').textContent=` ✓ ${st.cues.length}개`;draw()};
- G('aeImgs').onchange=e=>{st.imgs=naturalFileSort([...e.target.files]);refreshImgUrls();st.scenes=[];G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장 · 파일명 순 정렬`;draw()};
- G('aePreviewBtn').onclick=startPreview;
- G('aeOutputBtn').onclick=outputVideo;
- G('aeFastPack').onclick=fastRenderPack;
- G('aeRenderPack').onclick=renderPack;
+ G('aeImgs').onchange=e=>{st.imgs=naturalFileSort([...e.target.files]);refreshImgUrls();st.scenes=[];st.orderConfirmed=false;renderOrderGrid();G('aeImgInfo').textContent=` ✓ ${st.imgs.length}장 · 검증 대기`;draw()};
+ G('aePreviewBtn').onclick=()=>{if(requireOrder())startPreview()};
+ G('aeOutputBtn').onclick=()=>{if(requireOrder())outputVideo()};
+ G('aeFastPack').onclick=()=>{if(requireOrder())fastRenderPack()};
+ G('aeRenderPack').onclick=()=>{if(requireOrder())renderPack()};
  G('aePlayer').addEventListener('timeupdate',updateStage);
  G('aeExportPlan').onclick=()=>{if(!st.scenes.length){G('aeStatus').textContent='⚠ 먼저 자동 편집 설계를 실행하세요.';return}exportPlan();};
- G('aeBuild').onclick=()=>{if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}st.scenes=makeScenes();draw();const mm=st.mappingMode==='paragraph'?'문단→이미지→SRT 실제시간 연결':st.mappingMode==='srt_timeline'?'이미지 순서 고정 + SRT 자연 전환':'균등 fallback';G('aeStatus').textContent=`✓ 자동배치 완료 · ${st.scenes.length}장 · ${mm} · 최종 길이 ${tm(st.dur*1000)}`};
+ G('aeBuild').onclick=()=>{if(!requireOrder())return;if(!st.dur||!st.cues.length||!st.imgs.length){G('aeStatus').textContent='⚠ 음성, SRT, 이미지를 모두 불러오세요.';return}st.scenes=makeScenes();draw();const mm=st.mappingMode==='paragraph'?'문단→이미지→SRT 실제시간 연결':st.mappingMode==='srt_timeline'?'이미지 순서 고정 + SRT 자연 전환':'균등 fallback';G('aeStatus').textContent=`✓ 자동배치 완료 · ${st.scenes.length}장 · ${mm} · 최종 길이 ${tm(st.dur*1000)}`};
 })();
 </script><section id="capcutTtsCleaner" style="margin:18px 0;padding:14px;border:1px solid #d8d8d8;border-radius:10px;background:#fff">
 <h3>🎙 캡컷 음성용 텍스트 정리</h3>
