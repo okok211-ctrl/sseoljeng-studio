@@ -244,7 +244,7 @@ html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!
  </div>
  <div class="row">
   <div class="field"><label>문단 수 · 기본 30</label><select id="count"><option>15</option><option selected>30</option><option>45</option><option>60</option><option value="custom">직접 입력</option></select><input id="customCount" type="number" min="10" max="100" value="30" style="margin-top:6px;display:none" placeholder="10~100"><button class="btn secondary" type="button" onclick="recommendStoryLength()" style="margin-top:6px;width:100%">✨ AI 분량 추천</button><div id="lengthRecommendStatus" class="tiny" style="margin-top:5px">사건 수와 반전 수를 보고 15·30·45·60 중 추천</div></div>
-  <div class="field"><label>이미지 수</label><select id="images"><option selected>10</option><option>15</option><option>20</option><option>25</option><option>30</option></select></div>
+  <div class="field"><label>이미지 수</label><select id="images"><option>10</option><option>15</option><option>20</option><option>25</option><option selected>30</option></select><div class="tiny" style="margin-top:5px">추천: 30문단 원고는 30장(문단별 1장). 장면별 구도·감정·사물 컷을 다르게 생성합니다.</div></div>
  </div>
  <div class="field"><label>이야기 전개 유형 · 반복 방지 설계</label><select id="storyArc" onchange="updateArcTip()"><option value="auto">작품에 맞춰 자유롭게 설계</option><option value="mystery">진실 추적 · 미스터리</option><option value="growth">선택과 성장</option><option value="ensemble">다중 인물 시점</option><option value="reconciliation">오해와 화해</option><option value="tragedy">후회와 여운</option><option value="slice">생활 밀착형 현실극</option><option value="conflict">갈등과 대응</option></select><div class="tiny" id="arcTip" style="margin-top:7px">작품마다 갈등의 원인·해결 방식·결말을 다르게 설계합니다.</div></div>
  <div class="row">
@@ -1713,6 +1713,20 @@ ${sseoljengYoutubeStyleRules()}
 }
 
 
+function cinematicImageVariationRules(){
+ return `[썰쟁 문단별 시네마틱 이미지 연출 원칙]
+- 영상 편집에서 매 이미지가 서로 다른 시각 정보를 제공하도록, 같은 인물 정면 얼굴만 반복하지 마세요.
+- 매 문단에서 실제로 벌어지는 구체적인 행동·결정·발견·증거·감정 변화를 우선 시각화하세요. 원고에 없는 사건, 소품, 장소, 등장인물을 지어내지 마세요.
+- 전체 이미지의 카메라 구도를 다양화하세요: 인물 감정 클로즈업, 행동을 담는 미디엄샷, 장소를 보여주는 와이드샷, 중요한 손동작·명함·문서·사물 디테일샷, 인물 간 관계를 드러내는 투샷을 장면에 맞게 섞으세요.
+- 매 이미지의 시각적 초점과 카메라 구도는 직전 이미지와 가능한 한 다르게 설정하세요. 의미 없이 줌인·줌아웃을 반복하도록 지시하지 마세요.
+- 장면별 감정은 원고의 흐름에 따라 따뜻함·불안·의문·긴장·통쾌함·감동 등을 선택하세요. 모든 장면에 같은 조명과 표정을 강제하지 마세요.
+- 1인칭 이야기여도 주인공이 매 이미지에 나올 필요는 없습니다. 주인공이 실제로 등장하는 컷에서만 배정한 기준 얼굴을 적용하세요.
+- 주요 등장인물은 작품별로 선택한 기준 얼굴을 유지하고, 이름·나이·직업·의상·성격·표정은 원고의 설정과 해당 장면을 따르세요. 배정되지 않은 보조·엑스트라는 상황에 맞게 생성하되 동일 인물이 반복 등장하면 외형을 일관되게 유지하세요.
+- 각 이미지에 [장면 연출: 카메라 구도 / 시각적 초점 / 감정 분위기 / 주요 등장인물]을 한 줄로 추가하세요. 해당 인물이 없으면 '주요 등장인물: 없음'으로 적으세요.
+- 프롬프트는 한 장면만 묘사하고 16:9 가로형 한국 드라마 실사 스타일을 유지하세요. 이미지 내부 글자·자막·워터마크는 금지합니다.
+- 이미지 30장이라고 해서 수익 창출 승인이 보장되는 것은 아닙니다. 원고와 시각적 서사의 독창성을 우선하세요.`;
+}
+
 function imageParagraphRangeGuide(totalParagraphs,imageCount){
  const total=Math.max(1,Number(totalParagraphs)||1);
  const count=Math.max(1,Math.min(40,Number(imageCount)||10));
@@ -2338,10 +2352,11 @@ ${story}
 3. 모든 프롬프트는 반드시 '한국 드라마 실사 영화 스틸, 16:9 가로형.'으로 시작하세요.
 4. 각 프롬프트 마지막에도 '16:9 가로형, 동일 인물과 의상 연속성 유지, 텍스트·자막·말풍선·로고·워터마크 없음.'을 명시하세요.
 5. 9:16 세로형은 절대 사용하지 마세요.
-6. 각 번호마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [생성 프롬프트]를 구분하세요.
+6. 각 번호마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [장면 연출], [생성 프롬프트]를 구분하세요.
 7. [사용 문단]은 반드시 '시작문단~끝문단' 형식으로 표시하세요. 한 문단 배정도 '12문단~12문단'처럼 범위 형식을 유지하세요.
 8. 아래 문단 배분표를 그대로 따르세요. 각 범위 안에서 가장 강렬하고 시각적인 한 장면을 골라 [대표 장면 문단]에 정확한 문단 번호를 표시하세요.
 9. ${imageParagraphAssignmentRules(c.count,c.images)}
+10. ${cinematicImageVariationRules()}
 
 [이미지별 사용 문단 배분]
 ${imageParagraphRangeGuide(c.count,c.images)}`;
@@ -2354,7 +2369,7 @@ ${story}
 
 출력 순서:
 [이미지 프롬프트] 본문용 이미지 ${c.images}개. 모든 이미지는 반드시 가로형 16:9 비율의 실사 한국 드라마 영화 스틸로 작성하세요. 9:16 세로형은 절대 사용하지 마세요. 각 번호의 프롬프트 첫 문장과 마지막 조건에 모두 '16:9 가로형'을 명시하세요. 동일 인물과 의상 연속성을 유지하고, 본문 이미지는 문구·자막·말풍선·로고 없음.
-각 이미지마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [생성 프롬프트]를 출력하세요. [사용 문단]은 반드시 '시작문단~끝문단' 형식으로 적고 한 문단 배정도 '12문단~12문단'처럼 표시하세요. 아래 배분표를 그대로 따르고, 각 범위 안에서 가장 강렬하고 시각적인 한 장면을 선택해 [대표 장면 문단]에 정확한 번호를 표시하세요. ${imageParagraphAssignmentRules(c.count,c.images)}
+각 이미지마다 반드시 [사용 문단: 시작문단~끝문단], [대표 장면 문단], [장면 설명], [장면 연출], [생성 프롬프트]를 출력하세요. ${cinematicImageVariationRules()} [사용 문단]은 반드시 '시작문단~끝문단' 형식으로 적고 한 문단 배정도 '12문단~12문단'처럼 표시하세요. 아래 배분표를 그대로 따르고, 각 범위 안에서 가장 강렬하고 시각적인 한 장면을 선택해 [대표 장면 문단]에 정확한 번호를 표시하세요. ${imageParagraphAssignmentRules(c.count,c.images)}
 
 [이미지별 사용 문단 배분]
 ${imageParagraphRangeGuide(c.count,c.images)}
