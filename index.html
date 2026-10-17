@@ -249,7 +249,7 @@ html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!
  <div class="field"><label>이야기 전개 유형 · 반복 방지 설계</label><select id="storyArc" onchange="updateArcTip()"><option value="auto">작품에 맞춰 자유롭게 설계</option><option value="mystery">진실 추적 · 미스터리</option><option value="growth">선택과 성장</option><option value="ensemble">다중 인물 시점</option><option value="reconciliation">오해와 화해</option><option value="tragedy">후회와 여운</option><option value="slice">생활 밀착형 현실극</option><option value="conflict">갈등과 대응</option></select><div class="tiny" id="arcTip" style="margin-top:7px">작품마다 갈등의 원인·해결 방식·결말을 다르게 설계합니다.</div></div>
  <div class="row">
   <div class="field"><label>시점</label><select id="pov"><option>3인칭 관찰자</option><option>1인칭 회고체</option></select></div>
-  <div class="field"><label>분위기</label><select id="tone"><option>긴장감과 반전</option><option>감동</option><option>통쾌함</option><option>가족 갈등</option></select></div>
+  <div class="field"><label>분위기</label><select id="tone"><option value="AI 자동 결정">AI 자동 결정 (추천)</option><option>긴장감과 반전</option><option>감동</option><option>통쾌함</option><option>가족 갈등</option></select></div>
  </div>
  <div class="row">
   <div class="field"><label>스토리 밀도</label><select id="density"><option>보통</option><option selected>높음</option><option>영화급</option><option>잔잔함</option></select></div>
@@ -2176,6 +2176,7 @@ ${typeof scriptFaceOnlyCastText==='function'?scriptFaceOnlyCastText():imageCast}
 4. 보조 인물과 단역을 핵심 인물처럼 확대하지 마세요. 기타 엑스트라는 별도 얼굴 배정 없이 장면별 적절한 임의 얼굴로 묘사하세요.
 시점: ${c.pov}
 분위기: ${c.tone}
+${c.tone==='AI 자동 결정'?'[분위기 자동 설계] 주제와 사건의 인과를 기준으로 각 5문단 구간의 감정 톤을 다르게 정하세요. 따뜻함·의문·긴장·반전·통쾌함·감동 중 실제 사건에 맞는 흐름을 선택하고, 설계도 에피소드 지도에 각 구간의 분위기와 전환 이유를 기록하세요. 대본도 해당 감정 흐름을 따르세요. 억지 사이다나 억지 감동은 금지합니다.':''}
 문단 수: ${c.count}
 이미지 수: ${c.images}
 스토리 밀도: ${c.density}
@@ -2194,6 +2195,7 @@ ${storyCast}
 ${storyEngineRules()}
 시점: ${c.pov}
 분위기: ${c.tone}
+${c.tone==='AI 자동 결정'?'[분위기 자동 설계] 주제와 사건의 인과를 기준으로 각 5문단 구간의 감정 톤을 다르게 정하세요. 따뜻함·의문·긴장·반전·통쾌함·감동 중 실제 사건에 맞는 흐름을 선택하고, 설계도 에피소드 지도에 각 구간의 분위기와 전환 이유를 기록하세요. 대본도 해당 감정 흐름을 따르세요. 억지 사이다나 억지 감동은 금지합니다.':''}
 문단 수: ${c.count}
 스토리 밀도: ${c.density}
 작성 품질: ${c.quality}
@@ -2975,7 +2977,8 @@ function wizardPromptFor(step){
  if(!c.topic)throw new Error('먼저 주제를 입력하세요.');
  if(!blueprint)throw new Error('먼저 스토리 설계도를 작성하거나 생성하세요.');
  const [start,end]=promptWizard.ranges[step],total=Number(c.count),isFirst=start===1,isLast=end===total;
- const common=`당신은 유튜브 사연 채널용 롱폼 원고를 작성하는 전문 작가입니다.\n\n[프로젝트]\n제목: ${c.name}\n주제: ${c.topic}\n총 문단 수: ${total}문단\n이번 작성 구간: ${start}~${end}문단\n시점: ${c.pov}\n분위기: ${c.tone}\n스토리 밀도: ${c.density}\n\n[등장인물]\n${storyCastText()}\n\n[전체 문단별 고정 설계도]\n${blueprint}\n\n[사건 기억장 - 현재 프로젝트 검증본]\n${v2325SafeMemoryText(blueprint)}`;
+ const common=`당신은 유튜브 사연 채널용 롱폼 원고를 작성하는 전문 작가입니다.\n\n[프로젝트]\n제목: ${c.name}\n주제: ${c.topic}\n총 문단 수: ${total}문단\n이번 작성 구간: ${start}~${end}문단\n시점: ${c.pov}\n분위기: ${c.tone}
+${c.tone==='AI 자동 결정'?'[분위기 자동 설계] 주제와 사건의 인과를 기준으로 각 5문단 구간의 감정 톤을 다르게 정하세요. 따뜻함·의문·긴장·반전·통쾌함·감동 중 실제 사건에 맞는 흐름을 선택하고, 설계도 에피소드 지도에 각 구간의 분위기와 전환 이유를 기록하세요. 대본도 해당 감정 흐름을 따르세요. 억지 사이다나 억지 감동은 금지합니다.':''}\n스토리 밀도: ${c.density}\n\n[등장인물]\n${storyCastText()}\n\n[전체 문단별 고정 설계도]\n${blueprint}\n\n[사건 기억장 - 현재 프로젝트 검증본]\n${v2325SafeMemoryText(blueprint)}`;
  v2326EnsureWrittenBlocksProject();
  const writtenBlocks=v2330GetCommittedBlocksBefore(start).filter(b=>Number(b.number)<start);
  // v23.33: continuity is handed off ONLY through LAST STATE SNAPSHOT.
@@ -3072,6 +3075,7 @@ function buildLongformPrompt(){
 총 문단 수: ${total}문단
 시점: ${c.pov}
 분위기: ${c.tone}
+${c.tone==='AI 자동 결정'?'[분위기 자동 설계] 주제와 사건의 인과를 기준으로 각 5문단 구간의 감정 톤을 다르게 정하세요. 따뜻함·의문·긴장·반전·통쾌함·감동 중 실제 사건에 맞는 흐름을 선택하고, 설계도 에피소드 지도에 각 구간의 분위기와 전환 이유를 기록하세요. 대본도 해당 감정 흐름을 따르세요. 억지 사이다나 억지 감동은 금지합니다.':''}
 스토리 밀도: ${c.density}
 
 [등장인물]
@@ -3905,6 +3909,7 @@ function storyBaseContext(blueprint,existing=''){
 주제: ${c.topic}
 시점: ${c.pov}
 분위기: ${c.tone}
+${c.tone==='AI 자동 결정'?'[분위기 자동 설계] 주제와 사건의 인과를 기준으로 각 5문단 구간의 감정 톤을 다르게 정하세요. 따뜻함·의문·긴장·반전·통쾌함·감동 중 실제 사건에 맞는 흐름을 선택하고, 설계도 에피소드 지도에 각 구간의 분위기와 전환 이유를 기록하세요. 대본도 해당 감정 흐름을 따르세요. 억지 사이다나 억지 감동은 금지합니다.':''}
 밀도: ${c.density}
 등장인물(서사용 정보만):
 ${storyCastText()}

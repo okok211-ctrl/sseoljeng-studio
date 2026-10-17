@@ -4,6 +4,9 @@
 const URL='https://eeeapsxleuhjqrkposyc.supabase.co', BUCKET='character-images';
 const KEY='sseoljeng-supabase-publishable-key';
 let client=null, session=null, files=[];
+const notify=()=>window.dispatchEvent(new CustomEvent('studio-cloud-faces-updated'));
+window.studioCloudFaces=()=>session?.user?files.map(f=>({id:'cloud:'+session.user.id+'/'+f.name,label:fileLabel(f.name),path:session.user.id+'/'+f.name})):[];
+window.studioCloudFaceUrl=async(path)=>{if(!client||!session?.user||!path.startsWith(session.user.id+'/'))throw Error('클라우드 로그인 또는 사진 경로를 확인하세요.');const {data,error}=await client.storage.from(BUCKET).createSignedUrl(path,3600);if(error)throw error;return data.signedUrl;};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function status(msg,bad=false){const el=$('sbCharStatus');if(el){el.textContent=msg;el.style.color=bad?'#b42343':'#346c64';}}
@@ -17,12 +20,12 @@ function initClient(){
 function updateUI(){const logged=!!session?.user;$('sbCharAuth').hidden=logged;$('sbCharTools').hidden=!logged;$('sbCharUser').textContent=logged?`로그인: ${session.user.email}`:'로그아웃 상태';}
 async function connect(){try{initClient();const {data,error}=await client.auth.getSession();if(error)throw error;session=data.session;updateUI();if(session)await refresh();else status('계정 이메일과 비밀번호로 로그인하세요.');}catch(e){status(e.message,true)}}
 async function login(){try{if(!client)initClient();const email=$('sbCharEmail').value.trim(),password=$('sbCharPassword').value;if(!email||!password)throw Error('이메일과 비밀번호를 입력하세요.');const {data,error}=await client.auth.signInWithPassword({email,password});$('sbCharPassword').value='';if(error)throw error;session=data.session;updateUI();status('로그인 완료');await refresh();}catch(e){status('로그인 실패: '+e.message,true)}}
-async function logout(){if(client)await client.auth.signOut();session=null;files=[];updateUI();$('sbCharGallery').innerHTML='';status('로그아웃했습니다.');}
-async function refresh(){if(!session?.user)return;try{status('클라우드 이미지 목록을 불러오는 중...');const {data,error}=await client.storage.from(BUCKET).list(session.user.id,{limit:1000,sortBy:{column:'created_at',order:'desc'}});if(error)throw error;files=(data||[]).filter(f=>f.name&&!f.name.startsWith('.'));render();status(`클라우드 사진 ${files.length}장 · 본인 계정 전용`);}catch(e){status('목록 조회 실패: '+e.message,true)}}
+async function logout(){if(client)await client.auth.signOut();session=null;files=[];notify();updateUI();$('sbCharGallery').innerHTML='';status('로그아웃했습니다.');}
+async function refresh(){if(!session?.user)return;try{status('클라우드 이미지 목록을 불러오는 중...');const {data,error}=await client.storage.from(BUCKET).list(session.user.id,{limit:1000,sortBy:{column:'created_at',order:'desc'}});if(error)throw error;files=(data||[]).filter(f=>f.name&&!f.name.startsWith('.'));render();notify();status(`클라우드 사진 ${files.length}장 · 본인 계정 전용`);}catch(e){status('목록 조회 실패: '+e.message,true)}}
 function fileLabel(name){const n=name.replace(/\.[^.]+$/,'');const split=n.lastIndexOf('--');try{return decodeURIComponent(split>=0?n.slice(0,split):n)}catch{return n}}
 function render(){const g=$('sbCharGallery');g.innerHTML='';if(!files.length){g.textContent='아직 저장된 사진이 없습니다. 아래에서 업로드하세요.';return;}
  for(const f of files){const path=session.user.id+'/'+f.name;const card=document.createElement('div');card.className='sb-character-card';const image=document.createElement('img');image.alt=fileLabel(f.name);image.loading='lazy';const title=document.createElement('div');title.textContent=fileLabel(f.name);const actions=document.createElement('div');actions.className='sb-card-actions';
- const load=document.createElement('button');load.type='button';load.textContent='선택 캐릭터에 적용';load.onclick=()=>apply(path);
+ const load=document.createElement('button');load.type='button';load.textContent='얼굴 배정으로 이동';load.onclick=()=>{document.querySelector('[data-tab=story]')?.click();document.getElementById('scriptCastPanel')?.setAttribute('open','');document.getElementById('scriptCastPanel')?.scrollIntoView({behavior:'smooth',block:'center'});};
  const remove=document.createElement('button');remove.type='button';remove.textContent='삭제';remove.onclick=()=>del(path);
  actions.append(load,remove);card.append(image,title,actions);g.append(card);
  client.storage.from(BUCKET).createSignedUrl(path,3600).then(({data,error})=>{if(!error&&data?.signedUrl)image.src=data.signedUrl;}).catch(()=>{});
