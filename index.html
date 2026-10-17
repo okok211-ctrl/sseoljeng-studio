@@ -139,6 +139,7 @@ html{scroll-behavior:smooth}body{background:#f3f5f9!important;color:var(--text)!
 #benchmarkPanel{background:#fff!important;color:#253149!important;border-color:#e4e9f2!important}
 @media(max-width:1050px){.layout{grid-template-columns:300px minmax(0,1fr)}.app{padding:16px}.side{padding:15px}.main{padding:18px}}@media(max-width:760px){.layout{grid-template-columns:1fr}.side{position:static;max-height:none}.top{padding:18px}.main{min-height:400px}.row{grid-template-columns:1fr}.top h1{font-size:25px}.app{padding:10px}.tabs{flex-wrap:nowrap;overflow:auto}}
 </style>
+<link rel="stylesheet" href="js/supabase-characters.css">
 </head>
 <body>
 <div class="app">
@@ -4666,5 +4667,7 @@ window.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById
  });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="js/supabase-characters.js" defer></script>
 </body>
 </html>
